@@ -1,0 +1,23 @@
+
+.ske-icon {
+	width: 1rem;
+	height: 1rem;
+	border-radius: 999px;
+	background-color: tomato;
+}
+.flex-noshrink {
+	flex-shrink: 0;
+}
+.flex-grow {
+	flex-grow: 1;
+}
+
+.ske-task-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	padding: 0.5rem;
+	/* border-top: 1px solid tomato; */
+	border-bottom: 1px solid tomato;
+}

@@ -1,1 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
+
+@layer global;
+
+@layer global {
+	html, body {
+		height: 100svh;
+		margin: 0;
+		background-color: #D9D9D9;
+		font-family: Arial, Helvetica, sans-serif;
+		// antializing
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+}

@@ -155,3 +155,7 @@ function planInternal(
     [[], facts] as [PrimitiveTask[], ReadonlySet<Fact>]
   );
 }
+
+// Either
+// - Adaptive executor
+// - Recactive executor
