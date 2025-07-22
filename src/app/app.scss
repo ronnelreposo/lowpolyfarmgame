@@ -4,6 +4,7 @@
 	height: 1rem;
 	border-radius: 999px;
 	background-color: tomato;
+
 }
 .flex-noshrink {
 	flex-shrink: 0;
@@ -17,7 +18,12 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.25rem;
-	padding: 0.5rem;
+	/* padding: 0.5rem; */
+	padding-right: 0.5rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
 	/* border-top: 1px solid tomato; */
 	border-bottom: 1px solid tomato;
+
+	padding-left: attr(data-pl rem);
 }
