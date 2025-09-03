@@ -45,14 +45,19 @@ export class App {
 			runTime: {
 				"load-main": "idle",
 				"load-profile": "idle",
-				"load-city-lookup": "idle",
-				"load-country-lookup": "idle"
+				"load-city-lookup": "success",
+				"load-country-lookup": "success"
 			},
 			rootId: "root"
 		};
 
 		console.log(readyTasks("root", appFlow)); // ['load-city-lookup', 'load-country-lookup']
 
+		// Note.Try setting the statuses in the runTime, and you'll get different result.
+
+		// Spinners?
+		console.log("load resurce spinning status: ",
+			aggregateStatus("load-resources", appFlow));
 	}
 }
 
