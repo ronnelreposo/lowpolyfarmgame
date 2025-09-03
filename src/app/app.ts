@@ -1,5 +1,6 @@
 import { Component } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
+import { BehaviorSubject } from "rxjs";
 
 @Component({
 	selector: "app-root",
@@ -51,6 +52,7 @@ export class App {
 		};
 
 		console.log(readyTasks("root", appFlow)); // ['load-city-lookup', 'load-country-lookup']
+
 	}
 }
 
@@ -113,3 +115,58 @@ function readyTasks(id: string, wf: WorkFlowState): string[] {
 
 	return [];
 }
+
+/*
+@Injectable()
+export class WorkflowEffects {
+  constructor(private actions$: Actions, private store: Store, private api: ApiService) {}
+
+  // scheduler
+  schedule$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(startWorkflow, taskSuccess, taskFailed),
+      withLatestFrom(this.store.select(selectWorkflow)),
+      mergeMap(([_, wf]) => {
+        const ready = readyTasks(wf.rootId, wf)
+          .filter(id => (wf.runTime[id] ?? "idle") === "idle");
+        return ready.map(id => taskStart({ id }));
+      })
+    )
+  );
+
+  // executor
+  exec$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(taskStart),
+      mergeMap(({ id }) => {
+        // mark loading
+        const start = setRunTime({ id, status: "loading" });
+
+        // pick task implementation
+        switch (id) {
+          case "load-entity":
+            return concat(
+              of(start),
+              this.api.getEntity().pipe(
+                map(() => taskSuccess({ id })),
+                catchError(() => of(taskFailed({ id })))
+              )
+            );
+          case "load-file":
+            return concat(
+              of(start),
+              this.api.getFile().pipe(
+                map(() => taskSuccess({ id })),
+                catchError(() => of(taskFailed({ id })))
+              )
+            );
+          default:
+            return of(taskFailed({ id })); // unknown task
+        }
+      })
+    )
+  );
+}
+
+
+*/
