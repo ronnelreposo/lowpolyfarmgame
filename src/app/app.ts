@@ -153,7 +153,10 @@ export class WorkflowEffects {
             return concat(
               of(start),
               this.api.getEntity().pipe(
-                map(() => taskSuccess({ id })),
+                map(() => {
+                updateState(paylod);
+                taskSuccess({ id });
+                ),
                 catchError(() => of(taskFailed({ id })))
               )
             );
