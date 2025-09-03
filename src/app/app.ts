@@ -42,10 +42,10 @@ export class App {
 				}
 			},
 			runTime: {
-				"load-main": "success",
-				"load-profile": "success",
-				"load-city-lookup": "success",
-				"load-country-lookup": "success"
+				"load-main": "idle",
+				"load-profile": "idle",
+				"load-city-lookup": "idle",
+				"load-country-lookup": "idle"
 			},
 			rootId: "root"
 		};
