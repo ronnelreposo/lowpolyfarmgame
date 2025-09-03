@@ -11,150 +11,105 @@ export class App {
 	protected title = "angular20-playground";
 
 	constructor() {
-		console.log("Hello Ronnel!");
-		const htn: HTN = {
-			kind: "composite",
-			goalId: "loadApp",
-			requires: [],
-			subtasks: [
-				{
-					kind: "primitive",
-					taskId: "loadPage",
-					requires: [],
-					provides: ["pageLoaded"],
+
+		const appFlow: WorkFlowState = {
+			steps: {
+				"root": {
+					id: "root",
+					kind: "sequence",
+					children: ["load-resources", "load-main", "load-profile"]
 				},
-				{
-					kind: "primitive",
-					taskId: "loadResource",
-					requires: ["pageLoaded"],
-					provides: ["resourceLoaded"],
+				"load-resources": {
+					id: "load-resources",
+					kind: "parallel",
+					children: ["load-city-lookup", "load-country-lookup" ]
 				},
-				{
-					kind: "primitive",
-					taskId: "loadImage",
-					requires: ["resourceLoaded"],
-					provides: ["imageLoaded"],
+				"load-main": {
+					id: "load-main",
+					kind: "task"
 				},
-				{
-					kind: "primitive",
-					taskId: "showErrorDialog",
-					requires: ["resourceFailed"],
-					provides: [],
+				"load-profile": {
+					id: "load-profile",
+					kind: "task"
 				},
-			],
+				"load-city-lookup": {
+					id: "load-city-lookup",
+					kind: "task"
+				},
+				"load-country-lookup": {
+					id: "load-country-lookup",
+					kind: "task"
+				}
+			},
+			runTime: {
+				"load-main": "success",
+				"load-profile": "success",
+				"load-city-lookup": "success",
+				"load-country-lookup": "success"
+			},
+			rootId: "root"
 		};
 
-		const planResult = planInternal(htn, new Set()); // no facts yet.
-		console.log(
-			"1",
-			planResult[0].map((t) => t.taskId),
-		); // ["loadPage", "loadResource", "loadImage"]
-
-		const plantResult2 = planInternal(htn, new Set(["pageLoaded"])); // At  least the page is loaded, plan next step.
-		console.log(
-			"2",
-			plantResult2[0].map((t) => t.taskId),
-		); // ["loadResource", "loadImage"]
+		console.log(readyTasks("root", appFlow)); // ['load-city-lookup', 'load-country-lookup']
 	}
 }
 
-type AppState = {
-	pageLoaded: false;
-	// Improvement. can be encapsulated by Status data type.
-	resourceLoaded: false;
-	resourceFailed: false;
-	imageLoaded: false;
-	something?: string;
-};
+type Status = "idle" | "loading" | "success" | "failed" | "skipped";
 
-type World = Pick<
-	AppState,
-	"pageLoaded" | "resourceLoaded" | "resourceFailed" | "imageLoaded"
->;
+type OpLeaf = {
+	id: string;
+	kind: "task";
+}
+type OpNode = {
+	id: string;
+	kind: "sequence" | "parallel",
+	children: string[];
+}
 
-type Fact = keyof World;
+type WorkFlowState = {
+	steps: Record<string, OpLeaf | OpNode>;
+	runTime: Record<string, Status>;
+	rootId: string;
+}
 
-type BaseTask = {
-	requires: Fact[];
-};
+const isDone = (s: Status) => s === "success" || s === "skipped";
 
-type PrimitiveTask = BaseTask & {
-	kind: "primitive";
-	taskId: string;
-	provides: Fact[];
-};
+function aggregateStatus(id: string, wf: WorkFlowState): Status {
 
-type CompositeTask = BaseTask & {
-	kind: "composite";
-	goalId: string;
-	subtasks: HTN[];
-};
+	const node = wf.steps[id];
+	if (node.kind === "task") { return wf.runTime[id] ?? "idle" }
 
-type HTN = PrimitiveTask | CompositeTask;
+	const statuses = node.children.map(childId => aggregateStatus(childId, wf));
 
-function plan1(htn: HTN, facts: Set<Fact>): PrimitiveTask[] {
-	// Check if all requires are satisfied
-	const requiresMet = htn.requires.every((fact) => facts.has(fact));
-	if (!requiresMet) return [];
+	if (statuses.some(s => s === "failed")) { return "failed"; }
+	if (statuses.every(isDone)) { return "success"; }
+	if (statuses.some(s => s === "loading")) { return "loading"; }
+	return "idle";
+}
 
-	if (htn.kind === "primitive") {
-		// Add provides to facts (immutably)
-		const newFacts = new Set(facts);
-		for (const f of htn.provides) newFacts.add(f);
-		return [htn]; // single primitive step
+function readyTasks(id: string, wf: WorkFlowState): string[] {
+	const node = wf.steps[id];
+
+	if (node.kind === "task") {
+		return (wf.runTime[id] ?? "idle") === "idle" ? [id] : [];
 	}
 
-	if (htn.kind === "composite") {
-		// Decompose recursively
-		let currentFacts = new Set(facts);
-		let result: PrimitiveTask[] = [];
+	if (node.children.length === 0) {
+		return [];
+	}
 
-		for (const sub of htn.subtasks) {
-			const subPlan = plan1(sub, currentFacts);
-			// Simulate subtask effects
-			for (const t of subPlan) {
-				t.provides.forEach((f) => currentFacts.add(f));
-			}
-			result = result.concat(subPlan);
+	if (node.kind === "sequence") {
+		for (const child of node.children) {
+			const status = aggregateStatus(child, wf);
+			if (status === "failed") { return []; } // stop the sequence.
+			if (!isDone(status)) { return readyTasks(child, wf); } // next unfinished.
 		}
+		return [];
+	}
 
-		return result;
+	if (node.kind === "parallel") {
+		return node.children.flatMap(child => readyTasks(child, wf));
 	}
 
 	return [];
 }
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal pure planner: returns [steps, factsAfterAllSteps]
-// ─────────────────────────────────────────────────────────────────────────────
-function planInternal(
-	node: HTN,
-	facts: ReadonlySet<Fact>,
-): [PrimitiveTask[], ReadonlySet<Fact>] {
-	// 1) If node can’t run yet, skip it entirely
-	if (!node.requires.every((r) => facts.has(r))) {
-		return [[], facts];
-	}
-
-	// 2) If primitive, also skip if it would add nothing new
-	if (node.kind === "primitive") {
-		if (node.provides.every((p) => facts.has(p))) {
-			return [[], facts];
-		}
-		const nextFacts = new Set(facts);
-		node.provides.forEach((p) => nextFacts.add(p));
-		return [[node], nextFacts];
-	}
-
-	// 3) Composite: fold over subtasks, threading facts and steps
-	return node.subtasks.reduce<[PrimitiveTask[], ReadonlySet<Fact>]>(
-		([stepsAcc, factsAcc], sub) => {
-			const [subSteps, subFacts] = planInternal(sub, factsAcc);
-			return [stepsAcc.concat(subSteps), subFacts];
-		},
-		[[], facts] as [PrimitiveTask[], ReadonlySet<Fact>],
-	);
-}
-
-// Either
-// - Adaptive executor
-// - Recactive executor
