@@ -1,29 +1,41 @@
 
-.ske-icon {
-	width: 1rem;
-	height: 1rem;
-	border-radius: 999px;
-	background-color: tomato;
+details {
+	border: 1px solid tomato;
+	padding: 0.5rem;
+	border-radius: 0.5rem;
+	color: white;
+	display: grid;
+	grid-template-rows: auto 1fr;
+	gap: 0.5rem;
 
-}
-.flex-noshrink {
-	flex-shrink: 0;
-}
-.flex-grow {
-	flex-grow: 1;
-}
+	summary {
+		background-color: tomato;
+		padding: 0.5rem;
+		border-radius: 0.25rem 0.25rem 0 0;
 
-.ske-task-container {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.25rem;
-	/* padding: 0.5rem; */
-	padding-right: 0.5rem;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-	/* border-top: 1px solid tomato; */
-	border-bottom: 1px solid tomato;
+		&::marker {
+			color: white;
+		}
+	}
 
-	padding-left: attr(data-pl rem);
+	section {
+		display: grid;
+		grid-template-rows: auto 1fr;
+		gap: 0.25rem;
+		padding: 0.5rem;
+		font-size: 11px;
+		color: black;
+
+		header {
+			font-size: 14px;
+			color: rgba(0, 0, 0, 0.6);
+		}
+	}
+
+	&:not([open]) {
+		gap: 0;
+		summary {
+			border-radius: 0.25rem;
+		}
+	}
 }

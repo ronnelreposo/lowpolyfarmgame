@@ -1,26 +1,32 @@
-<!--<div *ngFor="let logEntry of ">
-	logEntry | json
-</div>-->
 @if (uiState) {
 	@if (uiState.entities['my-logbook']; as logBook) {
 		@switch (logBook._type) {
 			@case ('LogBook') {
-				<details>
+				<details open>
 					<summary>{{ logBook.state.header }}</summary>
 					@for (logEntry of (logBook.state.logEntryBarIds); track logEntry) {
-						<section>
-							<span>{{ logEntry }}</span>
-						</section>
+						@if (uiState.entities[logEntry]; as logEntry) {
+							@switch (logEntry._type) {
+								@case ('LogEntryBar') {
+									<section>
+										<header>{{ logEntry.state.header }}</header>
+										<span>
+											{{ logEntry.state.description + logEntry.state.timeStamp }}
+										</span>
+									</section>
+								}
+								@default {
+									<span>Should be log entry bar case</span>
+								}
+							}
+						}
 					} @empty {
 						<span>No Items</span>
 					}
 				</details>
 			}
-			@case ('LogEntryBar') {
-				<span>Should be a log book</span>
-			}
 			@default {
-				<span>Unkown case</span>
+				<span>Should be log book case</span>
 			}
 		}
 	}
