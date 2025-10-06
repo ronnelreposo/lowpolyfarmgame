@@ -10,6 +10,7 @@ import { BehaviorSubject } from "rxjs";
 })
 export class App {
 	protected title = "angular20-playground";
+	public answer = 0;
 
 	constructor() {
 
@@ -18,7 +19,7 @@ export class App {
 				"root": {
 					id: "root",
 					kind: "sequence",
-					children: ["load-resources", "load-main", "load-profile"]
+					children: ["load-main", "load-profile"]
 				},
 				"load-resources": {
 					id: "load-resources",
@@ -45,8 +46,8 @@ export class App {
 			runTime: {
 				"load-main": "idle",
 				"load-profile": "idle",
-				"load-city-lookup": "success",
-				"load-country-lookup": "success"
+				"load-city-lookup": "idle",
+				"load-country-lookup": "idle"
 			},
 			rootId: "root"
 		};
@@ -58,6 +59,34 @@ export class App {
 		// Spinners?
 		console.log("load resurce spinning status: ",
 			aggregateStatus("load-resources", appFlow));
+
+		// tiny
+		const appFlow2: WorkFlowState = {
+			steps: {
+				"root": {
+					id: "root",
+					kind: "sequence",
+					children: ["derive-local-state", "load-attachment-image", /* storeAttachmentLocally */]
+				},
+				"derive-local-state": {
+					id: "derive-local-state",
+					kind: "task"
+				},
+				"load-attachment-image": {
+					id: "load-attachment-image",
+					kind: "task"
+				},
+			},
+			runTime: {
+				"derive-local-state": "idle",
+				"load-attachment-image": "idle",
+			},
+			rootId: "root"
+		};
+	}
+
+	public compute() {
+		this.answer += this.answer + 1;
 	}
 }
 
@@ -132,6 +161,7 @@ export class WorkflowEffects {
       ofType(startWorkflow, taskSuccess, taskFailed),
       withLatestFrom(this.store.select(selectWorkflow)),
       mergeMap(([_, wf]) => {
+        // Ensures that no over requesting.
         const ready = readyTasks(wf.rootId, wf)
           .filter(id => (wf.runTime[id] ?? "idle") === "idle");
         return ready.map(id => taskStart({ id }));
@@ -176,5 +206,28 @@ export class WorkflowEffects {
   );
 }
 
+
+*/
+
+/*
+Plan for tomorrow morning. Oct 3, 2025.
+
+- Use this workflow status.
+- Prototype fast, fk the spinner just show "loading text" in the DOM first.
+- Use different effects per actions in schedule$ since you're using ngrx.component.store.
+- Every load of the data$(steps), create a Map of workflow.
+	- whipe state clean if it's a differnt set of steps (differnt service action)
+- For every request of load api, create a local Map<string, Subject> for cancellation. *1.
+- Use the fucking mergeMap wit cancellation,
+	- No need to edit the core model to add cancellation since see reason *1.
+
+mergeMap(({ id }) => {
+  const cancel$ = new Subject<void>();
+  cancelMap.set(id, cancel$);
+  return apiCall().pipe(
+    takeUntil(cancel$),
+    finalize(() => cancelMap.delete(id))
+  );
+});
 
 */
