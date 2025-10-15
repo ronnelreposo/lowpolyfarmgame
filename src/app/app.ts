@@ -3,8 +3,6 @@
 import { AfterViewInit, Component, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { BehaviorSubject } from "rxjs";
-// import shaderCode from '../assets/shaders/vertex.wgsl?raw';
-import shaderCode from './vertex.wgsl?raw';
 
 
 @Component({
@@ -30,11 +28,45 @@ export class App implements AfterViewInit {
 			device,
 			format: presentationFormat
 		});
-		const shaderCode = await fetch('assets/shaders/vertex.wgsl').then(r => r.text());
+		const shaderCode = await fetch('/assets/shaders/shader1.wgsl').then(r => r.text());
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
 			code: shaderCode
 		});
-		console.log(adapter, device);
+		const pipeline = device.createRenderPipeline({
+			label: "our hardcoded red triangle pipeline",
+			layout: 'auto',
+			vertex: {
+				entryPoint: 'vs',
+				module,
+			},
+			fragment: {
+				entryPoint: 'fs',
+				module,
+				targets: [{ format: presentationFormat }]
+			}
+		});
+		const colorAttachments: GPURenderPassColorAttachment[] = [{
+			view: undefined as unknown as GPUTextureView,
+			loadOp: 'clear',
+			storeOp: 'store',
+			clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
+		}];
+		const renderPassDescriptor: GPURenderPassDescriptor = {
+			label: "our basic canvas renderpass",
+			colorAttachments: colorAttachments
+		}
+		colorAttachments[0].view =
+			context!?.getCurrentTexture().createView();
+
+		// Render
+
+		const encoder = device.createCommandEncoder({ label: "our encoder" });
+		const pass = encoder.beginRenderPass(renderPassDescriptor);
+		pass.setPipeline(pipeline);
+		pass.draw(3);
+		pass.end();
+		const commandBuffer = encoder.finish();
+		device.queue.submit([commandBuffer]);
 	}
 }
