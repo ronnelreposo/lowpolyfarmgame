@@ -1,5 +1,14 @@
 
 Oct 16, 2025. 10:23PM
+- Unniforms multiple using data
+	- vs and fs are jus function nothing else (kernel programs).
+	- you have nothing in control of execution, that's the gpu's job.
+	- you just setup commands and enqueue them.
+	- that's why even though its pointing on the same group and binding,
+		it doesn't override things.
+	- then webgpu executes on what's in the queue.
+	- Right now there's one big command buffer. OK.
+	- Next optimization is one big uniformbuffer/storagebuffer for the whole entities.
 - Uniforms are global variables to binded before
 executing pipeline.
 	- Remember 1 buffer, one binding first for basic.
