@@ -59,11 +59,44 @@ export class App implements AfterViewInit {
 		colorAttachments[0].view =
 			context!?.getCurrentTexture().createView();
 
+		// Uniform buffer.
+		const uniformBufferSize = (
+			4 * 4 + // color is 4 32bit floats (4bytes each)
+			2 * 4 + // scale is 2 32bit floats (4bytes each)
+			2 * 4 // offset is 2 32bit floats (4bytes each)
+		);
+		const uniformBuffer = device.createBuffer({
+			size: uniformBufferSize,
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
+		const chunk = 4;
+		const uniformValues = new Float32Array(uniformBufferSize / chunk);
+		// offsets to the various uniform values in float32 indices
+		const kColorOffset = 0;
+		const kScaleOffset = 4;
+		const kOffsetOffset = 6;
+		uniformValues.set([0, 1, 0, 1], kColorOffset);
+		uniformValues.set([-0.5, -0.25], kOffsetOffset);
+
+		const bindGroup = device.createBindGroup({
+			label: "Our first bind group",
+			layout: pipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: uniformBuffer } },
+			]
+		});
+
+		// Modify the unniform buffer again . // remaining.
+		uniformValues.set([0.5, 0.5], kScaleOffset);
+
+		device.queue.writeBuffer(uniformBuffer, 0, uniformValues);
+
 		// Render
 
 		const encoder = device.createCommandEncoder({ label: "our encoder" });
 		const pass = encoder.beginRenderPass(renderPassDescriptor);
 		pass.setPipeline(pipeline);
+		pass.setBindGroup(0, bindGroup);
 		pass.draw(3);
 		pass.end();
 		const commandBuffer = encoder.finish();
