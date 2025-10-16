@@ -3,7 +3,7 @@
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import { AfterViewInit, Component, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { BehaviorSubject } from "rxjs";
+import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
 
 
 @Component({
@@ -53,21 +53,17 @@ export class App implements AfterViewInit {
 			storeOp: 'store',
 			clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
 		}];
-		const renderPassDescriptor: GPURenderPassDescriptor = {
-			label: "our basic canvas renderpass",
-			colorAttachments: colorAttachments
-		}
-		colorAttachments[0].view =
-			context!?.getCurrentTexture().createView();
+
 
 		// Uniform buffer.
 		const uniformBufferSize = (
 			4 * 4 + // color is 4 32bit floats (4bytes each)
-			2 * 4 + // scale is 2 32bit floats (4bytes each)
-			2 * 4 // offset is 2 32bit floats (4bytes each)
+			2 * 4 +// offset is 2 32bit floats (4bytes each)
+			2 * 4 // padding
 		);
-
-		const data = Array(20).fill(undefined)
+		const itemNum = 20;
+		const entities = Array(itemNum).fill(undefined);
+		const data = entities
 			.map((_, i) => {
 				const pos = [
 					Math.random() * 2 - 1,
@@ -81,6 +77,7 @@ export class App implements AfterViewInit {
 			}).map(obj => {
 
 				const uniformBuffer = device.createBuffer({
+					label: "color and offset uniform buffer",
 					size: uniformBufferSize,
 					usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 				});
@@ -88,47 +85,101 @@ export class App implements AfterViewInit {
 				const uniformValues = new Float32Array(uniformBufferSize / chunk);
 				// offsets to the various uniform values in float32 indices
 				const kColorOffset = 0;
-				const kScaleOffset = 4;
-				const kOffsetOffset = 6;
+				const kOffsetOffset = 4;
 				uniformValues.set(obj.color, kColorOffset);
 				uniformValues.set(obj.pos, kOffsetOffset);
 
-				const bindGroup = device.createBindGroup({
-					label: "Our first bind group",
-					layout: pipeline.getBindGroupLayout(0),
-					entries: [
-						{ binding: 0, resource: { buffer: uniformBuffer } },
-					]
-				});
 
-				// Modify the unniform buffer again . // remaining.
-				// Note. after bindgroup creation.
-				uniformValues.set([0.5, 0.5], kScaleOffset);
 
 				return {
-					bindGroup,
 					uniformValues,
 					uniformBuffer,
 				};
 			});
-
-		// Render
-
-		const encoder = device.createCommandEncoder({ label: "our encoder" });
-		const pass = encoder.beginRenderPass(renderPassDescriptor);
-		pass.setPipeline(pipeline);
-
-		data.forEach(({ bindGroup, uniformValues, uniformBuffer }) => {
+		// Updates only once.
+		data.forEach(({ uniformValues, uniformBuffer }) => {
 			// Copy uniforms to queue.
 			device.queue.writeBuffer(uniformBuffer, 0, uniformValues);
-			// Assign resource
-			pass.setBindGroup(0, bindGroup);
-			// draw single pass. Not draw yet, Store it as a command.
-			pass.draw(3);
 		});
 
-		pass.end();
-		const commandBuffer = encoder.finish();
-		device.queue.submit([commandBuffer]);
+		function setNewScale(scale: [number, number]) {
+			// Set new scale.
+			const chunk = 4;
+			const uniformBufferSize = 2 * 4;// scale is 2 32bit floats (4bytes each)
+			const uniformValues = new Float32Array(uniformBufferSize / chunk);
+			// offsets to the various uniform values in float32 indices
+			const kScaleOffset = 0;
+			uniformValues.set(scale, kScaleOffset);
+			return uniformValues;
+		}
+		const data_scaleOnly = entities
+			.map((_, i) => {
+				const scale = [Math.random(), Math.random()] as [number, number];
+				return scale;
+			}).map((scale, i) => {
+
+				const uniformBuffer = device.createBuffer({
+					label: `scale only uniform buffer${i}`,
+					size: uniformBufferSize,
+					usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+				});
+
+				// Set inital scale value.
+				const uniformValues = setNewScale(scale);
+
+				return {
+					uniformBuffer,
+					uniformValues,
+				};
+			});
+
+
+		const bindGroups = entities
+			.map((_, i) => {
+				const bindGroup = device.createBindGroup({
+					label: `Our first bind group${i} (scale)`,
+					layout: pipeline.getBindGroupLayout(0),
+					entries: [
+						{ binding: 0, resource: { buffer: data[i].uniformBuffer } },
+						{ binding: 1, resource: { buffer: data_scaleOnly[i].uniformBuffer } },
+					]
+				});
+				return bindGroup;
+			});
+
+		// Render Loop.
+
+		animationFrames()
+			.pipe(throttleTime(100))
+			.subscribe(_ => {
+
+				const renderPassDescriptor: GPURenderPassDescriptor = {
+					label: "our basic canvas renderpass",
+					colorAttachments: colorAttachments
+				}
+				colorAttachments[0].view =
+					context!?.getCurrentTexture().createView();
+
+				const encoder = device.createCommandEncoder({ label: "our encoder" });
+				const pass = encoder.beginRenderPass(renderPassDescriptor);
+				pass.setPipeline(pipeline);
+
+				// Loop through entties and update and write buffer.
+				entities.forEach((_, i) => {
+					// Update buffer.
+					const newScale = [Math.random(), Math.random()] as [number, number];
+					const uniformValues = setNewScale(newScale);
+					// Copy uniforms to queue.
+					device.queue.writeBuffer(data_scaleOnly[i].uniformBuffer, 0, uniformValues);
+					// Assign resource
+					pass.setBindGroup(0, bindGroups[i]);
+					// draw single pass. Not draw yet, Store it as a command.
+					pass.draw(3);
+				});
+
+				pass.end();
+				const commandBuffer = encoder.finish();
+				device.queue.submit([commandBuffer]);
+			});
 	}
 }

@@ -1,5 +1,8 @@
 
 Oct 16, 2025. 10:23PM
+- Loop
+	- Never create bindgroup per frame.
+	- Do update the data and write buffer to queue.
 - Unniforms multiple using data
 	- vs and fs are jus function nothing else (kernel programs).
 	- you have nothing in control of execution, that's the gpu's job.

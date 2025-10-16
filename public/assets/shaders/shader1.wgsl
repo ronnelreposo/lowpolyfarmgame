@@ -6,11 +6,16 @@ struct OurVertextShaderOutput {
 
 struct OurStruct {
 	color: vec4f,
-	scale: vec2f,
 	offset: vec2f,
 };
 
+struct OtherStruct {
+	scale: vec2f,
+	// _padding: vec2f, // to satisfy 16-byte alignment
+}
+
 @group(0) @binding(0) var<uniform> ourStruct0: OurStruct;
+@group(0) @binding(1) var<uniform> otherStruct: OtherStruct;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32
@@ -26,7 +31,7 @@ struct OurStruct {
 		vec4f(0, 0, 1, 1) // blue.
 	);
 	return vec4f(
-		pos[vertexIndex] * ourStruct0.scale + ourStruct0.offset, 0.0, 1.0);
+		pos[vertexIndex] * otherStruct.scale + ourStruct0.offset, 0.0, 1.0);
 }
 
 @fragment fn fs() -> @location(0) vec4f {
