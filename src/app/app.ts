@@ -5,7 +5,6 @@ import { AfterViewInit, Component, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
 
-
 @Component({
 	selector: "app-root",
 	imports: [RouterOutlet],
@@ -13,8 +12,7 @@ import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
 	styleUrl: "./app.scss",
 })
 export class App implements AfterViewInit {
-	constructor() {
-	}
+	constructor() {}
 	async ngAfterViewInit(): Promise<void> {
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
@@ -22,164 +20,127 @@ export class App implements AfterViewInit {
 		if (!device) {
 			return;
 		}
-		const canvas = document.querySelector('canvas');
-		const context = canvas?.getContext('webgpu');
+		const canvas = document.querySelector("canvas");
+		const context = canvas?.getContext("webgpu");
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 		context?.configure({
 			device,
-			format: presentationFormat
+			format: presentationFormat,
 		});
-		const shaderCode = await fetch('/assets/shaders/shader1.wgsl').then(r => r.text());
+		const shaderCode = await fetch("/assets/shaders/shader1.wgsl").then(
+			(r) => r.text(),
+		);
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
-			code: shaderCode
+			code: shaderCode,
 		});
 		const pipeline = device.createRenderPipeline({
 			label: "our hardcoded red triangle pipeline",
-			layout: 'auto',
+			layout: "auto",
 			vertex: {
-				entryPoint: 'vs',
+				entryPoint: "vs",
 				module,
 			},
 			fragment: {
-				entryPoint: 'fs',
+				entryPoint: "fs",
 				module,
-				targets: [{ format: presentationFormat }]
-			}
+				targets: [{ format: presentationFormat }],
+			},
 		});
-		const colorAttachments: GPURenderPassColorAttachment[] = [{
-			view: undefined as unknown as GPUTextureView,
-			loadOp: 'clear',
-			storeOp: 'store',
-			clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
-		}];
+		const colorAttachments: GPURenderPassColorAttachment[] = [
+			{
+				view: undefined as unknown as GPUTextureView,
+				loadOp: "clear",
+				storeOp: "store",
+				clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
+			},
+		];
 
-
+		const kNumObjects = 500_000;
 		// Uniform buffer.
-		const uniformBufferSize = (
+		const staticUnitSize =
 			4 * 4 + // color is 4 32bit floats (4bytes each)
-			2 * 4 +// offset is 2 32bit floats (4bytes each)
-			2 * 4 // padding
-		);
-		const itemNum = 20;
-		const entities = Array(itemNum).fill(undefined);
-		const data = entities
-			.map((_, i) => {
-				const pos = [
-					Math.random() * 2 - 1,
-					Math.random() * 2 - 1
-				]; // clip space X and Y.
-				const color = [Math.random(), Math.random(), Math.random(), 1];
-				return {
-					pos,
-					color
-				};
-			}).map(obj => {
-
-				const uniformBuffer = device.createBuffer({
-					label: "color and offset uniform buffer",
-					size: uniformBufferSize,
-					usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-				});
-				const chunk = 4;
-				const uniformValues = new Float32Array(uniformBufferSize / chunk);
-				// offsets to the various uniform values in float32 indices
-				const kColorOffset = 0;
-				const kOffsetOffset = 4;
-				uniformValues.set(obj.color, kColorOffset);
-				uniformValues.set(obj.pos, kOffsetOffset);
-
-
-
-				return {
-					uniformValues,
-					uniformBuffer,
-				};
-			});
-		// Updates only once.
-		data.forEach(({ uniformValues, uniformBuffer }) => {
-			// Copy uniforms to queue.
-			device.queue.writeBuffer(uniformBuffer, 0, uniformValues);
+			2 * 4 + // offset is 2 32bit floats (4bytes each)
+			2 * 4; // padding
+		const staticStorageBufferSize = staticUnitSize * kNumObjects;
+		const entities = Array(kNumObjects).fill(undefined);
+		const staticStorageBuffer = device.createBuffer({
+			label: "color and offset storage buffer",
+			size: staticStorageBufferSize,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
-
-		function setNewScale(scale: [number, number]) {
-			// Set new scale.
-			const chunk = 4;
-			const uniformBufferSize = 2 * 4;// scale is 2 32bit floats (4bytes each)
-			const uniformValues = new Float32Array(uniformBufferSize / chunk);
+		const staticEntities = entities.map((_, i) => {
+			const pos = [Math.random() * 2 - 1, Math.random() * 2 - 1]; // clip space X and Y.
+			const color = [Math.random(), Math.random(), Math.random(), 1];
+			return { pos, color };
+		});
+		const chunk = 4;
+		const staticStorageValues = new Float32Array(staticStorageBufferSize / chunk);
+		staticEntities.forEach((obj, i) => {
+			const staticOffset = i * (staticUnitSize / chunk);
 			// offsets to the various uniform values in float32 indices
-			const kScaleOffset = 0;
-			uniformValues.set(scale, kScaleOffset);
-			return uniformValues;
-		}
-		const data_scaleOnly = entities
-			.map((_, i) => {
-				const scale = [Math.random(), Math.random()] as [number, number];
-				return scale;
-			}).map((scale, i) => {
+			const kColorOffset = 0;
+			const kOffsetOffset = 4;
+			staticStorageValues.set(obj.color, staticOffset + kColorOffset);
+			staticStorageValues.set(obj.pos, staticOffset + kOffsetOffset);
+		});
+		// Updates only once. Copy storage to queue, enqueue only once.
+		device.queue.writeBuffer(staticStorageBuffer, 0, staticStorageValues);
 
-				const uniformBuffer = device.createBuffer({
-					label: `scale only uniform buffer${i}`,
-					size: uniformBufferSize,
-					usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-				});
+		const changingUnitSize = 2 * 4; // scale is 2 32bit floats (4bytes each)
+		const changingStorageBuferSize = changingUnitSize * kNumObjects;
+		const changingStorageBuffer = device.createBuffer({
+			label: `scale only storage buffer`,
+			size: changingStorageBuferSize,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
+		// Set initial scale: Scale only changing.
+		const chaingingStorageValues = new Float32Array(changingStorageBuferSize / chunk);
 
-				// Set inital scale value.
-				const uniformValues = setNewScale(scale);
-
-				return {
-					uniformBuffer,
-					uniformValues,
-				};
-			});
-
-
-		const bindGroups = entities
-			.map((_, i) => {
-				const bindGroup = device.createBindGroup({
-					label: `Our first bind group${i} (scale)`,
-					layout: pipeline.getBindGroupLayout(0),
-					entries: [
-						{ binding: 0, resource: { buffer: data[i].uniformBuffer } },
-						{ binding: 1, resource: { buffer: data_scaleOnly[i].uniformBuffer } },
-					]
-				});
-				return bindGroup;
-			});
+		// Create one bind group.
+		const bindGroup = device.createBindGroup({
+			label: `Our first bind group (scale)`,
+			layout: pipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: { buffer: staticStorageBuffer }, },
+				{ binding: 1, resource: { buffer: changingStorageBuffer }, },
+			],
+		});
 
 		// Render Loop.
 
 		animationFrames()
-			.pipe(throttleTime(100))
+			// .pipe(throttleTime(100))
 			.subscribe(_ => {
 
-				const renderPassDescriptor: GPURenderPassDescriptor = {
-					label: "our basic canvas renderpass",
-					colorAttachments: colorAttachments
-				}
-				colorAttachments[0].view =
-					context!?.getCurrentTexture().createView();
+			const renderPassDescriptor: GPURenderPassDescriptor = {
+				label: "our basic canvas renderpass",
+				colorAttachments: colorAttachments,
+			};
+			colorAttachments[0].view = context!?.getCurrentTexture().createView();
 
-				const encoder = device.createCommandEncoder({ label: "our encoder" });
-				const pass = encoder.beginRenderPass(renderPassDescriptor);
-				pass.setPipeline(pipeline);
+			const encoder = device.createCommandEncoder({ label: "our encoder" });
+			const pass = encoder.beginRenderPass(renderPassDescriptor);
+			pass.setPipeline(pipeline);
 
-				// Loop through entties and update and write buffer.
-				entities.forEach((_, i) => {
-					// Update buffer.
-					const newScale = [Math.random(), Math.random()] as [number, number];
-					const uniformValues = setNewScale(newScale);
-					// Copy uniforms to queue.
-					device.queue.writeBuffer(data_scaleOnly[i].uniformBuffer, 0, uniformValues);
-					// Assign resource
-					pass.setBindGroup(0, bindGroups[i]);
-					// draw single pass. Not draw yet, Store it as a command.
-					pass.draw(3);
-				});
+			// Update scale.
+			entities.forEach((_, i) => {
+				const newScale = [Math.random(), Math.random()] as [number, number];
+				const offset = i * (changingUnitSize / chunk);
+				const kScaleOffset = 0;
+				// Set the scale in values.
+				chaingingStorageValues.set(newScale, offset + kScaleOffset);
+			})
+			// Upload all scales at once.
+			device.queue.writeBuffer(changingStorageBuffer, 0, chaingingStorageValues);
+			// Assign resource
+			pass.setBindGroup(0, bindGroup);
+			// draw single pass. Not draw yet, Store it as a command.
+			pass.draw(3, kNumObjects);
 
-				pass.end();
-				const commandBuffer = encoder.finish();
-				device.queue.submit([commandBuffer]);
-			});
+			pass.end();
+			const commandBuffer = encoder.finish();
+			device.queue.submit([commandBuffer]);
+		});
 	}
 }

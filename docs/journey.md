@@ -1,5 +1,8 @@
 
 Oct 16, 2025. 10:23PM
+- Storage buffer
+	- WTF! 500k rectangles / frame.
+	- That's the power of storage buffer.
 - Loop
 	- Never create bindgroup per frame.
 	- Do update the data and write buffer to queue.
