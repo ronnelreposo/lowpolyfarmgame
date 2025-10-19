@@ -3,7 +3,7 @@
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
+import { animationFrames, BehaviorSubject, combineLatest, of, ReplaySubject, Subject, throttleTime } from "rxjs";
 
 @Component({
 	selector: "app-root",
@@ -23,14 +23,19 @@ export class App implements AfterViewInit {
 		}
 		const canvas = document.querySelector("canvas");
 
+		const canvasDimension$ = new ReplaySubject<{ width: number, height: number }>(1);
 		this.ngZone.runOutsideAngular(async () => {
 			const observer = new ResizeObserver(entries => {
 				for (const entry of entries) {
 					const width = entry.contentBoxSize[0].inlineSize;
 					const height = entry.contentBoxSize[0].blockSize;
+					console.log(width, height);
 					const canvas = entry.target as any;
-					canvas.width = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
-					canvas.height = Math.max(1, Math.min(height, device.limits.maxTextureDimension2D));
+					const newWidth = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
+					const newHeight = Math.max(1, Math.min(height, device.limits.maxTextureDimension2D));
+					canvas.width = newWidth;
+					canvas.height = newHeight;
+					canvasDimension$.next({ width: newWidth, height: newHeight });
 				}
 			});
 			observer.observe(canvas!);
@@ -140,9 +145,13 @@ export class App implements AfterViewInit {
 
 		// Render Loop.
 
-		animationFrames()
+		combineLatest({
+			// frame: animationFrames(),
+			frame: of(1),
+			canvasDimension: canvasDimension$
+		})
 			// .pipe(throttleTime(100))
-			.subscribe(_ => {
+			.subscribe(({ frame, canvasDimension }) => {
 
 			const renderPassDescriptor: GPURenderPassDescriptor = {
 				label: "our basic canvas renderpass",
@@ -173,5 +182,15 @@ export class App implements AfterViewInit {
 			const commandBuffer = encoder.finish();
 			device.queue.submit([commandBuffer]);
 		});
+	}
+}
+
+
+type Dimension = { width: number, height: number}
+type Coord = { x: number, y: number }
+function transformToClipSpace(coord: Coord, dimension: Dimension): Coord {
+	return {
+		x: (coord.x / dimension.width) * 2 - 1,
+		y: 1 - (coord.y / dimension.height) * 2
 	}
 }
