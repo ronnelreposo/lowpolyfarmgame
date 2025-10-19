@@ -29,7 +29,6 @@ export class App implements AfterViewInit {
 				for (const entry of entries) {
 					const width = entry.contentBoxSize[0].inlineSize;
 					const height = entry.contentBoxSize[0].blockSize;
-					console.log(width, height);
 					const canvas = entry.target as any;
 					const newWidth = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
 					const newHeight = Math.max(1, Math.min(height, device.limits.maxTextureDimension2D));
@@ -76,70 +75,36 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const kNumObjects = 100_000;
-		// Uniform buffer.
-		const staticUnitSize =
-			4 * 4 + // color is 4 32bit floats (4bytes each)
-			2 * 4 + // offset is 2 32bit floats (4bytes each)
-			2 * 4; // padding
-		const staticStorageBufferSize = staticUnitSize * kNumObjects;
-		const entities = Array(kNumObjects).fill(undefined);
-		const staticStorageBuffer = device.createBuffer({
-			label: "color and offset storage buffer",
-			size: staticStorageBufferSize,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
-		const staticEntities = entities.map((_, i) => {
-			const pos = [Math.random() * 2 - 1, Math.random() * 2 - 1]; // clip space X and Y.
-			const color = [Math.random(), Math.random(), Math.random(), 1];
-			return { pos, color };
-		});
-		const bytesPerFloat = 4;
-		const staticStorageValues = new Float32Array(staticStorageBufferSize / bytesPerFloat);
-		staticEntities.forEach((obj, i) => {
-			const staticOffset = i * (staticUnitSize / bytesPerFloat);
-			// offsets to the various uniform values in float32 indices
-			const kColorOffset = 0;
-			const kOffsetOffset = 4;
-			staticStorageValues.set(obj.color, staticOffset + kColorOffset);
-			staticStorageValues.set(obj.pos, staticOffset + kOffsetOffset);
-		});
-		// Updates only once. Copy storage to queue, enqueue only once.
-		device.queue.writeBuffer(staticStorageBuffer, 0, staticStorageValues);
+		const entities: Entity[] = [
+			{
+				kind: "tri", verts: [
+					0.0, 0.5,	// top
+					-0.5, -0.5,	// bottom left
+					0.5, -0.5	// bottom right
+				]
+			},
+			{ kind: "quad", verts: createQuadVertices() }
+		];
 
-		const vertexData = entities.map(_ => {
-			return [
-				0.0, 0.5,	// top
-				-0.5, -0.5,	// bottom left
-				0.5, -0.5	// bottom right
-			];
-		}).flatMap(xs => xs);
-		const posStorageValues = new Float32Array(vertexData);
+		const acc = entities.reduce((a, e) =>
+			({ vertices: a.vertices.concat(e.verts) }),
+			{ vertices: <number[]>[] }
+		);
+
+		const posStorageValues = new Float32Array(acc.vertices);
 		const posStorageBuffer = device.createBuffer({
-			label: `scale only storage buffer`,
+			label: `position storage buffer`,
 			size: posStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const changingUnitSize = 2 * 4; // scale is 2 32bit floats (4bytes each)
-		const changingStorageBuferSize = changingUnitSize * kNumObjects;
-		const changingStorageBuffer = device.createBuffer({
-			label: `scale only storage buffer`,
-			size: changingStorageBuferSize,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
-		// Set initial scale: Scale only changing.
-		const changingStorageValues = new Float32Array(changingStorageBuferSize / bytesPerFloat);
-
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
-			label: `Our first bind group (scale)`,
+			label: `Position only bind group`,
 			layout: pipeline.getBindGroupLayout(0),
 			entries: [
-				{ binding: 0, resource: { buffer: staticStorageBuffer }, },
-				{ binding: 1, resource: { buffer: changingStorageBuffer }, },
-				{ binding: 2, resource: { buffer: posStorageBuffer }, },
+				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 			],
 		});
 
@@ -163,20 +128,12 @@ export class App implements AfterViewInit {
 			const pass = encoder.beginRenderPass(renderPassDescriptor);
 			pass.setPipeline(pipeline);
 
-			// Update scale.
-			entities.forEach((_, i) => {
-				const newScale = [Math.random(), Math.random()] as [number, number];
-				const offset = i * (changingUnitSize / bytesPerFloat);
-				const kScaleOffset = 0;
-				// Set the scale in values.
-				changingStorageValues.set(newScale, offset + kScaleOffset);
-			})
-			// Upload all scales at once.
-			device.queue.writeBuffer(changingStorageBuffer, 0, changingStorageValues);
+			// Assign here later for write buffer.
+
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);
 			// draw single pass. Not draw yet, Store it as a command.
-			pass.draw(3, kNumObjects);
+			pass.draw(acc.vertices.length / 2); // vec2f for position.
 
 			pass.end();
 			const commandBuffer = encoder.finish();
@@ -188,9 +145,43 @@ export class App implements AfterViewInit {
 
 type Dimension = { width: number, height: number}
 type Coord = { x: number, y: number }
-function transformToClipSpace(coord: Coord, dimension: Dimension): Coord {
-	return {
-		x: (coord.x / dimension.width) * 2 - 1,
-		y: 1 - (coord.y / dimension.height) * 2
-	}
+const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, number] => {
+	return [
+		((coord.x / dimension.width) * 2 - 1),
+		(1 - (coord.y / dimension.height) * 2)
+	];
 }
+// const normMinMax = (min: number, max: number) => (value: number): number => {
+// 	return max - value / (max - min);
+// };
+const rgbaToColor = (r: number, g: number, b: number, a: number = 1): [number, number, number, number] => {
+	return [r / 255, g / 255, b / 255, a / 1];
+};
+
+
+// hard coded resolution.
+const resWidth = 2400;
+const resHeight = 970
+const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
+
+function createQuadVertices(): number[] {
+	const coords = <Coord[]>[
+		// Triangle 1.
+		{ x: 0, y: 0 }, // top left
+		{ x: 0, y: 100 }, // bottom left
+		{ x: 100, y: 100 }, // bottom right
+		// Triangle 2.
+		{ x: 0, y: 0 }, //  top left
+		{ x: 100, y: 100 }, // bottom right
+		{ x: 100, y: 0 }, // bottom right
+	];
+	const coordsCp = coords.map(toCp);
+	return coordsCp.flatMap(x => x);
+	// why not return simply an array.
+}
+
+type Entity = (
+	| { kind: "tri" }
+	| { kind: "quad" })
+	// | { kind: "cool-hero" } // 🤣
+& { verts: number[] }
