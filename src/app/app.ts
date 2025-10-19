@@ -1,7 +1,7 @@
 /// <reference types="@webgpu/types" />
 
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
-import { AfterViewInit, Component, OnInit } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
 
@@ -10,9 +10,10 @@ import { animationFrames, BehaviorSubject, throttleTime } from "rxjs";
 	imports: [RouterOutlet],
 	templateUrl: "./app.html",
 	styleUrl: "./app.scss",
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App implements AfterViewInit {
-	constructor() {}
+	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
@@ -21,6 +22,20 @@ export class App implements AfterViewInit {
 			return;
 		}
 		const canvas = document.querySelector("canvas");
+
+		this.ngZone.runOutsideAngular(async () => {
+			const observer = new ResizeObserver(entries => {
+				for (const entry of entries) {
+					const width = entry.contentBoxSize[0].inlineSize;
+					const height = entry.contentBoxSize[0].blockSize;
+					const canvas = entry.target as any;
+					canvas.width = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
+					canvas.height = Math.max(1, Math.min(height, device.limits.maxTextureDimension2D));
+				}
+			});
+			observer.observe(canvas!);
+		});
+
 		const context = canvas?.getContext("webgpu");
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 		context?.configure({
@@ -56,7 +71,7 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const kNumObjects = 900_000;
+		const kNumObjects = 100_000;
 		// Uniform buffer.
 		const staticUnitSize =
 			4 * 4 + // color is 4 32bit floats (4bytes each)
