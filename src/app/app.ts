@@ -83,7 +83,17 @@ export class App implements AfterViewInit {
 					0.5, -0.5	// bottom right
 				]
 			},
-			{ kind: "quad", verts: createQuadVertices() }
+			{ kind: "quad", verts: createQuadVertices({ x: 0, y: 0 }) },
+			{
+				kind: "brick-row",
+				verts: [
+					createQuadVertices({ x: 100, y: 0 }),
+					createQuadVertices({ x: 200, y: 0 }),
+					createQuadVertices({ x: 300, y: 0 }),
+					createQuadVertices({ x: 400, y: 0 }),
+					createQuadVertices({ x: 500, y: 0 }),
+					].flat()
+			}
 		];
 
 		const acc = entities.reduce((a, e) =>
@@ -164,16 +174,16 @@ const resWidth = 2400;
 const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
-function createQuadVertices(): number[] {
+function createQuadVertices(offset: Coord): number[] {
 	const coords = <Coord[]>[
 		// Triangle 1.
-		{ x: 0, y: 0 }, // top left
-		{ x: 0, y: 100 }, // bottom left
-		{ x: 100, y: 100 }, // bottom right
+		{ x: 0 + offset.x, y: 0 + offset.y }, // top left
+		{ x: 0 + offset.x, y: 100 + offset.y }, // bottom left
+		{ x: 100 + offset.x, y: 100 + offset.y }, // bottom right
 		// Triangle 2.
-		{ x: 0, y: 0 }, //  top left
-		{ x: 100, y: 100 }, // bottom right
-		{ x: 100, y: 0 }, // bottom right
+		{ x: 0 + offset.x, y: 0 + offset.y }, //  top left
+		{ x: 100 + offset.x, y: 100 + offset.y }, // bottom right
+		{ x: 100 + offset.x, y: 0 + offset.y }, // bottom right
 	];
 	const coordsCp = coords.map(toCp);
 	return coordsCp.flatMap(x => x);
@@ -182,6 +192,7 @@ function createQuadVertices(): number[] {
 
 type Entity = (
 	| { kind: "tri" }
-	| { kind: "quad" })
+	| { kind: "quad" }
+	| { kind: "brick-row" }
 	// | { kind: "cool-hero" } // 🤣
-& { verts: number[] }
+) & { verts: number[] };
