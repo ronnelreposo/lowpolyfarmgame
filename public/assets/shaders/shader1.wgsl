@@ -17,9 +17,7 @@ struct VertexStruct {
 ) -> VsOutput {
 	var vsOut: VsOutput;
 	vsOut.position = vec4f(pos[vertexIndex].position, 0.0, 1.0);
-	// 3 vertices per triangle.
-	let triId = vertexIndex / 3u;
-	vsOut.color = color[triId]; // same color per triangle.
+	vsOut.color = color[vertexIndex]; // same color per triangle.
 	return vsOut;
 }
 

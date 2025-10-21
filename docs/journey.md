@@ -25,6 +25,22 @@ Oct 16, 2025. 10:23PM
 			- GPU cost: ✅
 			- Typical use: Instanced rendering
 
+- VertexStruct
+```wgsl
+struct Vertex {
+	position: vec3f,   // world or local space position
+	normal: vec3f,     // for lighting
+	uv: vec2f,         // texture coordinate
+	color: vec4f,      // vertex color (optional)
+	offset: vec2f,     // optional (for 2D / procedural offset)
+};
+```
+
+- Regarding reassigning buffer with different lenght per frame.
+	- You can allocate max buffer size
+	- Or you could `.destroy` the previous buffer and create new.
+	- It will not affect the resource binding in bindgroup.
+
 - Storage buffer
 	- WTF! 500k rectangles / frame.
 	- That's the power of storage buffer.

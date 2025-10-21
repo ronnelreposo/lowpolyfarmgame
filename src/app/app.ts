@@ -76,40 +76,48 @@ export class App implements AfterViewInit {
 		];
 
 		const entities: Entity[] = [
-			{ kind: "quad", verts: createQuadVertices(), triangleCount: 2 },
 			{
-				kind: "tri", triangleCount: 1,
+				kind: "quad",
+				triangleCount: 2,
+				verts: createQuadVertices(),
+				color: [0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1] // carrot.
+			},
+			{
+				kind: "tri",
+				triangleCount: 1,
 				verts: [
 					0.0, 0.5,	// top
 					-0.5, -0.5,	// bottom left
 					0.5, -0.5	// bottom right
-				]
+				],
+				color: rgbaToColor(142, 68, 173), // wisteria/violet
 			},
 		];
 
-		const acc = entities.reduce((a, e) =>
-			({
+		const numOfVertices = 3;
+		const floatsPerVerts = 2; // Vertex constains two floats (x,y).
+		const acc = entities.reduce((a, e) => {
+			const perVertexColors = Array(e.verts.length / floatsPerVerts)
+				.fill(e.color)
+				.flat();
+			return ({
 				vertices: a.vertices.concat(e.verts),
+				colors: a.colors.concat(perVertexColors),
 				triangleCountTotal: e.triangleCount + a.triangleCountTotal
-			}),
-			{ vertices: <number[]>[], triangleCountTotal: 0 }
+			})
+		},
+			{ vertices: <number[]>[], colors: <number[]>[], triangleCountTotal: 0 }
 		);
 
 		const posStorageValues = new Float32Array(acc.vertices);
 		const posStorageBuffer = device.createBuffer({
-			label: `position storage buffer`,
+			label: `Position storage buffer`,
 			size: posStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const colors = [
-			[0, 0, 0, 1], // black.
-			[0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1], // carrot.
-			[0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1], // carrot.
-		].flat();
-
-		const colorStorageValues = new Float32Array(colors);
+		const colorStorageValues = new Float32Array(acc.colors);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
 			size: colorStorageValues.byteLength,
@@ -152,7 +160,6 @@ export class App implements AfterViewInit {
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);
 
-			const numOfVertices = 3;
 			pass.draw(numOfVertices * acc.triangleCountTotal, 1);
 
 			pass.end();
@@ -204,4 +211,4 @@ type Entity = (
 	| { kind: "tri" }
 	| { kind: "quad" })
 	// | { kind: "cool-hero" } // 🤣
-& { verts: number[], triangleCount: number }
+& { verts: number[], triangleCount: number, color: number[] }
