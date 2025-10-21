@@ -1,5 +1,30 @@
 
 Oct 16, 2025. 10:23PM
+- Creating meshes
+	- Color lookup.
+	
+	- 💡 **The “realistic” hierarchy**
+		- **Per-vertex color**
+			- Memory: 🔺 High
+			- CPU cost: ✅ Low
+			- GPU cost: ✅ Very low
+			- Typical use: Almost everything
+		- **Per-triangle color**
+			- Memory: ✅ Lower
+			- CPU cost: ✅ Low
+			- GPU cost: 🔺 Slight shader overhead
+			- Typical use: Debug / procedural geometry
+		- **Indexed per-color**
+			- Memory: ✅✅ Lowest
+			- CPU cost: 🔺 Moderate
+			- GPU cost: 🔺 Slight indirection cost
+			- Typical use: Batching, massive meshes
+		- **Per-instance color**
+			- Memory: ✅✅✅✅
+			- CPU cost: ✅ Low
+			- GPU cost: ✅
+			- Typical use: Instanced rendering
+
 - Storage buffer
 	- WTF! 500k rectangles / frame.
 	- That's the power of storage buffer.

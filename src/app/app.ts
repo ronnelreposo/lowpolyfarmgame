@@ -76,19 +76,23 @@ export class App implements AfterViewInit {
 		];
 
 		const entities: Entity[] = [
+			{ kind: "quad", verts: createQuadVertices(), triangleCount: 2 },
 			{
-				kind: "tri", verts: [
+				kind: "tri", triangleCount: 1,
+				verts: [
 					0.0, 0.5,	// top
 					-0.5, -0.5,	// bottom left
 					0.5, -0.5	// bottom right
 				]
 			},
-			{ kind: "quad", verts: createQuadVertices() }
 		];
 
 		const acc = entities.reduce((a, e) =>
-			({ vertices: a.vertices.concat(e.verts) }),
-			{ vertices: <number[]>[] }
+			({
+				vertices: a.vertices.concat(e.verts),
+				triangleCountTotal: e.triangleCount + a.triangleCountTotal
+			}),
+			{ vertices: <number[]>[], triangleCountTotal: 0 }
 		);
 
 		const posStorageValues = new Float32Array(acc.vertices);
@@ -99,12 +103,26 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
+		const colors = [
+			[0, 0, 0, 1], // black.
+			[0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1], // carrot.
+			[0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1], // carrot.
+		].flat();
+
+		const colorStorageValues = new Float32Array(colors);
+		const colorStorageBuffer = device.createBuffer({
+			label: `Color storage buffer`,
+			size: colorStorageValues.byteLength,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
+
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
 			label: `Position only bind group`,
 			layout: pipeline.getBindGroupLayout(0),
 			entries: [
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
+				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
 			],
 		});
 
@@ -129,11 +147,13 @@ export class App implements AfterViewInit {
 			pass.setPipeline(pipeline);
 
 			// Assign here later for write buffer.
+			device.queue.writeBuffer(colorStorageBuffer, 0, colorStorageValues);
 
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);
-			// draw single pass. Not draw yet, Store it as a command.
-			pass.draw(acc.vertices.length / 2); // vec2f for position.
+
+			const numOfVertices = 3;
+			pass.draw(numOfVertices * acc.triangleCountTotal, 1);
 
 			pass.end();
 			const commandBuffer = encoder.finish();
@@ -184,4 +204,4 @@ type Entity = (
 	| { kind: "tri" }
 	| { kind: "quad" })
 	// | { kind: "cool-hero" } // 🤣
-& { verts: number[] }
+& { verts: number[], triangleCount: number }
