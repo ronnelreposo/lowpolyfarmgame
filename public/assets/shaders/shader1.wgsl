@@ -15,8 +15,14 @@ struct VertexStruct {
 	@builtin(vertex_index) vertexIndex : u32,
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
+	let T = mat4x4f(
+		1.0, 0.0, 0.0, 0.03,  // move in X
+		0.0, 1.0, 0.0, -0.25,  // move in Y
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	);
 	var vsOut: VsOutput;
-	vsOut.position = vec4f(pos[vertexIndex].position, 0.0, 1.0);
+	vsOut.position = vec4f(pos[vertexIndex].position, 0.0, 1.0) * T;
 	vsOut.color = color[vertexIndex]; // same color per triangle.
 	return vsOut;
 }
