@@ -37,7 +37,7 @@ struct VertexStruct {
 		0.0, 0.0, 0.0, 1.0,
 	);
 	// Rotation.
-	let angle = radians(120);
+	let angle = radians(35);
 	let Rx = rotationX(angle);
 	let Ry = rotationY(angle);
 	let Rz = rotationZ(angle);
@@ -92,3 +92,6 @@ fn rotationZ(angle: f32) -> mat4x4f {
 		0.0,  0.0, 0.0, 1.0,
 	);
 }
+
+// Pickup here.
+// fn perspective
