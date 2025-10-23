@@ -5,7 +5,7 @@ struct VsOutput {
 };
 
 struct VertexStruct {
-	position: vec2f,
+	position: vec4f,
 }
 
 @group(0) @binding(0) var<storage, read> pos: array<VertexStruct>;
@@ -15,12 +15,20 @@ struct VertexStruct {
 	@builtin(vertex_index) vertexIndex : u32,
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
+	let P = mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	);
+	// Translate
 	let T = mat4x4f(
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.03, -0.25, 0.0, 1.0	// move in X, move in Y
 	);
+	// Scale
 	let s = 0.7; // scale factor.
 	let S = mat4x4f(
 		s, 0.0, 0.0, 0.0,
@@ -28,12 +36,13 @@ struct VertexStruct {
 		0.0, 0.0, s, 0.0,
 		0.0, 0.0, 0.0, 1.0,
 	);
-	let angle = radians(0);
+	// Rotation.
+	let angle = radians(120);
 	let Rx = rotationX(angle);
 	let Ry = rotationY(angle);
 	let Rz = rotationZ(angle);
 	var vsOut: VsOutput;
-	vsOut.position = T * Rx * Ry * Rz * S * vec4f(pos[vertexIndex].position, 0.0, 1.0);
+	vsOut.position = P * T * Rx * Ry * Rz * S * pos[vertexIndex].position;
 	vsOut.color = color[vertexIndex]; // same color per triangle.
 	return vsOut;
 }

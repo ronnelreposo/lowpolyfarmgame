@@ -65,6 +65,11 @@ export class App implements AfterViewInit {
 				module,
 				targets: [{ format: presentationFormat }],
 			},
+			depthStencil: {
+				format: "depth24plus",
+				depthWriteEnabled: true,
+				depthCompare: "less",
+			}
 		});
 		const colorAttachments: GPURenderPassColorAttachment[] = [
 			{
@@ -86,16 +91,29 @@ export class App implements AfterViewInit {
 				kind: "tri",
 				triangleCount: 1,
 				verts: [
-					0.0, 0.5,	// top
-					-0.5, -0.5,	// bottom left
-					0.5, -0.5	// bottom right
+					// x, y, z(actual depth), w(const)
+					0.0, 0.5, 0.3, 1.0,	// top
+					-0.5, -0.5, 0.3, 1.0,	// bottom left
+					0.5, -0.5, 0.3, 1.0,	// bottom right
 				],
-				color: rgbaToColor(142, 68, 173), // wisteria/violet
+				color: rgbaToColor(142, 68, 173), // wisteria (violet)
+			},
+			// much fater triangle
+			{
+				kind: "tri",
+				triangleCount: 1,
+				verts: [
+					// x, y, z(actual depth), w(const)
+					-0.5, 0.5, 0.4, 1.0,	// top
+					-0.8, -0.5, 0.4, 1.0,	// bottom left
+					-0.2, -0.5, 0.4, 1.0,	// bottom right
+				],
+				color: rgbaToColor(52, 152, 219), // peter river (blue)
 			},
 		];
 
-		const numOfVertices = 3;
-		const floatsPerVerts = 2; // Vertex constains two floats (x,y).
+		const numOfVertices = 3; // triangle primitive
+		const floatsPerVerts = 4; // Vertex constains two floats (x,y).
 		const acc = entities.reduce((a, e) => {
 			const perVertexColors = Array(e.verts.length / floatsPerVerts)
 				.fill(e.color)
@@ -144,10 +162,22 @@ export class App implements AfterViewInit {
 			// .pipe(throttleTime(100))
 			.subscribe(({ frame, canvasDimension }) => {
 
+			const depthTexture = device.createTexture({
+				size: [canvasDimension.width, canvasDimension.height],
+				format: "depth24plus",
+				usage: GPUTextureUsage.RENDER_ATTACHMENT,
+			});
 			const renderPassDescriptor: GPURenderPassDescriptor = {
 				label: "our basic canvas renderpass",
 				colorAttachments: colorAttachments,
+				depthStencilAttachment: {
+					view: depthTexture.createView(),
+					depthClearValue: 1.0,
+					depthLoadOp: "clear",
+					depthStoreOp: "store"
+				}
 			};
+
 			colorAttachments[0].view = context!?.getCurrentTexture().createView();
 
 			const encoder = device.createCommandEncoder({ label: "our encoder" });
@@ -171,11 +201,13 @@ export class App implements AfterViewInit {
 
 
 type Dimension = { width: number, height: number}
-type Coord = { x: number, y: number }
-const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, number] => {
+type Coord = { x: number, y: number, z: number, w: number }
+const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, number, number, number] => {
 	return [
 		((coord.x / dimension.width) * 2 - 1),
-		(1 - (coord.y / dimension.height) * 2)
+		(1 - (coord.y / dimension.height) * 2),
+		coord.z,
+		coord.w
 	];
 }
 // const normMinMax = (min: number, max: number) => (value: number): number => {
@@ -192,15 +224,15 @@ const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
 function createQuadVertices(): number[] {
-	const coords = <Coord[]>[
+	const coords: Coord[] = [
 		// Triangle 1.
-		{ x: 0, y: 0 }, // top left
-		{ x: 0, y: 100 }, // bottom left
-		{ x: 100, y: 100 }, // bottom right
+		{ x: 0, y: 0, z: 0, w: 1 }, // top left
+		{ x: 0, y: 100, z: 0, w: 1 }, // bottom left
+		{ x: 100, y: 100, z: 0, w: 1 }, // bottom right
 		// Triangle 2.
-		{ x: 0, y: 0 }, //  top left
-		{ x: 100, y: 100 }, // bottom right
-		{ x: 100, y: 0 }, // bottom right
+		{ x: 0, y: 0, z: 0, w: 1 }, //  top left
+		{ x: 100, y: 100, z: 0, w: 1 }, // bottom right
+		{ x: 100, y: 0, z: 0, w: 1 }, // bottom right
 	];
 	const coordsCp = coords.map(toCp);
 	return coordsCp.flatMap(x => x);
