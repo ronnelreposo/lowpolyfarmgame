@@ -21,12 +21,65 @@ struct VertexStruct {
 		0.0, 0.0, 1.0, 0.0,
 		0.03, -0.25, 0.0, 1.0	// move in X, move in Y
 	);
+	let s = 0.7; // scale factor.
+	let S = mat4x4f(
+		s, 0.0, 0.0, 0.0,
+		0.0, s, 0.0, 0.0,
+		0.0, 0.0, s, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+	);
+	let angle = radians(0);
+	let Rx = rotationX(angle);
+	let Ry = rotationY(angle);
+	let Rz = rotationZ(angle);
 	var vsOut: VsOutput;
-	vsOut.position = T * vec4f(pos[vertexIndex].position, 0.0, 1.0);
+	vsOut.position = T * Rx * Ry * Rz * S * vec4f(pos[vertexIndex].position, 0.0, 1.0);
 	vsOut.color = color[vertexIndex]; // same color per triangle.
 	return vsOut;
 }
 
 @fragment fn fs(vsOut: VsOutput) -> @location(0) vec4f {
 	return vsOut.color;
+}
+
+fn rotationIdentity(angle: f32) -> mat4x4f {
+	return mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+	);
+}
+
+fn rotationX(angle: f32) -> mat4x4f {
+	let c = cos(angle);
+	let s = sin(angle);
+	return mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, c, s, 0.0,
+		0.0, -s, c, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+	);
+}
+
+fn rotationY(angle: f32) -> mat4x4f {
+	let c = cos(angle);
+	let s = sin(angle);
+	return mat4x4f(
+		c,    0.0,  -s,   0.0,
+		0.0,  1.0,   0.0, 0.0,
+		s,    0.0,   c,   0.0,
+		0.0,  0.0,   0.0, 1.0,
+	);
+}
+
+fn rotationZ(angle: f32) -> mat4x4f {
+	let c = cos(angle);
+	let s = sin(angle);
+	return mat4x4f(
+		c,    s,   0.0, 0.0,
+		-s,   c,   0.0, 0.0,
+		0.0,  0.0, 1.0, 0.0,
+		0.0,  0.0, 0.0, 1.0,
+	);
 }
