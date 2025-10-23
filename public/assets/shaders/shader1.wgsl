@@ -15,18 +15,20 @@ struct VertexStruct {
 	@builtin(vertex_index) vertexIndex : u32,
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
-	let P = mat4x4f(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-	);
+
+	// PICKUP HERE. Up next camera.
+
+	let fov = radians(120.0);  // 60° field of view
+	let aspect = 16.0 / 9.0;         // canvas width / height (adjust later)
+	let near = 0.1;
+	let far = 100.0;
+	let P = perspective(fov, aspect, near, far);
 	// Translate
 	let T = mat4x4f(
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
-		0.03, -0.25, 0.0, 1.0	// move in X, move in Y
+		0.03, 0.15, 0.0, 1.0	// move in X, move in Y
 	);
 	// Scale
 	let s = 0.7; // scale factor.
@@ -37,10 +39,9 @@ struct VertexStruct {
 		0.0, 0.0, 0.0, 1.0,
 	);
 	// Rotation.
-	let angle = radians(35);
-	let Rx = rotationX(angle);
-	let Ry = rotationY(angle);
-	let Rz = rotationZ(angle);
+	let Rx = rotationX(radians(45));
+	let Ry = rotationY(radians(15));
+	let Rz = rotationZ(radians(15));
 	var vsOut: VsOutput;
 	vsOut.position = P * T * Rx * Ry * Rz * S * pos[vertexIndex].position;
 	vsOut.color = color[vertexIndex]; // same color per triangle.
@@ -93,5 +94,21 @@ fn rotationZ(angle: f32) -> mat4x4f {
 	);
 }
 
-// Pickup here.
-// fn perspective
+fn perspective(fovY: f32, aspect: f32, near: f32, far: f32) -> mat4x4f {
+	let f = 1.0 / tan(fovY * 0.5);
+	return mat4x4f(
+		f / aspect, 0.0, 0.0, 0.0,
+		0.0, f, 0.0, 0.0,
+		0.0, 0.0, far / (far - near), 1.0,
+		0.0, 0.0, (-far * near) / (far - near), 0.0,
+	);
+}
+
+fn identityPerspective() -> mat4x4f {
+	return mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	);
+}

@@ -104,9 +104,9 @@ export class App implements AfterViewInit {
 				triangleCount: 1,
 				verts: [
 					// x, y, z(actual depth), w(const)
-					-0.5, 0.5, 0.4, 1.0,	// top
-					-0.8, -0.5, 0.4, 1.0,	// bottom left
-					-0.2, -0.5, 0.4, 1.0,	// bottom right
+					-0.5, 0.5, 0.7, 1.0,	// top
+					-0.8, -0.5, 0.7, 1.0,	// bottom left
+					-0.2, -0.5, 0.7, 1.0,	// bottom right
 				],
 				color: rgbaToColor(52, 152, 219), // peter river (blue)
 			},
@@ -226,13 +226,13 @@ const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 function createQuadVertices(): number[] {
 	const coords: Coord[] = [
 		// Triangle 1.
-		{ x: 0, y: 0, z: 0, w: 1 }, // top left
-		{ x: 0, y: 100, z: 0, w: 1 }, // bottom left
-		{ x: 100, y: 100, z: 0, w: 1 }, // bottom right
+		{ x: 0, y: 0, z: 0.3, w: 1 }, // top left
+		{ x: 0, y: 100, z: 0.3, w: 1 }, // bottom left
+		{ x: 100, y: 100, z: 0.3, w: 1 }, // bottom right
 		// Triangle 2.
-		{ x: 0, y: 0, z: 0, w: 1 }, //  top left
-		{ x: 100, y: 100, z: 0, w: 1 }, // bottom right
-		{ x: 100, y: 0, z: 0, w: 1 }, // bottom right
+		{ x: 0, y: 0, z: 0.3, w: 1 }, //  top left
+		{ x: 100, y: 100, z: 0.3, w: 1 }, // bottom right
+		{ x: 100, y: 0, z: 0.3, w: 1 }, // bottom right
 	];
 	const coordsCp = coords.map(toCp);
 	return coordsCp.flatMap(x => x);
