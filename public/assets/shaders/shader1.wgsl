@@ -24,12 +24,7 @@ struct VertexStruct {
 	let far = 100.0;
 	let P = perspective(fov, aspect, near, far);
 	// Translate. a.k.a camera trick.
-	let T = mat4x4f(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 3.4, 1.0	// move in X, move in Y
-	);
+	let T = translate(0.0, 0.0, 3.4);// move in X, move in Y
 	// Scale
 	let s = 0.8; // scale factor.
 	let S = mat4x4f(
@@ -50,6 +45,15 @@ struct VertexStruct {
 
 @fragment fn fs(vsOut: VsOutput) -> @location(0) vec4f {
 	return vsOut.color;
+}
+
+fn translate(x: f32, y: f32, z: f32) -> mat4x4f {
+	return mat4x4f(
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		x, y, z, 1.0,
+	);
 }
 
 fn rotationIdentity(angle: f32) -> mat4x4f {
