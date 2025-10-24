@@ -80,36 +80,123 @@ export class App implements AfterViewInit {
 			},
 		];
 
+		const cz = 0.5; // cube z.
 		const entities: Entity[] = [
+			// {
+			// 	kind: "quad",
+			// 	triangleCount: 2,
+			// 	verts: createQuadVertices(),
+			// 	color: [0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1] // carrot.
+			// },
+			// {
+			// 	kind: "tri",
+			// 	triangleCount: 1,
+			// 	verts: [
+			// 		// x, y, z(actual depth), w(const)
+			// 		0.0, 0.5, 0.3, 1.0,	// top
+			// 		-0.5, -0.5, 0.3, 1.0,	// bottom left
+			// 		0.5, -0.5, 0.3, 1.0,	// bottom right
+			// 	],
+			// 	color: rgbaToColor(142, 68, 173), // wisteria (violet)
+			// },
+			// // much fater triangle
+			// {
+			// 	kind: "tri",
+			// 	triangleCount: 1,
+			// 	verts: [
+			// 		// x, y, z(actual depth), w(const)
+			// 		-0.5, 0.5, 0.7, 1.0,	// top
+			// 		-0.8, -0.5, 0.7, 1.0,	// bottom left
+			// 		-0.2, -0.5, 0.7, 1.0,	// bottom right
+			// 	],
+			// 	color: rgbaToColor(52, 152, 219), // peter river (blue)
+			// },
 			{
-				kind: "quad",
-				triangleCount: 2,
-				verts: createQuadVertices(),
-				color: [0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1] // carrot.
-			},
-			{
-				kind: "tri",
-				triangleCount: 1,
+				kind: "free",
+				triangleCount: 12,
 				verts: [
-					// x, y, z(actual depth), w(const)
-					0.0, 0.5, 0.3, 1.0,	// top
-					-0.5, -0.5, 0.3, 1.0,	// bottom left
-					0.5, -0.5, 0.3, 1.0,	// bottom right
-				],
-				color: rgbaToColor(142, 68, 173), // wisteria (violet)
-			},
-			// much fater triangle
-			{
-				kind: "tri",
-				triangleCount: 1,
-				verts: [
-					// x, y, z(actual depth), w(const)
-					-0.5, 0.5, 0.7, 1.0,	// top
-					-0.8, -0.5, 0.7, 1.0,	// bottom left
-					-0.2, -0.5, 0.7, 1.0,	// bottom right
+					// FRONT face (z = +0.5)
+					-0.5, -0.5, cz, 1.0,   // bottom-left
+					0.5, -0.5, -cz, 1.0,   // bottom-right
+					0.5,  0.5, -cz, 1.0,   // top-right
+
+					-0.5, -0.5, cz, 1.0,   // bottom-left
+					0.5,  0.5, -cz, 1.0,   // top-right
+					-0.5,  0.5, cz, 1.0,   // top-left
+
+					// BACK face (z = -0.5)
+					0.5, -0.5, -cz, 1.0,   // bottom-left
+					-0.5, -0.5, -cz, 1.0,   // bottom-right
+					-0.5,  0.5, -cz, 1.0,   // top-right
+
+					0.5, -0.5, -cz, 1.0,   // bottom-left
+					-0.5,  0.5, -cz, 1.0,   // top-right
+					0.5,  0.5, -cz, 1.0,   // top-left
+
+					// LEFT face (x = -0.5)
+					-0.5, -0.5, -cz, 1.0,   // bottom-left
+					-0.5, -0.5,  cz, 1.0,   // bottom-right
+					-0.5,  0.5,  cz, 1.0,   // top-right
+
+					-0.5, -0.5, -cz, 1.0,   // bottom-left
+					-0.5,  0.5,  cz, 1.0,   // top-right
+					-0.5,  0.5, -cz, 1.0,   // top-left
+
+					// RIGHT face (x = +0.5)
+					0.5, -0.5,  cz, 1.0,   // bottom-left
+					0.5, -0.5, -cz, 1.0,   // bottom-right
+					0.5,  0.5, -cz, 1.0,   // top-right
+
+					0.5, -0.5,  cz, 1.0,   // bottom-left
+					0.5,  0.5, -cz, 1.0,   // top-right
+					0.5,  0.5,  cz, 1.0,   // top-left
+
+					// TOP face (y = +0.5)
+					-0.5,  0.5, cz, 1.0,  // bottom-left
+					0.5,  0.5,  cz, 1.0,   // bottom-right
+					0.5,  0.5, -cz, 1.0,   // top-right
+
+					-0.5,  0.5, cz, 1.0,   // bottom-left
+					0.5,  0.5, -cz, 1.0,   // top-right
+					-0.5,  0.5, -cz, 1.0,   // top-left
+
+					// BOTTOM face (y = -0.5)
+					-0.5, -0.5, -cz, 1.0,   // bottom-left
+					0.5, -0.5, -cz, 1.0,   // bottom-right
+					0.5, -0.5,  cz, 1.0,   // top-right
+
+					-0.5, -0.5, -cz, 1.0,   // bottom-left
+					0.5, -0.5,  cz, 1.0,   // top-right
+					-0.5, -0.5,  cz, 1.0,   // top-left
 				],
 				color: rgbaToColor(52, 152, 219), // peter river (blue)
-			},
+			}
+		];
+
+		const cubeColors = [
+			// FRONT face - orange
+			1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0,
+			1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0,
+
+			// BACK face - violet
+			0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0,
+			0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0,
+
+			// LEFT face - green
+			0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+			0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+
+			// RIGHT face - blue
+			0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0,
+			0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0,
+
+			// TOP face - yellow
+			1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+			1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+
+			// BOTTOM face - red
+			1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+			1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
 		];
 
 		const numOfVertices = 3; // triangle primitive
@@ -185,7 +272,7 @@ export class App implements AfterViewInit {
 			pass.setPipeline(pipeline);
 
 			// Assign here later for write buffer.
-			device.queue.writeBuffer(colorStorageBuffer, 0, colorStorageValues);
+			device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
 
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);
@@ -241,6 +328,7 @@ function createQuadVertices(): number[] {
 
 type Entity = (
 	| { kind: "tri" }
-	| { kind: "quad" })
+	| { kind: "quad" }
+	| { kind: "free" })
 	// | { kind: "cool-hero" } // 🤣
 & { verts: number[], triangleCount: number, color: number[] }
