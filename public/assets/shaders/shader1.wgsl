@@ -18,13 +18,21 @@ struct VertexStruct {
 
 	// PICKUP HERE. Up next camera.
 
-	let fov = radians(45.0);  // 45° field of view
+	let fov = radians(60.0);  // 45° field of view
 	let aspect = 16.0 / 9.0;         // canvas width / height (adjust later)
 	let near = 0.1;
 	let far = 100.0;
 	let P = perspective(fov, aspect, near, far);
+
+	// Camera
+	let eye = vec3f(0.5, -0.5, 1.0); // where your camera in world space.
+	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
+	let up = vec3f(0.0, 1.0, 0.0);
+	let V = lookAt(eye, subj, up);
+
+	// pickup here: don' translate
 	// Translate. a.k.a camera trick.
-	let T = translate(0.0, 0.0, 3.4);// move in X, move in Y
+	let T = translate(0.0, 0.0, 3.0);// move in X, move in Y
 	// Scale
 	let s = 0.8; // scale factor.
 	let S = mat4x4f(
@@ -34,11 +42,11 @@ struct VertexStruct {
 		0.0, 0.0, 0.0, 1.0,
 	);
 	// Rotation.
-	let Rx = rotationX(radians(-50));
-	let Ry = rotationY(radians(49));
-	let Rz = rotationZ(radians(25));
+	let Rx = rotationX(radians(0));
+	let Ry = rotationY(radians(0));
+	let Rz = rotationZ(radians(0));
 	var vsOut: VsOutput;
-	vsOut.position = P * T * Rx * Ry * Rz * S * pos[vertexIndex].position;
+	vsOut.position = P * T * V * Rx * Ry * Rz * S * pos[vertexIndex].position;
 	vsOut.color = color[vertexIndex];
 	return vsOut;
 }
@@ -118,5 +126,18 @@ fn identityPerspective() -> mat4x4f {
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0
+	);
+}
+
+fn lookAt(eye: vec3f, subj: vec3f, up: vec3f) -> mat4x4f {
+	let zAxis = normalize(eye - subj); // forward
+	let xAxis = normalize(cross(up, zAxis)); // right
+	let yAxis = cross(zAxis, xAxis); // recalculated up
+
+	return mat4x4f(
+		xAxis.x, yAxis.x, zAxis.x, 0.0,
+		xAxis.y, yAxis.y, zAxis.y, 0.0,
+		xAxis.z, yAxis.z, zAxis.z, 0.0,
+		-dot(xAxis, eye), -dot(yAxis, eye), -dot(zAxis, eye), 1.0
 	);
 }
