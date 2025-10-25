@@ -281,15 +281,17 @@ export class App implements AfterViewInit {
 		// Render Loop.
 
 		combineLatest({
-			// frame: animationFrames(),
-			frame: of(1),
+			frame: animationFrames(),
+			// frame: of(1),
 			canvasDimension: canvasDimension$,
 			camera: camera$,
 		})
 			// .pipe(throttleTime(100))
 			.subscribe(({ frame, canvasDimension, camera }) => {
 
-				console.log(camera);
+				const duration = 3_000;
+			const period = (frame.timestamp % duration) / duration;
+				const timedAngle = period * Math.PI * 2;
 
 			const depthTexture = device.createTexture({
 				size: [canvasDimension.width, canvasDimension.height],
@@ -317,7 +319,7 @@ export class App implements AfterViewInit {
 			device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
 
 			// Assign here later for write buffer.
-			device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
+			device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([camera[0], camera[1], timedAngle, camera[3]]));
 
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);
