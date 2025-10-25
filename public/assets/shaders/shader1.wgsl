@@ -12,6 +12,7 @@ struct VertexStruct {
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
 @group(0) @binding(2) var<uniform> camera: vec4f;
 @group(0) @binding(3) var<uniform> aspect: vec2f;
+@group(0) @binding(4) var<uniform> time: f32;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -25,7 +26,14 @@ struct VertexStruct {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye = camera.xyz; // where your camera in world space.
+	// let eye1 = camera.xyz; // where your camera in world space.
+	let orbitRadius = 3.0;
+	let PI = 3.141592653589793;
+	let eye = vec3f(
+		orbitRadius * cos(time * PI * 2.0),
+		camera.y,
+		orbitRadius * sin(time * PI * 2.0),
+	); // where your camera in world space.
 	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
@@ -34,7 +42,7 @@ struct VertexStruct {
 	let T = translate(0.0, 0.0, 0.0);// move in X, move in Y
 
 	// Scale
-	let s = 1.0; // scale factor.
+	let s = 0.8; // scale factor.
 	let S = mat4x4f(
 		s, 0.0, 0.0, 0.0,
 		0.0, s, 0.0, 0.0,
