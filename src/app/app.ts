@@ -116,58 +116,52 @@ export class App implements AfterViewInit {
 				triangleCount: 12,
 				verts: [
 					// FRONT face (z = +0.5)
-					-0.5, -0.5, cz, 1.0,   // bottom-left
-					0.5, -0.5, -cz, 1.0,   // bottom-right
-					0.5,  0.5, -cz, 1.0,   // top-right
-
-					-0.5, -0.5, cz, 1.0,   // bottom-left
-					0.5,  0.5, -cz, 1.0,   // top-right
-					-0.5,  0.5, cz, 1.0,   // top-left
+					-0.5, -0.5,  0.5, 1.0,   // bottom-left
+					 0.5, -0.5,  0.5, 1.0,   // bottom-right
+					 0.5,  0.5,  0.5, 1.0,   // top-right
+					-0.5, -0.5,  0.5, 1.0,   // bottom-left
+					 0.5,  0.5,  0.5, 1.0,   // top-right
+					-0.5,  0.5,  0.5, 1.0,   // top-left
 
 					// BACK face (z = -0.5)
-					0.5, -0.5, -cz, 1.0,   // bottom-left
-					-0.5, -0.5, -cz, 1.0,   // bottom-right
-					-0.5,  0.5, -cz, 1.0,   // top-right
-
-					0.5, -0.5, -cz, 1.0,   // bottom-left
-					-0.5,  0.5, -cz, 1.0,   // top-right
-					0.5,  0.5, -cz, 1.0,   // top-left
+					 0.5, -0.5, -0.5, 1.0,   // bottom-left
+					-0.5, -0.5, -0.5, 1.0,   // bottom-right
+					-0.5,  0.5, -0.5, 1.0,   // top-right
+					 0.5, -0.5, -0.5, 1.0,   // bottom-left
+					-0.5,  0.5, -0.5, 1.0,   // top-right
+					 0.5,  0.5, -0.5, 1.0,   // top-left
 
 					// LEFT face (x = -0.5)
-					-0.5, -0.5, -cz, 1.0,   // bottom-left
-					-0.5, -0.5,  cz, 1.0,   // bottom-right
-					-0.5,  0.5,  cz, 1.0,   // top-right
-
-					-0.5, -0.5, -cz, 1.0,   // bottom-left
-					-0.5,  0.5,  cz, 1.0,   // top-right
-					-0.5,  0.5, -cz, 1.0,   // top-left
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					-0.5, -0.5,  0.5, 1.0,   // bottom-right
+					-0.5,  0.5,  0.5, 1.0,   // top-right
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					-0.5,  0.5,  0.5, 1.0,   // top-right
+					-0.5,  0.5, -0.5, 1.0,   // top-left
 
 					// RIGHT face (x = +0.5)
-					0.5, -0.5,  cz, 1.0,   // bottom-left
-					0.5, -0.5, -cz, 1.0,   // bottom-right
-					0.5,  0.5, -cz, 1.0,   // top-right
-
-					0.5, -0.5,  cz, 1.0,   // bottom-left
-					0.5,  0.5, -cz, 1.0,   // top-right
-					0.5,  0.5,  cz, 1.0,   // top-left
+					 0.5, -0.5,  0.5, 1.0,   // bottom-left
+					 0.5, -0.5, -0.5, 1.0,   // bottom-right
+					 0.5,  0.5, -0.5, 1.0,   // top-right
+					 0.5, -0.5,  0.5, 1.0,   // bottom-left
+					 0.5,  0.5, -0.5, 1.0,   // top-right
+					 0.5,  0.5,  0.5, 1.0,   // top-left
 
 					// TOP face (y = +0.5)
-					-0.5,  0.5, cz, 1.0,  // bottom-left
-					0.5,  0.5,  cz, 1.0,   // bottom-right
-					0.5,  0.5, -cz, 1.0,   // top-right
-
-					-0.5,  0.5, cz, 1.0,   // bottom-left
-					0.5,  0.5, -cz, 1.0,   // top-right
-					-0.5,  0.5, -cz, 1.0,   // top-left
+					-0.5,  0.5,  0.5, 1.0,  // bottom-left
+					 0.5,  0.5,  0.5, 1.0,   // bottom-right
+					 0.5,  0.5, -0.5, 1.0,   // top-right
+					-0.5,  0.5,  0.5, 1.0,   // bottom-left
+					-0.5,  0.5, -0.5, 1.0,   // top-right
+					 0.5,  0.5, -0.5, 1.0,   // top-left
 
 					// BOTTOM face (y = -0.5)
-					-0.5, -0.5, -cz, 1.0,   // bottom-left
-					0.5, -0.5, -cz, 1.0,   // bottom-right
-					0.5, -0.5,  cz, 1.0,   // top-right
-
-					-0.5, -0.5, -cz, 1.0,   // bottom-left
-					0.5, -0.5,  cz, 1.0,   // top-right
-					-0.5, -0.5,  cz, 1.0,   // top-left
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					 0.5, -0.5,  0.5, 1.0,   // bottom-right
+					 0.5, -0.5, -0.5, 1.0,   // top-right
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					-0.5, -0.5,  0.5, 1.0,   // top-right
+					 0.5, -0.5,  0.5, 1.0,   // top-left
 				],
 				color: rgbaToColor(52, 152, 219), // peter river (blue)
 			}

@@ -25,14 +25,14 @@ struct VertexStruct {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye = vec3f(0.5, -0.5, 1.0); // where your camera in world space.
-	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
+	let eye = vec3f(-0.5, 1.0, 1.5); // where your camera in world space.
+	let subj = vec3f(.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
 
-	// pickup here: don' translate
-	// Translate. a.k.a camera trick.
-	let T = translate(0.0, 0.0, 3.0);// move in X, move in Y
+	// Translation.
+	let T = translate(0.0, 0.0, 0.0);// move in X, move in Y
+
 	// Scale
 	let s = 0.8; // scale factor.
 	let S = mat4x4f(
@@ -130,14 +130,14 @@ fn identityPerspective() -> mat4x4f {
 }
 
 fn lookAt(eye: vec3f, subj: vec3f, up: vec3f) -> mat4x4f {
-	let zAxis = normalize(eye - subj); // forward
-	let xAxis = normalize(cross(up, zAxis)); // right
-	let yAxis = cross(zAxis, xAxis); // recalculated up
+	let zAxis = normalize(subj - eye);      // Forward (+Z goes into screen)
+	let xAxis = normalize(cross(up, zAxis));  // Right
+	let yAxis = cross(zAxis, xAxis);          // Up
 
 	return mat4x4f(
 		xAxis.x, yAxis.x, zAxis.x, 0.0,
 		xAxis.y, yAxis.y, zAxis.y, 0.0,
 		xAxis.z, yAxis.z, zAxis.z, 0.0,
-		-dot(xAxis, eye), -dot(yAxis, eye), -dot(zAxis, eye), 1.0
+		-dot(xAxis, eye), -dot(yAxis, eye), -dot(zAxis, eye), 1.0,
 	);
 }
