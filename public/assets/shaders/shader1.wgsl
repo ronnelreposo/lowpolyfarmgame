@@ -18,8 +18,6 @@ struct VertexStruct {
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
 
-	// PICKUP HERE. Up next camera.
-
 	let fov = radians(60.0);  // 45° field of view
 	let aspect = aspect.x / aspect.y;
 	let near = 0.1;
