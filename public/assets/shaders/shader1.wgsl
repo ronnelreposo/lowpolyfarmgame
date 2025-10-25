@@ -36,7 +36,7 @@ struct VertexStruct {
 	let T = translate(0.0, 0.0, 0.0);// move in X, move in Y
 
 	// Scale
-	let s = 0.8; // scale factor.
+	let s = 1.0; // scale factor.
 	let S = mat4x4f(
 		s, 0.0, 0.0, 0.0,
 		0.0, s, 0.0, 0.0,
