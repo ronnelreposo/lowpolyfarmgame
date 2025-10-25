@@ -11,6 +11,7 @@ struct VertexStruct {
 @group(0) @binding(0) var<storage, read> pos: array<VertexStruct>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
 @group(0) @binding(2) var<uniform> camera: vec4f;
+@group(0) @binding(3) var<uniform> aspect: vec2f;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -19,8 +20,8 @@ struct VertexStruct {
 
 	// PICKUP HERE. Up next camera.
 
-	let fov = radians(60.0);  // 45° field of view
-	let aspect = 16.0 / 9.0;         // canvas width / height (adjust later)
+	let fov = radians(45.0);  // 45° field of view
+	let aspect = aspect.x / aspect.y;
 	let near = 0.1;
 	let far = 100.0;
 	let P = perspective(fov, aspect, near, far);

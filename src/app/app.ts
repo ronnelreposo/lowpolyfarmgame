@@ -266,6 +266,10 @@ export class App implements AfterViewInit {
 			size: 4 * 4, // 4 floats, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
+		const aspectUniformBuffer = device.createBuffer({
+			size: 4 * 4, // 4 floats, 4 bytes each.
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
 
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
@@ -275,6 +279,7 @@ export class App implements AfterViewInit {
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
 				{ binding: 2, resource: { buffer: cameraUniformBuffer }, },
+				{ binding: 3, resource: { buffer: aspectUniformBuffer }, },
 			],
 		});
 
@@ -292,6 +297,8 @@ export class App implements AfterViewInit {
 				const period = (frame.timestamp % duration) / duration;
 				const timedAngle = period * Math.PI * 2;
 
+				const width = canvasDimension.width;
+				const height = canvasDimension.height;
 				const depthTexture = device.createTexture({
 					size: [canvasDimension.width, canvasDimension.height],
 					format: "depth24plus",
@@ -320,10 +327,13 @@ export class App implements AfterViewInit {
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([camera[0], camera[1], timedAngle, camera[3]]));
 
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
+
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);
 
-				pass.draw(numOfVertices * acc.triangleCountTotal, 1);
+				pass.draw(numOfVertices * acc.triangleCountTotal, 2);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
