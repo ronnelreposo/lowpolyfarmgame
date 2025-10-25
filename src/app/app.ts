@@ -3,7 +3,7 @@
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { animationFrames, BehaviorSubject, combineLatest, of, ReplaySubject, Subject, throttleTime } from "rxjs";
+import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, reduce, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 
 @Component({
 	selector: "app-root",
@@ -22,6 +22,45 @@ export class App implements AfterViewInit {
 			return;
 		}
 		const canvas = document.querySelector("canvas");
+
+		const startingCamera = [1, 1, 1, 1];
+		const camera$ = fromEvent<KeyboardEvent>(document!, 'keydown')
+			.pipe(
+				tap((event: KeyboardEvent) => event.preventDefault()),
+				switchMap((event: KeyboardEvent) => {
+					switch (event.key) {
+						case "ArrowLeft": {
+							return of([0.1, 0, 0]);
+						}
+						case "ArrowRight": {
+							return of([-0.1, 0, 0]);
+						}
+						case "ArrowUp": {
+							return of([0, 0.1, 0]);
+						}
+						case "ArrowDown": {
+							return of([0, -0.1, 0]);
+						}
+						case "PageUp": {
+							return of([0, 0, 0.1]);
+						}
+						case "PageDown": {
+							return of([0, 0, -0.1]);
+						}
+						default:
+							return EMPTY;
+					}
+				}),
+				scan((acc, arr) => {
+					return [
+						Math.min(Math.max(acc[0] + arr[0], -1), 1),
+						Math.min(Math.max(acc[1] + arr[1], -1), 1),
+						Math.min(Math.max(acc[2] + arr[2], 0.1), 100),
+						1
+					];
+				}, startingCamera),
+				startWith(startingCamera),
+			);
 
 		const canvasDimension$ = new ReplaySubject<{ width: number, height: number }>(1);
 		this.ngZone.runOutsideAngular(async () => {
@@ -223,6 +262,11 @@ export class App implements AfterViewInit {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
+		const cameraUniformBuffer = device.createBuffer({
+			size: 4 * 4, // 4 floats, 4 bytes each.
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
+
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
 			label: `Position only bind group`,
@@ -230,6 +274,7 @@ export class App implements AfterViewInit {
 			entries: [
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
+				{ binding: 2, resource: { buffer: cameraUniformBuffer }, },
 			],
 		});
 
@@ -238,10 +283,13 @@ export class App implements AfterViewInit {
 		combineLatest({
 			// frame: animationFrames(),
 			frame: of(1),
-			canvasDimension: canvasDimension$
+			canvasDimension: canvasDimension$,
+			camera: camera$,
 		})
 			// .pipe(throttleTime(100))
-			.subscribe(({ frame, canvasDimension }) => {
+			.subscribe(({ frame, canvasDimension, camera }) => {
+
+				console.log(camera);
 
 			const depthTexture = device.createTexture({
 				size: [canvasDimension.width, canvasDimension.height],
@@ -267,6 +315,9 @@ export class App implements AfterViewInit {
 
 			// Assign here later for write buffer.
 			device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
+
+			// Assign here later for write buffer.
+			device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
 
 			// Assign resource
 			pass.setBindGroup(0, bindGroup);

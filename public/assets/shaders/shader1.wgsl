@@ -10,6 +10,7 @@ struct VertexStruct {
 
 @group(0) @binding(0) var<storage, read> pos: array<VertexStruct>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
+@group(0) @binding(2) var<uniform> camera: vec4f;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -25,8 +26,8 @@ struct VertexStruct {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye = vec3f(-0.5, 1.0, 1.5); // where your camera in world space.
-	let subj = vec3f(.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
+	let eye = camera.xyz; // where your camera in world space.
+	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
 
