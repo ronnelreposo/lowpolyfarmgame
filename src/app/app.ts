@@ -286,50 +286,49 @@ export class App implements AfterViewInit {
 			canvasDimension: canvasDimension$,
 			camera: camera$,
 		})
-			// .pipe(throttleTime(100))
 			.subscribe(({ frame, canvasDimension, camera }) => {
 
 				const duration = 3_000;
-			const period = (frame.timestamp % duration) / duration;
+				const period = (frame.timestamp % duration) / duration;
 				const timedAngle = period * Math.PI * 2;
 
-			const depthTexture = device.createTexture({
-				size: [canvasDimension.width, canvasDimension.height],
-				format: "depth24plus",
-				usage: GPUTextureUsage.RENDER_ATTACHMENT,
+				const depthTexture = device.createTexture({
+					size: [canvasDimension.width, canvasDimension.height],
+					format: "depth24plus",
+					usage: GPUTextureUsage.RENDER_ATTACHMENT,
+				});
+				const renderPassDescriptor: GPURenderPassDescriptor = {
+					label: "our basic canvas renderpass",
+					colorAttachments: colorAttachments,
+					depthStencilAttachment: {
+						view: depthTexture.createView(),
+						depthClearValue: 1.0,
+						depthLoadOp: "clear",
+						depthStoreOp: "store"
+					}
+				};
+
+				colorAttachments[0].view = context!?.getCurrentTexture().createView();
+
+				const encoder = device.createCommandEncoder({ label: "our encoder" });
+				const pass = encoder.beginRenderPass(renderPassDescriptor);
+				pass.setPipeline(pipeline);
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([camera[0], camera[1], timedAngle, camera[3]]));
+
+				// Assign resource
+				pass.setBindGroup(0, bindGroup);
+
+				pass.draw(numOfVertices * acc.triangleCountTotal, 1);
+
+				pass.end();
+				const commandBuffer = encoder.finish();
+				device.queue.submit([commandBuffer]);
 			});
-			const renderPassDescriptor: GPURenderPassDescriptor = {
-				label: "our basic canvas renderpass",
-				colorAttachments: colorAttachments,
-				depthStencilAttachment: {
-					view: depthTexture.createView(),
-					depthClearValue: 1.0,
-					depthLoadOp: "clear",
-					depthStoreOp: "store"
-				}
-			};
-
-			colorAttachments[0].view = context!?.getCurrentTexture().createView();
-
-			const encoder = device.createCommandEncoder({ label: "our encoder" });
-			const pass = encoder.beginRenderPass(renderPassDescriptor);
-			pass.setPipeline(pipeline);
-
-			// Assign here later for write buffer.
-			device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
-
-			// Assign here later for write buffer.
-			device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([camera[0], camera[1], timedAngle, camera[3]]));
-
-			// Assign resource
-			pass.setBindGroup(0, bindGroup);
-
-			pass.draw(numOfVertices * acc.triangleCountTotal, 1);
-
-			pass.end();
-			const commandBuffer = encoder.finish();
-			device.queue.submit([commandBuffer]);
-		});
 	}
 }
 
