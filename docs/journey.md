@@ -1,4 +1,12 @@
 
+
+Oct 25, 205 10:19PM
+- Today I achieved 3D interactive cube.
+- FOV values:
+	- 45–60° → comfortable, cinematic
+	- 70–90° → wide-angle, fast movement feel
+	- <40° → zoomed, dramatic depth (telephoto look)
+
 Oct 16, 2025. 10:23PM
 - Creating meshes
 	- Color lookup.
