@@ -5,6 +5,9 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } fro
 import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
+import { mapTree, reduceTree } from "./ds/tree";
+import { Model } from "./models/unit";
+import { puppy } from "./models/puppy";
 
 @Component({
 	selector: "app-root",
@@ -30,6 +33,7 @@ export class App implements AfterViewInit {
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
+					console.log("key", event)
 					switch (event.key) {
 						case "ArrowLeft": {
 							return of([0.1, 0, 0]);
@@ -45,6 +49,12 @@ export class App implements AfterViewInit {
 						}
 						case "PageUp": {
 							return of([0, 0, 0.1]);
+						}
+						case "-": {
+							return of([0, 0, 0.1]);
+						}
+						case "=": {
+							return of([0, 0, -0.1]);
 						}
 						case "PageDown": {
 							return of([0, 0, -0.1]);
@@ -121,94 +131,8 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const head_unit: Tree<Vertex> = createNode(
-			unitCube("base-head"),
-			[createLeaf(unitCube("left-ear")), createLeaf(unitCube("right-ear"))]
-		);
-		// Transform: Head w/ two ears model, box composition.
-		const headComposition = mapTree<Vertex, Vertex>(head_unit, (cube) => {
-			if (cube.id === "left-ear" || cube.id === "right-ear") {
-				const step = 0.5;
-				const earsAngleDeg = 25;
-				const T = mat.translation44([], [
-					cube.id === "left-ear" ? step : -step, 0.25, 0.0,
-				]); // identity for now.
-				const Rx = mat.rotationX44([], 0);
-				const Ry = mat.rotationY44([], 0);
-				const Rz = mat.rotationZ44([],
-					toRadians(cube.id === "left-ear" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
-				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-				const S = mat.scale44([], 0.7);
-				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Vertex>{
-					...cube,
-					model:  mat.mulM44([], cube.model, newModel), // local transform.
-				};
-			}
-			return cube;
-		});
-		// Transform: Head w/ two ears model, box composition.
-		const headComposition2 = mapTree<Vertex, Vertex>(headComposition, (cube) => {
-				const T = mat.translation44([], [0, 0.4, 0.0]); // identity for now.
-				const Rx = mat.rotationX44([], 0);
-				const Ry = mat.rotationY44([], toRadians(25));
-				const Rz = mat.rotationZ44([], toRadians(15)); // tilt a bit.
-				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-				const S = mat.scale44([], 0.7);
-				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Vertex>{
-					...cube,
-					model:  mat.mulM44([], newModel, cube.model), // world transform.
-				};
-		});
-
-		const body: Tree<Vertex> = createNode(
-			unitCube("body"),
-			[
-				headComposition2,
-				createLeaf(unitCube("left-leg")), createLeaf(unitCube("right-leg"))
-			]
-		);
-
-		const minionComposition = mapTree<Vertex, Vertex>(body, (cube) => {
-			if (cube.id === "body") {
-				const T = mat.translation44([], [0.0, -0.4, 0.0]); // identity for now.
-				const Rx = mat.rotationX44([], 0);
-				const Ry = mat.rotationY44([], 0);
-				const Rz = mat.rotationZ44([], 0); // tilt a bit.
-				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-				const S = mat.scale44([], 0.85);
-				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Vertex>{
-					...cube,
-					model: newModel,
-				};
-			}
-			if (cube.id === "left-leg" || cube.id === "right-leg") {
-				const step = 0.5;
-				const T = mat.translation44([], [
-					cube.id === "left-leg" ? step : -step, -0.85, 0.0,
-				]); // identity for now.
-				const Rx = mat.rotationX44([], 0);
-				const Ry = mat.rotationY44([], 0);
-				const Rz = mat.rotationZ44([], 0);
-				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-				const S = mat.scale44([], 0.5);
-				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Vertex>{
-					...cube,
-					model: newModel,
-				};
-			}
-			return cube;
-		});
-
 		// Transform: Final transform - Move to local space.
-		const finalLocalTransform = mapTree<Vertex, Vertex>(minionComposition, (cube) => {
+		const finalLocalTransform = mapTree<Model, Model>(puppy, (cube) => {
 			const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
 			const Rx = mat.rotationX44([], 0);
 			const Ry = mat.rotationY44([], 0);
@@ -225,7 +149,7 @@ export class App implements AfterViewInit {
 			// World-space add:
 			const newModel = mat.mulM44([], M, cube.model);
 
-			return <Vertex>{
+			return <Model>{
 				...cube,
 				model: newModel,
 			};
@@ -402,112 +326,11 @@ const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, 
 // const normMinMax = (min: number, max: number) => (value: number): number => {
 // 	return max - value / (max - min);
 // };
-const rgbaToColor = (r: number, g: number, b: number, a: number = 1): number[] => {
-	return [r / 255, g / 255, b / 255, a / 1];
-};
-
 
 // hard coded resolution.
 const resWidth = 2400;
 const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
-
-type Vertex = {
-	id: string,
-	vertices: number[],
-	colors: number[],
-	model: number[],
-}
-function unitCube(id: string): Vertex {
-	const vertices = [
-		// FRONT face (z = +0.5)
-		-0.5, -0.5, 0.5, 1.0,   // bottom-left
-		0.5, -0.5, 0.5, 1.0,   // bottom-right
-		0.5, 0.5, 0.5, 1.0,   // top-right
-		-0.5, -0.5, 0.5, 1.0,   // bottom-left
-		0.5, 0.5, 0.5, 1.0,   // top-right
-		-0.5, 0.5, 0.5, 1.0,   // top-left
-
-		// BACK face (z = -0.5)
-		0.5, -0.5, -0.5, 1.0,   // bottom-left
-		-0.5, -0.5, -0.5, 1.0,   // bottom-right
-		-0.5, 0.5, -0.5, 1.0,   // top-right
-		0.5, -0.5, -0.5, 1.0,   // bottom-left
-		-0.5, 0.5, -0.5, 1.0,   // top-right
-		0.5, 0.5, -0.5, 1.0,   // top-left
-
-		// LEFT face (x = -0.5)
-		-0.5, -0.5, -0.5, 1.0,   // bottom-left
-		-0.5, -0.5, 0.5, 1.0,   // bottom-right
-		-0.5, 0.5, 0.5, 1.0,   // top-right
-		-0.5, -0.5, -0.5, 1.0,   // bottom-left
-		-0.5, 0.5, 0.5, 1.0,   // top-right
-		-0.5, 0.5, -0.5, 1.0,   // top-left
-
-		// RIGHT face (x = +0.5)
-		0.5, -0.5, 0.5, 1.0,   // bottom-left
-		0.5, -0.5, -0.5, 1.0,   // bottom-right
-		0.5, 0.5, -0.5, 1.0,   // top-right
-		0.5, -0.5, 0.5, 1.0,   // bottom-left
-		0.5, 0.5, -0.5, 1.0,   // top-right
-		0.5, 0.5, 0.5, 1.0,   // top-left
-
-		// TOP face (y = +0.5)
-		-0.5, 0.5, 0.5, 1.0,  // bottom-left
-		0.5, 0.5, 0.5, 1.0,   // bottom-right
-		0.5, 0.5, -0.5, 1.0,   // top-right
-		-0.5, 0.5, 0.5, 1.0,   // bottom-left
-		-0.5, 0.5, -0.5, 1.0,   // top-right
-		0.5, 0.5, -0.5, 1.0,   // top-left
-
-		// BOTTOM face (y = -0.5)
-		-0.5, -0.5, -0.5, 1.0,   // bottom-left
-		0.5, -0.5, 0.5, 1.0,   // bottom-right
-		0.5, -0.5, -0.5, 1.0,   // top-right
-		-0.5, -0.5, -0.5, 1.0,   // bottom-left
-		-0.5, -0.5, 0.5, 1.0,   // top-right
-		0.5, -0.5, 0.5, 1.0,   // top-left
-	];
-
-	const colors: number[] = [
-		// FRONT face - orange
-		...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
-
-		// BACK face - violet (wisteria)
-		...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
-
-		// LEFT face - green (gree sea)
-		...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
-
-		// RIGHT face - blue (belize hole)
-		...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
-
-		// TOP face - yellow (sunflower)
-		...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
-
-		// BOTTOM face - red (pomegranate)
-		...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
-	];
-
-	const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
-	const Rx = mat.rotationX44([], 0);
-	const Ry = mat.rotationY44([], 0);
-	const Rz = mat.rotationZ44([], 0);
-	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-	const S = mat.scale44([], 1);
-	// M = T * Rx * Ry * Rz * S
-	const M = mat.mulM44([], T, mat.mulM44([], R, S));
-
-	// // 6 faces, 6 vertices per face.
-	// const translates: number[][] = Array.from({ length: 36 }, () => M as number[]);
-
-	return {
-		id,
-		vertices,
-		colors,
-		model: M as number[],
-	};
-}
 
 type Entity = (
 	| { kind: "tri" }
@@ -515,59 +338,3 @@ type Entity = (
 	| { kind: "free" })
 	// | { kind: "cool-hero" } // 🤣
 & { verts: number[], triangleCount: number, color: number[] }
-
-type Tree<T>
-	= { kind: "leaf", value: T }
-	| { kind: "node", value: T, children: Tree<T>[] }
-
-// constructors
-function createLeaf<T>(value: T): Tree<T> {
-	return { kind: "leaf", value };
-}
-
-function createNode<T>(value: T, children: Tree<T>[]): Tree<T> {
-	return { kind: "node", value, children };
-}
-
-function mapTree<T, U>(tree: Tree<T>, f: (value: T) => U): Tree<U> {
-	if (tree.kind === "leaf") {
-		return createLeaf(f(tree.value));
-	}
-	return createNode(f(tree.value), tree.children.map(child => mapTree(child, f)));
-}
-
-function flatMapTree<T, U>(tree: Tree<T>, f: (v: T) => Tree<U>): Tree<U> {
-	const replaced = f(tree.value);                 // subtree to splice in
-	if (tree.kind === "leaf") return replaced;      // nothing to graft
-
-	const kids = tree.children.map(c => flatMapTree(c, f));
-
-	if (replaced.kind === "leaf") {
-	// need a node to host the (mapped) original children
-	return createNode(replaced.value, kids);
-	}
-	// keep any children produced by f, plus the mapped original children
-	return createNode(replaced.value, [...replaced.children, ...kids]);
-}
-
-function reduceTree<T, R>(
-	tree: Tree<T>,
-	reducer: (acc: R, value: T) => R,
-	initial: R
-): R {
-	const accHere = reducer(initial, tree.value);
-	return tree.kind === "node"
-		? tree.children.reduce(
-			(acc, child) => reduceTree(child, reducer, acc),
-			accHere
-		)
-		: accHere;
-}
-
-function toRadians(degrees: number): number {
-	return degrees * Math.PI / 180;
-}
-
-function toDegrees(radians: number): number {
-	return radians * 180 / Math.PI;
-}
