@@ -208,28 +208,22 @@ export class App implements AfterViewInit {
 
 		const cubeColors = [
 			// FRONT face - orange
-			1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0,
-			1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0,
+			...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
 
-			// BACK face - violet
-			0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0,
-			0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0,
+			// BACK face - violet (wisteria)
+			...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
 
-			// LEFT face - green
-			0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
-			0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+			// LEFT face - green (gree sea)
+			...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
 
-			// RIGHT face - blue
-			0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0,
-			0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0, 0.0, 0.3, 1.0, 1.0,
+			// RIGHT face - blue (belize hole)
+			...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
 
-			// TOP face - yellow
-			1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
-			1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0,
+			// TOP face - yellow (sunflower)
+			...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
 
-			// BOTTOM face - red
-			1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-			1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+			// BOTTOM face - red (pomegranate)
+			...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
 		];
 
 		const numOfVertices = 3; // triangle primitive
@@ -298,7 +292,7 @@ export class App implements AfterViewInit {
 		})
 			.subscribe(({ frame, canvasDimension, camera }) => {
 
-				console.log(camera)
+				// console.log(camera);
 
 				const duration = 3_000;
 				const period = (frame.timestamp % duration) / duration;
@@ -365,7 +359,7 @@ const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, 
 // const normMinMax = (min: number, max: number) => (value: number): number => {
 // 	return max - value / (max - min);
 // };
-const rgbaToColor = (r: number, g: number, b: number, a: number = 1): [number, number, number, number] => {
+const rgbaToColor = (r: number, g: number, b: number, a: number = 1): number[] => {
 	return [r / 255, g / 255, b / 255, a / 1];
 };
 
