@@ -10,9 +10,11 @@ struct VertexStruct {
 
 @group(0) @binding(0) var<storage, read> pos: array<VertexStruct>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
-@group(0) @binding(2) var<uniform> camera: vec4f;
-@group(0) @binding(3) var<uniform> aspect: vec2f;
-@group(0) @binding(4) var<uniform> time: f32;
+@group(0) @binding(2) var<storage, read> translates: array<vec4f>;
+
+@group(0) @binding(3) var<uniform> camera: vec4f;
+@group(0) @binding(4) var<uniform> aspect: vec2f;
+@group(0) @binding(5) var<uniform> time: f32;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -23,13 +25,13 @@ struct VertexStruct {
 
 	let fov = radians(60.0);  // 45° field of view
 	let aspect = aspect.x / aspect.y;
-	let near = 0.1;
+	let near = 0.5;
 	let far = 100.0;
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
 	let eye = camera.xyz; // where your camera in world space.
-	// let orbitRadius = 3.0;
+	// let orbitRadius = 5.1;
 	// let PI = 3.141592653589793;
 	// let eye = vec3f(
 	// 	orbitRadius * cos(time * PI * 2.0),
@@ -41,10 +43,11 @@ struct VertexStruct {
 	let V = lookAt(eye, subj, up);
 
 	// Translation.
-	let T = translate(0.0, 0.0, 0.0);// move in X, move in Y
+	let ct = translates[vertexIndex];
+	let T = translate(ct.x, ct.y, ct.z);// move in X, move in Y
 
 	// Scale
-	let s = 0.8; // scale factor.
+	let s = 1.0; // scale factor.
 	let S = mat4x4f(
 		s, 0.0, 0.0, 0.0,
 		0.0, s, 0.0, 0.0,
@@ -56,7 +59,7 @@ struct VertexStruct {
 	let Ry = rotationY(radians(0));
 	let Rz = rotationZ(radians(0));
 	var vsOut: VsOutput;
-	vsOut.position = P * T * V * Rx * Ry * Rz * S * pos[vertexIndex].position;
+	vsOut.position = P * V * T * Rx * Ry * Rz * S * pos[vertexIndex].position;
 	vsOut.color = color[vertexIndex];
 	return vsOut;
 }

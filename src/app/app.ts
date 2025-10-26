@@ -16,9 +16,18 @@ import * as m4 from "@thi.ng/matrices";
 export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
-		// const m1 = m4.IDENT44;
-		// const m2 = m4.translation44(m1, [0.1, 0.1, 0.1]);
-		// console.log(m2)
+
+		const m0 = [
+			-0.5, -0.5, 0.5, 1.0,   // bottom-left
+			0.5, -0.5, 0.5, 1.0,   // bottom-right
+			0.5, 0.5, 0.5, 1.0,   // top-right
+			-0.5, -0.5, 0.5, 1.0,   // bottom-left
+			0.5, 0.5, 0.5, 1.0,   // top-right
+			-0.5, 0.5, 0.5, 1.0,   // top-left
+		];
+		const m1 = Object.freeze(m4.IDENT44);
+		const translated = m4.translation44(m0, [0.1, 0.1, 0.1]);
+		console.log(translated)
 
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
@@ -125,21 +134,43 @@ export class App implements AfterViewInit {
 		];
 
 		const sceneGraph: Tree<Vertex> = createNode(
-			unitCube(),
-			[createLeaf(unitCube()), createLeaf(unitCube())]
+			unitCube("base"),
+			[createLeaf(unitCube("left")), createLeaf(unitCube("right"))]
 		);
+		// head w/ two ears model, box composition.
+		const m1Sg = mapTree<Vertex, Vertex>(sceneGraph, (cube) => {
+			if (cube.id === "left" || cube.id === "right") {
+				const gap = 0.0; // tiny gap to avoid cop[lanar z issues.
+				const step = 1.0 + gap; // center to center spacing.
+				return <Vertex>{
+					...cube,
+					vertices: cube.vertices,
+					translates: cube.translates.map(([x, y, z, w], i) => {
+						return [
+							cube.id === "left" ? x + step : x - step,
+							1,
+							0.0,
+							w,
+						];
+					}),
+				};
+			}
+			return cube;
+		});
 		const foldedSceneGraph = reduceTree(
-			sceneGraph,
+			m1Sg,
 			(acc, val) => {
 				return {
 					verticesArray: [...acc.verticesArray, ...val.vertices],
 					colorsArray: [...acc.colorsArray, ...val.colors],
+					translatesArray: [...acc.translatesArray, ...val.translates],
 					cubeCount: acc.cubeCount + 1
 				};
 			},
 			{
 				verticesArray: [] as number[],
 				colorsArray: [] as number[],
+				translatesArray: [] as number[][],
 				cubeCount: 0
 			}
 		);
@@ -156,6 +187,13 @@ export class App implements AfterViewInit {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
+
+		const transStorageValues = new Float32Array(foldedSceneGraph.translatesArray.flat());
+		const transStorageBuffer = device.createBuffer({
+			label: `Translation storage buffer`,
+			size: transStorageValues.byteLength,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
 
 		const colorStorageValues = new Float32Array(foldedSceneGraph.colorsArray);
 		const colorStorageBuffer = device.createBuffer({
@@ -184,23 +222,24 @@ export class App implements AfterViewInit {
 			entries: [
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
-				{ binding: 2, resource: { buffer: cameraUniformBuffer }, },
-				{ binding: 3, resource: { buffer: aspectUniformBuffer }, },
-				{ binding: 4, resource: { buffer: timeUniformBuffer }, },
+				{ binding: 2, resource: { buffer: transStorageBuffer }, },
+				{ binding: 3, resource: { buffer: cameraUniformBuffer }, },
+				{ binding: 4, resource: { buffer: aspectUniformBuffer }, },
+				{ binding: 5, resource: { buffer: timeUniformBuffer }, },
 			],
 		});
 
 		// Render Loop.
 
 		combineLatest({
-			// frame: animationFrames(),
-			frame: of({ timestamp: 0 }),
+			frame: animationFrames(),
+			// frame: of({ timestamp: 0 }),
 			canvasDimension: canvasDimension$,
 			camera: camera$,
 		})
 			.subscribe(({ frame, canvasDimension, camera }) => {
 
-				console.log(camera);
+				// console.log(camera);
 
 				const duration = 3_000;
 				const period = (frame.timestamp % duration) / duration;
@@ -231,6 +270,9 @@ export class App implements AfterViewInit {
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(foldedSceneGraph.colorsArray));
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(transStorageBuffer, 0, transStorageValues);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
@@ -278,8 +320,13 @@ const resWidth = 2400;
 const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
-type Vertex = { vertices: number[], colors: number[] }
-function unitCube(): Vertex {
+type Vertex = {
+	id: string,
+	vertices: number[],
+	colors: number[],
+	translates: number[][],
+}
+function unitCube(id: string): Vertex {
 	const vertices = [
 		// FRONT face (z = +0.5)
 		-0.5, -0.5, 0.5, 1.0,   // bottom-left
@@ -350,9 +397,23 @@ function unitCube(): Vertex {
 		...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
 	];
 
+	// const translates: number[][] = [
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// 	...Array(6).fill([0, 0, 0, 1.0]),
+	// ];
+
+	// 6 faces, 6 vertices per face.
+	const translates: number[][] = Array.from({ length: 36 }, () => [0, 0, 0, 1.0]);
+
 	return {
+		id,
 		vertices,
 		colors,
+		translates,
 	};
 }
 
@@ -376,15 +437,11 @@ function createNode<T>(value: T, children: Tree<T>[]): Tree<T> {
 	return { kind: "node", value, children };
 }
 
-function mapTree<T>(tree: Tree<T>): Tree<T> {
+function mapTree<T, U>(tree: Tree<T>, f: (value: T) => U): Tree<U> {
 	if (tree.kind === "leaf") {
-		return tree;
+		return createLeaf(f(tree.value));
 	}
-	return {
-		kind: "node",
-		value: tree.value,
-		children: tree.children.map(child => mapTree(child))
-	};
+	return createNode(f(tree.value), tree.children.map(child => mapTree(child, f)));
 }
 
 function reduceTree<T, R>(

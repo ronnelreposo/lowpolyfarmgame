@@ -1,6 +1,15 @@
 
+Oct 26, 2025 4:28PM
+- Scene graph
+- Pass translation
+- Golden order: P * V * T * R * S
+	- P: Perspective
+	- V: Camera
+	- T: Translation
+	- R: Rotation
+	- S: Scale
 
-Oct 25, 205 10:19PM
+Oct 25, 2025 10:19PM
 - Today I achieved 3D interactive cube.
 - FOV values:
 	- 45–60° → comfortable, cinematic
