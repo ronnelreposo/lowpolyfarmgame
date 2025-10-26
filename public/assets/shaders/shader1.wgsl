@@ -4,13 +4,9 @@ struct VsOutput {
 	@location(0) color: vec4f,
 };
 
-struct VertexStruct {
-	position: vec4f,
-}
-
-@group(0) @binding(0) var<storage, read> pos: array<VertexStruct>;
+@group(0) @binding(0) var<storage, read> pos: array<vec4f>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
-@group(0) @binding(2) var<storage, read> translates: array<vec4f>;
+@group(0) @binding(2) var<storage, read> models: array<mat4x4f>;
 
 @group(0) @binding(3) var<uniform> camera: vec4f;
 @group(0) @binding(4) var<uniform> aspect: vec2f;
@@ -25,98 +21,31 @@ struct VertexStruct {
 
 	let fov = radians(60.0);  // 45° field of view
 	let aspect = aspect.x / aspect.y;
-	let near = 0.5;
+	let near = 0.1;
 	let far = 100.0;
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye = camera.xyz; // where your camera in world space.
-	// let orbitRadius = 5.1;
-	// let PI = 3.141592653589793;
-	// let eye = vec3f(
-	// 	orbitRadius * cos(time * PI * 2.0),
-	// 	camera.y,
-	// 	orbitRadius * sin(time * PI * 2.0),
-	// ); // where your camera in world space.
+	let eye1 = camera.xyz; // where your camera in world space.
+	let orbitRadius = 5.1;
+	let PI = 3.141592653589793;
+	let eye = vec3f(
+		orbitRadius * cos(time * PI * 2.0),
+		camera.y,
+		orbitRadius * sin(time * PI * 2.0),
+	); // where your camera in world space.
 	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
 
-	// Translation.
-	let ct = translates[vertexIndex];
-	let T = translate(ct.x, ct.y, ct.z);// move in X, move in Y
-
-	// Scale
-	let s = 1.0; // scale factor.
-	let S = mat4x4f(
-		s, 0.0, 0.0, 0.0,
-		0.0, s, 0.0, 0.0,
-		0.0, 0.0, s, 0.0,
-		0.0, 0.0, 0.0, 1.0,
-	);
-	// Rotation.
-	let Rx = rotationX(radians(0));
-	let Ry = rotationY(radians(0));
-	let Rz = rotationZ(radians(0));
 	var vsOut: VsOutput;
-	vsOut.position = P * V * T * Rx * Ry * Rz * S * pos[vertexIndex].position;
+	vsOut.position = P * V * models[vertexIndex] * pos[vertexIndex];
 	vsOut.color = color[vertexIndex];
 	return vsOut;
 }
 
 @fragment fn fs(vsOut: VsOutput) -> @location(0) vec4f {
 	return vsOut.color;
-}
-
-fn translate(x: f32, y: f32, z: f32) -> mat4x4f {
-	return mat4x4f(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		x, y, z, 1.0,
-	);
-}
-
-fn rotationIdentity(angle: f32) -> mat4x4f {
-	return mat4x4f(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0,
-	);
-}
-
-fn rotationX(angle: f32) -> mat4x4f {
-	let c = cos(angle);
-	let s = sin(angle);
-	return mat4x4f(
-		1.0, 0.0, 0.0, 0.0,
-		0.0, c, s, 0.0,
-		0.0, -s, c, 0.0,
-		0.0, 0.0, 0.0, 1.0,
-	);
-}
-
-fn rotationY(angle: f32) -> mat4x4f {
-	let c = cos(angle);
-	let s = sin(angle);
-	return mat4x4f(
-		c,    0.0,  -s,   0.0,
-		0.0,  1.0,   0.0, 0.0,
-		s,    0.0,   c,   0.0,
-		0.0,  0.0,   0.0, 1.0,
-	);
-}
-
-fn rotationZ(angle: f32) -> mat4x4f {
-	let c = cos(angle);
-	let s = sin(angle);
-	return mat4x4f(
-		c,    s,   0.0, 0.0,
-		-s,   c,   0.0, 0.0,
-		0.0,  0.0, 1.0, 0.0,
-		0.0,  0.0, 0.0, 1.0,
-	);
 }
 
 fn perspective(fovY: f32, aspect: f32, near: f32, far: f32) -> mat4x4f {

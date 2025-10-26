@@ -4,7 +4,7 @@ import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
-import * as m4 from "@thi.ng/matrices";
+import * as mat from "@thi.ng/matrices";
 
 @Component({
 	selector: "app-root",
@@ -17,17 +17,14 @@ export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 
-		const m0 = [
-			-0.5, -0.5, 0.5, 1.0,   // bottom-left
-			0.5, -0.5, 0.5, 1.0,   // bottom-right
-			0.5, 0.5, 0.5, 1.0,   // top-right
-			-0.5, -0.5, 0.5, 1.0,   // bottom-left
-			0.5, 0.5, 0.5, 1.0,   // top-right
-			-0.5, 0.5, 0.5, 1.0,   // top-left
-		];
-		const m1 = Object.freeze(m4.IDENT44);
-		const translated = m4.translation44(m0, [0.1, 0.1, 0.1]);
-		console.log(translated)
+		// const m1 = Object.freeze(m4.IDENT44);
+
+		// const T = m4.translation44([], [0.1, 0.1, 0.1]);
+		// const Rx = m4.rotationX44([], 0);
+		// const Ry = m4.rotationY44([], 0);
+		// const Rz = m4.rotationZ44([], 0);
+		// const S = m4.scale44([], 1);
+		// const M = m4.mulM44([], T, m4.mul44([], Rx, m4.mul44([], Ry, m4.mul44([], Rz, S))));
 
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
@@ -137,40 +134,68 @@ export class App implements AfterViewInit {
 			unitCube("base"),
 			[createLeaf(unitCube("left")), createLeaf(unitCube("right"))]
 		);
-		// head w/ two ears model, box composition.
+		// Transform2: Head w/ two ears model, box composition.
 		const m1Sg = mapTree<Vertex, Vertex>(sceneGraph, (cube) => {
 			if (cube.id === "left" || cube.id === "right") {
-				const gap = 0.0; // tiny gap to avoid cop[lanar z issues.
-				const step = 1.0 + gap; // center to center spacing.
+				const step = 0.5;
+				const earsAngleDeg = 25;
 				return <Vertex>{
 					...cube,
-					vertices: cube.vertices,
-					translates: cube.translates.map(([x, y, z, w], i) => {
-						return [
-							cube.id === "left" ? x + step : x - step,
-							1,
-							0.0,
-							w,
-						];
+					models: cube.models.map((m, i) => {
+						const T = mat.translation44([], [
+							cube.id === "left" ? step : -step, 1.0, 0.0, 0.0
+						]); // identity for now.
+						const Rx = mat.rotationX44([], 0);
+						const Ry = mat.rotationY44([], 0);
+						const Rz = mat.rotationZ44([],
+							toRadians(cube.id === "left" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
+						const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+						const S = mat.scale44([], 0.7);
+						// M = T * Rx * Ry * Rz * S
+						const M = mat.mulM44([], S, mat.mulM44([], R, T));
+						return M;
 					}),
 				};
 			}
 			return cube;
 		});
+		// Transform2: Move to local space.
+		const m2Sg = mapTree<Vertex, Vertex>(m1Sg, (cube) => {
+			return <Vertex>{
+				...cube,
+				models: cube.models.map((m, i) => {
+					const T = mat.translation44([], [0.0, 0.0, 0.0, 0.0]); // identity for now.
+					const Rx = mat.rotationX44([], 0);
+					const Ry = mat.rotationY44([], 0);
+					const Rz = mat.rotationZ44([], toRadians(25));
+					const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+					const S = mat.scale44([], 1);
+					// M = T * Rx * Ry * Rz * S
+					const M = mat.mulM44([], S, mat.mulM44([], R, T));
+
+					// choose one:
+					// World-space add:
+					// return mat.mulM44([], Delta, m);
+
+					// Local-space add
+					return mat.mulM44([], M, m);
+				}),
+			};
+		});
 		const foldedSceneGraph = reduceTree(
-			m1Sg,
+			m2Sg,
 			(acc, val) => {
 				return {
 					verticesArray: [...acc.verticesArray, ...val.vertices],
 					colorsArray: [...acc.colorsArray, ...val.colors],
-					translatesArray: [...acc.translatesArray, ...val.translates],
+					modelsArray: [...acc.modelsArray, ...val.models],
 					cubeCount: acc.cubeCount + 1
 				};
 			},
 			{
 				verticesArray: [] as number[],
 				colorsArray: [] as number[],
-				translatesArray: [] as number[][],
+				modelsArray: [] as number[][],
 				cubeCount: 0
 			}
 		);
@@ -188,10 +213,10 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const transStorageValues = new Float32Array(foldedSceneGraph.translatesArray.flat());
-		const transStorageBuffer = device.createBuffer({
-			label: `Translation storage buffer`,
-			size: transStorageValues.byteLength,
+		const modelsStorageValues = new Float32Array(foldedSceneGraph.modelsArray.flat());
+		const modelsStorageBuffer = device.createBuffer({
+			label: `Models storage buffer`,
+			size: modelsStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
@@ -222,7 +247,7 @@ export class App implements AfterViewInit {
 			entries: [
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
-				{ binding: 2, resource: { buffer: transStorageBuffer }, },
+				{ binding: 2, resource: { buffer: modelsStorageBuffer }, },
 				{ binding: 3, resource: { buffer: cameraUniformBuffer }, },
 				{ binding: 4, resource: { buffer: aspectUniformBuffer }, },
 				{ binding: 5, resource: { buffer: timeUniformBuffer }, },
@@ -272,7 +297,7 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(foldedSceneGraph.colorsArray));
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(transStorageBuffer, 0, transStorageValues);
+				device.queue.writeBuffer(modelsStorageBuffer, 0, modelsStorageValues);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
@@ -324,7 +349,7 @@ type Vertex = {
 	id: string,
 	vertices: number[],
 	colors: number[],
-	translates: number[][],
+	models: number[][],
 }
 function unitCube(id: string): Vertex {
 	const vertices = [
@@ -397,23 +422,23 @@ function unitCube(id: string): Vertex {
 		...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
 	];
 
-	// const translates: number[][] = [
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// 	...Array(6).fill([0, 0, 0, 1.0]),
-	// ];
+	const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
+	const Rx = mat.rotationX44([], 0);
+	const Ry = mat.rotationY44([], 0);
+	const Rz = mat.rotationZ44([], 0);
+	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+	const S = mat.scale44([], 1);
+	// M = T * Rx * Ry * Rz * S
+	const M = mat.mulM44([], S, mat.mulM44([], R, T));
 
 	// 6 faces, 6 vertices per face.
-	const translates: number[][] = Array.from({ length: 36 }, () => [0, 0, 0, 1.0]);
+	const translates: number[][] = Array.from({ length: 36 }, () => M as number[]);
 
 	return {
 		id,
 		vertices,
 		colors,
-		translates,
+		models: translates,
 	};
 }
 
@@ -456,4 +481,12 @@ function reduceTree<T, R>(
 			accHere
 		)
 		: accHere;
+}
+
+function toRadians(degrees: number): number {
+	return degrees * Math.PI / 180;
+}
+
+function toDegrees(radians: number): number {
+	return radians * 180 / Math.PI;
 }
