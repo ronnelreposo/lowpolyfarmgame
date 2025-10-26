@@ -3,7 +3,8 @@
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, reduce, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
+import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
+import * as m4 from "@thi.ng/matrices";
 
 @Component({
 	selector: "app-root",
@@ -15,6 +16,10 @@ import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map,
 export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
+		// const m1 = m4.IDENT44;
+		// const m2 = m4.translation44(m1, [0.1, 0.1, 0.1]);
+		// console.log(m2)
+
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -119,129 +124,13 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const cz = 0.5; // cube z.
-		const entities: Entity[] = [
-			// {
-			// 	kind: "quad",
-			// 	triangleCount: 2,
-			// 	verts: createQuadVertices(),
-			// 	color: [0.9019607843137255, 0.49411764705882355, 0.13333333333333333, 1] // carrot.
-			// },
-			// {
-			// 	kind: "tri",
-			// 	triangleCount: 1,
-			// 	verts: [
-			// 		// x, y, z(actual depth), w(const)
-			// 		0.0, 0.5, 0.3, 1.0,	// top
-			// 		-0.5, -0.5, 0.3, 1.0,	// bottom left
-			// 		0.5, -0.5, 0.3, 1.0,	// bottom right
-			// 	],
-			// 	color: rgbaToColor(142, 68, 173), // wisteria (violet)
-			// },
-			// // much fater triangle
-			// {
-			// 	kind: "tri",
-			// 	triangleCount: 1,
-			// 	verts: [
-			// 		// x, y, z(actual depth), w(const)
-			// 		-0.5, 0.5, 0.7, 1.0,	// top
-			// 		-0.8, -0.5, 0.7, 1.0,	// bottom left
-			// 		-0.2, -0.5, 0.7, 1.0,	// bottom right
-			// 	],
-			// 	color: rgbaToColor(52, 152, 219), // peter river (blue)
-			// },
-			{
-				kind: "free",
-				triangleCount: 12,
-				verts: [
-					// FRONT face (z = +0.5)
-					-0.5, -0.5,  0.5, 1.0,   // bottom-left
-					 0.5, -0.5,  0.5, 1.0,   // bottom-right
-					 0.5,  0.5,  0.5, 1.0,   // top-right
-					-0.5, -0.5,  0.5, 1.0,   // bottom-left
-					 0.5,  0.5,  0.5, 1.0,   // top-right
-					-0.5,  0.5,  0.5, 1.0,   // top-left
+		const { vertices, colors } = unitCube();
+		const numOfVertices = 3; // Triangle primitive
+		const cubeFaces = 6;
+		const trianglePerFace = 2;
+		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
-					// BACK face (z = -0.5)
-					 0.5, -0.5, -0.5, 1.0,   // bottom-left
-					-0.5, -0.5, -0.5, 1.0,   // bottom-right
-					-0.5,  0.5, -0.5, 1.0,   // top-right
-					 0.5, -0.5, -0.5, 1.0,   // bottom-left
-					-0.5,  0.5, -0.5, 1.0,   // top-right
-					 0.5,  0.5, -0.5, 1.0,   // top-left
-
-					// LEFT face (x = -0.5)
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					-0.5, -0.5,  0.5, 1.0,   // bottom-right
-					-0.5,  0.5,  0.5, 1.0,   // top-right
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					-0.5,  0.5,  0.5, 1.0,   // top-right
-					-0.5,  0.5, -0.5, 1.0,   // top-left
-
-					// RIGHT face (x = +0.5)
-					 0.5, -0.5,  0.5, 1.0,   // bottom-left
-					 0.5, -0.5, -0.5, 1.0,   // bottom-right
-					 0.5,  0.5, -0.5, 1.0,   // top-right
-					 0.5, -0.5,  0.5, 1.0,   // bottom-left
-					 0.5,  0.5, -0.5, 1.0,   // top-right
-					 0.5,  0.5,  0.5, 1.0,   // top-left
-
-					// TOP face (y = +0.5)
-					-0.5,  0.5,  0.5, 1.0,  // bottom-left
-					 0.5,  0.5,  0.5, 1.0,   // bottom-right
-					 0.5,  0.5, -0.5, 1.0,   // top-right
-					-0.5,  0.5,  0.5, 1.0,   // bottom-left
-					-0.5,  0.5, -0.5, 1.0,   // top-right
-					 0.5,  0.5, -0.5, 1.0,   // top-left
-
-					// BOTTOM face (y = -0.5)
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					 0.5, -0.5,  0.5, 1.0,   // bottom-right
-					 0.5, -0.5, -0.5, 1.0,   // top-right
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					-0.5, -0.5,  0.5, 1.0,   // top-right
-					 0.5, -0.5,  0.5, 1.0,   // top-left
-				],
-				color: rgbaToColor(52, 152, 219), // peter river (blue)
-			}
-		];
-
-		const cubeColors = [
-			// FRONT face - orange
-			...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
-
-			// BACK face - violet (wisteria)
-			...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
-
-			// LEFT face - green (gree sea)
-			...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
-
-			// RIGHT face - blue (belize hole)
-			...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
-
-			// TOP face - yellow (sunflower)
-			...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
-
-			// BOTTOM face - red (pomegranate)
-			...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
-		];
-
-		const numOfVertices = 3; // triangle primitive
-		const floatsPerVerts = 4; // Vertex constains two floats (x,y).
-		const acc = entities.reduce((a, e) => {
-			const perVertexColors = Array(e.verts.length / floatsPerVerts)
-				.fill(e.color)
-				.flat();
-			return ({
-				vertices: a.vertices.concat(e.verts),
-				colors: a.colors.concat(perVertexColors),
-				triangleCountTotal: e.triangleCount + a.triangleCountTotal
-			})
-		},
-			{ vertices: <number[]>[], colors: <number[]>[], triangleCountTotal: 0 }
-		);
-
-		const posStorageValues = new Float32Array(acc.vertices);
+		const posStorageValues = new Float32Array(vertices);
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
 			size: posStorageValues.byteLength,
@@ -249,7 +138,7 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const colorStorageValues = new Float32Array(acc.colors);
+		const colorStorageValues = new Float32Array(colors);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
 			size: colorStorageValues.byteLength,
@@ -322,7 +211,7 @@ export class App implements AfterViewInit {
 				pass.setPipeline(pipeline);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(cubeColors));
+				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(colors));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
@@ -336,7 +225,8 @@ export class App implements AfterViewInit {
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);
 
-				pass.draw(numOfVertices * acc.triangleCountTotal, 2);
+				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
+				pass.draw(unitCubeNumOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
@@ -369,20 +259,81 @@ const resWidth = 2400;
 const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
-function createQuadVertices(): number[] {
-	const coords: Coord[] = [
-		// Triangle 1.
-		{ x: 0, y: 0, z: 0.3, w: 1 }, // top left
-		{ x: 0, y: 100, z: 0.3, w: 1 }, // bottom left
-		{ x: 100, y: 100, z: 0.3, w: 1 }, // bottom right
-		// Triangle 2.
-		{ x: 0, y: 0, z: 0.3, w: 1 }, //  top left
-		{ x: 100, y: 100, z: 0.3, w: 1 }, // bottom right
-		{ x: 100, y: 0, z: 0.3, w: 1 }, // bottom right
+function unitCube(): { vertices: number[], colors: number[] } {
+	const vertices = [
+		// FRONT face (z = +0.5)
+		-0.5, -0.5, 0.5, 1.0,   // bottom-left
+		0.5, -0.5, 0.5, 1.0,   // bottom-right
+		0.5, 0.5, 0.5, 1.0,   // top-right
+		-0.5, -0.5, 0.5, 1.0,   // bottom-left
+		0.5, 0.5, 0.5, 1.0,   // top-right
+		-0.5, 0.5, 0.5, 1.0,   // top-left
+
+		// BACK face (z = -0.5)
+		0.5, -0.5, -0.5, 1.0,   // bottom-left
+		-0.5, -0.5, -0.5, 1.0,   // bottom-right
+		-0.5, 0.5, -0.5, 1.0,   // top-right
+		0.5, -0.5, -0.5, 1.0,   // bottom-left
+		-0.5, 0.5, -0.5, 1.0,   // top-right
+		0.5, 0.5, -0.5, 1.0,   // top-left
+
+		// LEFT face (x = -0.5)
+		-0.5, -0.5, -0.5, 1.0,   // bottom-left
+		-0.5, -0.5, 0.5, 1.0,   // bottom-right
+		-0.5, 0.5, 0.5, 1.0,   // top-right
+		-0.5, -0.5, -0.5, 1.0,   // bottom-left
+		-0.5, 0.5, 0.5, 1.0,   // top-right
+		-0.5, 0.5, -0.5, 1.0,   // top-left
+
+		// RIGHT face (x = +0.5)
+		0.5, -0.5, 0.5, 1.0,   // bottom-left
+		0.5, -0.5, -0.5, 1.0,   // bottom-right
+		0.5, 0.5, -0.5, 1.0,   // top-right
+		0.5, -0.5, 0.5, 1.0,   // bottom-left
+		0.5, 0.5, -0.5, 1.0,   // top-right
+		0.5, 0.5, 0.5, 1.0,   // top-left
+
+		// TOP face (y = +0.5)
+		-0.5, 0.5, 0.5, 1.0,  // bottom-left
+		0.5, 0.5, 0.5, 1.0,   // bottom-right
+		0.5, 0.5, -0.5, 1.0,   // top-right
+		-0.5, 0.5, 0.5, 1.0,   // bottom-left
+		-0.5, 0.5, -0.5, 1.0,   // top-right
+		0.5, 0.5, -0.5, 1.0,   // top-left
+
+		// BOTTOM face (y = -0.5)
+		-0.5, -0.5, -0.5, 1.0,   // bottom-left
+		0.5, -0.5, 0.5, 1.0,   // bottom-right
+		0.5, -0.5, -0.5, 1.0,   // top-right
+		-0.5, -0.5, -0.5, 1.0,   // bottom-left
+		-0.5, -0.5, 0.5, 1.0,   // top-right
+		0.5, -0.5, 0.5, 1.0,   // top-left
 	];
-	const coordsCp = coords.map(toCp);
-	return coordsCp.flatMap(x => x);
-	// why not return simply an array.
+
+	const colors: number[] = [
+		// FRONT face - orange
+		...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
+
+		// BACK face - violet (wisteria)
+		...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
+
+		// LEFT face - green (gree sea)
+		...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
+
+		// RIGHT face - blue (belize hole)
+		...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
+
+		// TOP face - yellow (sunflower)
+		...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
+
+		// BOTTOM face - red (pomegranate)
+		...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
+	];
+
+	return {
+		vertices,
+		colors,
+	};
 }
 
 type Entity = (
@@ -391,3 +342,27 @@ type Entity = (
 	| { kind: "free" })
 	// | { kind: "cool-hero" } // 🤣
 & { verts: number[], triangleCount: number, color: number[] }
+
+type Tree<T>
+	= { kind: "leaf", value: T }
+	| { kind: "node", value: T, children: Tree<T>[] }
+
+// constructors
+function createLeaf<T>(value: T): Tree<T> {
+	return { kind: "leaf", value };
+}
+
+function createNode<T>(value: T, children: Tree<T>[]): Tree<T> {
+	return { kind: "node", value, children };
+}
+
+function mapTree<T>(tree: Tree<T>): Tree<T> {
+	if (tree.kind === "leaf") {
+		return tree;
+	}
+	return {
+		kind: "node",
+		value: tree.value,
+		children: tree.children.map(child => mapTree(child))
+	};
+}

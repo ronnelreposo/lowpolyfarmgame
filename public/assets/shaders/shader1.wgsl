@@ -19,6 +19,8 @@ struct VertexStruct {
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
 
+	let t = time; // temporary assignment, dummy usage.
+
 	let fov = radians(60.0);  // 45° field of view
 	let aspect = aspect.x / aspect.y;
 	let near = 0.1;
