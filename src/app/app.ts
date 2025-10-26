@@ -17,15 +17,6 @@ export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 
-		// const m1 = Object.freeze(m4.IDENT44);
-
-		// const T = m4.translation44([], [0.1, 0.1, 0.1]);
-		// const Rx = m4.rotationX44([], 0);
-		// const Ry = m4.rotationY44([], 0);
-		// const Rz = m4.rotationZ44([], 0);
-		// const S = m4.scale44([], 1);
-		// const M = m4.mulM44([], T, m4.mul44([], Rx, m4.mul44([], Ry, m4.mul44([], Rz, S))));
-
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -130,26 +121,84 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const sceneGraph: Tree<Vertex> = createNode(
-			unitCube("base"),
-			[createLeaf(unitCube("left")), createLeaf(unitCube("right"))]
+		const head_unit: Tree<Vertex> = createNode(
+			unitCube("base-head"),
+			[createLeaf(unitCube("left-ear")), createLeaf(unitCube("right-ear"))]
 		);
-		// Transform2: Head w/ two ears model, box composition.
-		const m1Sg = mapTree<Vertex, Vertex>(sceneGraph, (cube) => {
-			if (cube.id === "left" || cube.id === "right") {
+		// Transform: Head w/ two ears model, box composition.
+		const headComposition = mapTree<Vertex, Vertex>(head_unit, (cube) => {
+			if (cube.id === "left-ear" || cube.id === "right-ear") {
 				const step = 0.5;
 				const earsAngleDeg = 25;
 				const T = mat.translation44([], [
-					cube.id === "left" ? step : -step, 1.0, 0.0, 0.0
+					cube.id === "left-ear" ? step : -step, 0.25, 0.0,
 				]); // identity for now.
 				const Rx = mat.rotationX44([], 0);
 				const Ry = mat.rotationY44([], 0);
 				const Rz = mat.rotationZ44([],
-					toRadians(cube.id === "left" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
+					toRadians(cube.id === "left-ear" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
 				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
 				const S = mat.scale44([], 0.7);
 				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], S, mat.mulM44([], R, T));
+				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
+				return <Vertex>{
+					...cube,
+					model:  mat.mulM44([], cube.model, newModel), // local transform.
+				};
+			}
+			return cube;
+		});
+		// Transform: Head w/ two ears model, box composition.
+		const headComposition2 = mapTree<Vertex, Vertex>(headComposition, (cube) => {
+				const T = mat.translation44([], [0, 0.4, 0.0]); // identity for now.
+				const Rx = mat.rotationX44([], 0);
+				const Ry = mat.rotationY44([], toRadians(25));
+				const Rz = mat.rotationZ44([], toRadians(15)); // tilt a bit.
+				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+				const S = mat.scale44([], 0.7);
+				// M = T * Rx * Ry * Rz * S
+				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
+				return <Vertex>{
+					...cube,
+					model:  mat.mulM44([], newModel, cube.model), // world transform.
+				};
+		});
+
+		const body: Tree<Vertex> = createNode(
+			unitCube("body"),
+			[
+				headComposition2,
+				createLeaf(unitCube("left-leg")), createLeaf(unitCube("right-leg"))
+			]
+		);
+
+		const minionComposition = mapTree<Vertex, Vertex>(body, (cube) => {
+			if (cube.id === "body") {
+				const T = mat.translation44([], [0.0, -0.4, 0.0]); // identity for now.
+				const Rx = mat.rotationX44([], 0);
+				const Ry = mat.rotationY44([], 0);
+				const Rz = mat.rotationZ44([], 0); // tilt a bit.
+				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+				const S = mat.scale44([], 0.85);
+				// M = T * Rx * Ry * Rz * S
+				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
+				return <Vertex>{
+					...cube,
+					model: newModel,
+				};
+			}
+			if (cube.id === "left-leg" || cube.id === "right-leg") {
+				const step = 0.5;
+				const T = mat.translation44([], [
+					cube.id === "left-leg" ? step : -step, -0.85, 0.0,
+				]); // identity for now.
+				const Rx = mat.rotationX44([], 0);
+				const Ry = mat.rotationY44([], 0);
+				const Rz = mat.rotationZ44([], 0);
+				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+				const S = mat.scale44([], 0.5);
+				// M = T * Rx * Ry * Rz * S
+				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
 				return <Vertex>{
 					...cube,
 					model: newModel,
@@ -157,32 +206,34 @@ export class App implements AfterViewInit {
 			}
 			return cube;
 		});
-		// Transform2: Move to local space.
-		const m2Sg = mapTree<Vertex, Vertex>(m1Sg, (cube) => {
-			const T = mat.translation44([], [0.0, 0.0, 0.0, 0.0]); // identity for now.
+
+		// Transform: Final transform - Move to local space.
+		const finalLocalTransform = mapTree<Vertex, Vertex>(minionComposition, (cube) => {
+			const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
 			const Rx = mat.rotationX44([], 0);
 			const Ry = mat.rotationY44([], 0);
-			const Rz = mat.rotationZ44([], toRadians(25));
+			const Rz = mat.rotationZ44([], 0);
 			const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
 			const S = mat.scale44([], 1);
 			// M = T * Rx * Ry * Rz * S
-			const M = mat.mulM44([], S, mat.mulM44([], R, T));
+			const M = mat.mulM44([], T, mat.mulM44([], R, S));
 
 			// choose one:
-			// World-space add:
-			// return mat.mulM44([], Delta, m);
+			// Local-space add:
+			// return mat.mulM44([], cube.model, M);
 
-			// Local-space add
+			// World-space add:
 			const newModel = mat.mulM44([], M, cube.model);
 
 			return <Vertex>{
 				...cube,
-				models: newModel,
+				model: newModel,
 			};
 		});
+
 		const floatsPerPosition = 4; // vec4f positions.
 		const foldedSceneGraph = reduceTree(
-			m2Sg,
+			finalLocalTransform,
 			(acc, val) => {
 				const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
 				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
@@ -279,7 +330,7 @@ export class App implements AfterViewInit {
 
 				// console.log(camera);
 
-				const duration = 3_000;
+				const duration = 1_500;
 				const period = (frame.timestamp % duration) / duration;
 
 				const width = canvasDimension.width;
@@ -445,7 +496,7 @@ function unitCube(id: string): Vertex {
 	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
 	const S = mat.scale44([], 1);
 	// M = T * Rx * Ry * Rz * S
-	const M = mat.mulM44([], S, mat.mulM44([], R, T));
+	const M = mat.mulM44([], T, mat.mulM44([], R, S));
 
 	// // 6 faces, 6 vertices per face.
 	// const translates: number[][] = Array.from({ length: 36 }, () => M as number[]);
@@ -483,6 +534,20 @@ function mapTree<T, U>(tree: Tree<T>, f: (value: T) => U): Tree<U> {
 		return createLeaf(f(tree.value));
 	}
 	return createNode(f(tree.value), tree.children.map(child => mapTree(child, f)));
+}
+
+function flatMapTree<T, U>(tree: Tree<T>, f: (v: T) => Tree<U>): Tree<U> {
+	const replaced = f(tree.value);                 // subtree to splice in
+	if (tree.kind === "leaf") return replaced;      // nothing to graft
+
+	const kids = tree.children.map(c => flatMapTree(c, f));
+
+	if (replaced.kind === "leaf") {
+	// need a node to host the (mapped) original children
+	return createNode(replaced.value, kids);
+	}
+	// keep any children produced by f, plus the mapped original children
+	return createNode(replaced.value, [...replaced.children, ...kids]);
 }
 
 function reduceTree<T, R>(

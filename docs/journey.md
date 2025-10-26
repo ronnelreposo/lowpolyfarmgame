@@ -1,4 +1,7 @@
 
+Oct 26, 2025 9:11PM
+- `mat.mulM44([], cube.model, M); // local space.`
+- `mat.mulM44([], M, cube.model); // world space.`
 Oct 26, 2025 4:28PM
 - Scene graph
 - Pass translation
