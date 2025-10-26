@@ -124,13 +124,32 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const { vertices, colors } = unitCube();
+		const sceneGraph: Tree<Vertex> = createNode(
+			unitCube(),
+			[createLeaf(unitCube()), createLeaf(unitCube())]
+		);
+		const foldedSceneGraph = reduceTree(
+			sceneGraph,
+			(acc, val) => {
+				return {
+					verticesArray: [...acc.verticesArray, ...val.vertices],
+					colorsArray: [...acc.colorsArray, ...val.colors],
+					cubeCount: acc.cubeCount + 1
+				};
+			},
+			{
+				verticesArray: [] as number[],
+				colorsArray: [] as number[],
+				cubeCount: 0
+			}
+		);
+
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
-		const posStorageValues = new Float32Array(vertices);
+		const posStorageValues = new Float32Array(foldedSceneGraph.verticesArray);
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
 			size: posStorageValues.byteLength,
@@ -138,7 +157,7 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const colorStorageValues = new Float32Array(colors);
+		const colorStorageValues = new Float32Array(foldedSceneGraph.colorsArray);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
 			size: colorStorageValues.byteLength,
@@ -174,14 +193,14 @@ export class App implements AfterViewInit {
 		// Render Loop.
 
 		combineLatest({
-			frame: animationFrames(),
-			// frame: of({ timestamp: 0 }),
+			// frame: animationFrames(),
+			frame: of({ timestamp: 0 }),
 			canvasDimension: canvasDimension$,
 			camera: camera$,
 		})
 			.subscribe(({ frame, canvasDimension, camera }) => {
 
-				// console.log(camera);
+				console.log(camera);
 
 				const duration = 3_000;
 				const period = (frame.timestamp % duration) / duration;
@@ -211,7 +230,7 @@ export class App implements AfterViewInit {
 				pass.setPipeline(pipeline);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(colors));
+				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(foldedSceneGraph.colorsArray));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
@@ -226,7 +245,7 @@ export class App implements AfterViewInit {
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(unitCubeNumOfVertices, drawInstances);
+				pass.draw(foldedSceneGraph.cubeCount * unitCubeNumOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
@@ -259,7 +278,8 @@ const resWidth = 2400;
 const resHeight = 970
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
-function unitCube(): { vertices: number[], colors: number[] } {
+type Vertex = { vertices: number[], colors: number[] }
+function unitCube(): Vertex {
 	const vertices = [
 		// FRONT face (z = +0.5)
 		-0.5, -0.5, 0.5, 1.0,   // bottom-left
@@ -365,4 +385,18 @@ function mapTree<T>(tree: Tree<T>): Tree<T> {
 		value: tree.value,
 		children: tree.children.map(child => mapTree(child))
 	};
+}
+
+function reduceTree<T, R>(
+	tree: Tree<T>,
+	reducer: (acc: R, value: T) => R,
+	initial: R
+): R {
+	const accHere = reducer(initial, tree.value);
+	return tree.kind === "node"
+		? tree.children.reduce(
+			(acc, child) => reduceTree(child, reducer, acc),
+			accHere
+		)
+		: accHere;
 }

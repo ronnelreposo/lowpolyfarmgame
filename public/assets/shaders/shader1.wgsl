@@ -28,14 +28,14 @@ struct VertexStruct {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	// let eye1 = camera.xyz; // where your camera in world space.
-	let orbitRadius = 3.0;
-	let PI = 3.141592653589793;
-	let eye = vec3f(
-		orbitRadius * cos(time * PI * 2.0),
-		camera.y,
-		orbitRadius * sin(time * PI * 2.0),
-	); // where your camera in world space.
+	let eye = camera.xyz; // where your camera in world space.
+	// let orbitRadius = 3.0;
+	// let PI = 3.141592653589793;
+	// let eye = vec3f(
+	// 	orbitRadius * cos(time * PI * 2.0),
+	// 	camera.y,
+	// 	orbitRadius * sin(time * PI * 2.0),
+	// ); // where your camera in world space.
 	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
