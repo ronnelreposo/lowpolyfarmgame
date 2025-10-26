@@ -139,63 +139,68 @@ export class App implements AfterViewInit {
 			if (cube.id === "left" || cube.id === "right") {
 				const step = 0.5;
 				const earsAngleDeg = 25;
+				const T = mat.translation44([], [
+					cube.id === "left" ? step : -step, 1.0, 0.0, 0.0
+				]); // identity for now.
+				const Rx = mat.rotationX44([], 0);
+				const Ry = mat.rotationY44([], 0);
+				const Rz = mat.rotationZ44([],
+					toRadians(cube.id === "left" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
+				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+				const S = mat.scale44([], 0.7);
+				// M = T * Rx * Ry * Rz * S
+				const newModel = mat.mulM44([], S, mat.mulM44([], R, T));
 				return <Vertex>{
 					...cube,
-					models: cube.models.map((m, i) => {
-						const T = mat.translation44([], [
-							cube.id === "left" ? step : -step, 1.0, 0.0, 0.0
-						]); // identity for now.
-						const Rx = mat.rotationX44([], 0);
-						const Ry = mat.rotationY44([], 0);
-						const Rz = mat.rotationZ44([],
-							toRadians(cube.id === "left" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
-						const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-						const S = mat.scale44([], 0.7);
-						// M = T * Rx * Ry * Rz * S
-						const M = mat.mulM44([], S, mat.mulM44([], R, T));
-						return M;
-					}),
+					model: newModel,
 				};
 			}
 			return cube;
 		});
 		// Transform2: Move to local space.
 		const m2Sg = mapTree<Vertex, Vertex>(m1Sg, (cube) => {
+			const T = mat.translation44([], [0.0, 0.0, 0.0, 0.0]); // identity for now.
+			const Rx = mat.rotationX44([], 0);
+			const Ry = mat.rotationY44([], 0);
+			const Rz = mat.rotationZ44([], toRadians(25));
+			const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+			const S = mat.scale44([], 1);
+			// M = T * Rx * Ry * Rz * S
+			const M = mat.mulM44([], S, mat.mulM44([], R, T));
+
+			// choose one:
+			// World-space add:
+			// return mat.mulM44([], Delta, m);
+
+			// Local-space add
+			const newModel = mat.mulM44([], M, cube.model);
+
 			return <Vertex>{
 				...cube,
-				models: cube.models.map((m, i) => {
-					const T = mat.translation44([], [0.0, 0.0, 0.0, 0.0]); // identity for now.
-					const Rx = mat.rotationX44([], 0);
-					const Ry = mat.rotationY44([], 0);
-					const Rz = mat.rotationZ44([], toRadians(25));
-					const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-					const S = mat.scale44([], 1);
-					// M = T * Rx * Ry * Rz * S
-					const M = mat.mulM44([], S, mat.mulM44([], R, T));
-
-					// choose one:
-					// World-space add:
-					// return mat.mulM44([], Delta, m);
-
-					// Local-space add
-					return mat.mulM44([], M, m);
-				}),
+				models: newModel,
 			};
 		});
+		const floatsPerPosition = 4; // vec4f positions.
 		const foldedSceneGraph = reduceTree(
 			m2Sg,
 			(acc, val) => {
+				const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
+				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
 				return {
 					verticesArray: [...acc.verticesArray, ...val.vertices],
 					colorsArray: [...acc.colorsArray, ...val.colors],
-					modelsArray: [...acc.modelsArray, ...val.models],
+					modelsArray: [...acc.modelsArray, ...val.model],
+					modelIdIncrement: acc.modelIdIncrement + 1,
+					modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
 					cubeCount: acc.cubeCount + 1
 				};
 			},
 			{
 				verticesArray: [] as number[],
 				colorsArray: [] as number[],
-				modelsArray: [] as number[][],
+				modelsArray: [] as number[],
+				modelIdIncrement: 0,
+				modelIdArray: [] as number[],
 				cubeCount: 0
 			}
 		);
@@ -217,6 +222,13 @@ export class App implements AfterViewInit {
 		const modelsStorageBuffer = device.createBuffer({
 			label: `Models storage buffer`,
 			size: modelsStorageValues.byteLength,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
+
+		const modelIdStorageValues = new Uint32Array(foldedSceneGraph.modelIdArray);
+		const modelIdStorageBuffer = device.createBuffer({
+			label: `Model IDs storage buffer`,
+			size: modelIdStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
@@ -248,9 +260,10 @@ export class App implements AfterViewInit {
 				{ binding: 0, resource: { buffer: posStorageBuffer }, },
 				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
 				{ binding: 2, resource: { buffer: modelsStorageBuffer }, },
-				{ binding: 3, resource: { buffer: cameraUniformBuffer }, },
-				{ binding: 4, resource: { buffer: aspectUniformBuffer }, },
-				{ binding: 5, resource: { buffer: timeUniformBuffer }, },
+				{ binding: 3, resource: { buffer: modelIdStorageBuffer }, },
+				{ binding: 4, resource: { buffer: cameraUniformBuffer }, },
+				{ binding: 5, resource: { buffer: aspectUniformBuffer }, },
+				{ binding: 6, resource: { buffer: timeUniformBuffer }, },
 			],
 		});
 
@@ -298,6 +311,9 @@ export class App implements AfterViewInit {
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(modelsStorageBuffer, 0, modelsStorageValues);
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdStorageValues);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
@@ -349,7 +365,7 @@ type Vertex = {
 	id: string,
 	vertices: number[],
 	colors: number[],
-	models: number[][],
+	model: number[],
 }
 function unitCube(id: string): Vertex {
 	const vertices = [
@@ -431,14 +447,14 @@ function unitCube(id: string): Vertex {
 	// M = T * Rx * Ry * Rz * S
 	const M = mat.mulM44([], S, mat.mulM44([], R, T));
 
-	// 6 faces, 6 vertices per face.
-	const translates: number[][] = Array.from({ length: 36 }, () => M as number[]);
+	// // 6 faces, 6 vertices per face.
+	// const translates: number[][] = Array.from({ length: 36 }, () => M as number[]);
 
 	return {
 		id,
 		vertices,
 		colors,
-		models: translates,
+		model: M as number[],
 	};
 }
 

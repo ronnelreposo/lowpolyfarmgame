@@ -7,10 +7,12 @@ struct VsOutput {
 @group(0) @binding(0) var<storage, read> pos: array<vec4f>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
 @group(0) @binding(2) var<storage, read> models: array<mat4x4f>;
+// Model ID per vertex.
+@group(0) @binding(3) var<storage, read> modelIds: array<u32>;
 
-@group(0) @binding(3) var<uniform> camera: vec4f;
-@group(0) @binding(4) var<uniform> aspect: vec2f;
-@group(0) @binding(5) var<uniform> time: f32;
+@group(0) @binding(4) var<uniform> camera: vec4f;
+@group(0) @binding(5) var<uniform> aspect: vec2f;
+@group(0) @binding(6) var<uniform> time: f32;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -39,7 +41,7 @@ struct VsOutput {
 	let V = lookAt(eye, subj, up);
 
 	var vsOut: VsOutput;
-	vsOut.position = P * V * models[vertexIndex] * pos[vertexIndex];
+	vsOut.position = P * V * models[modelIds[vertexIndex]] * pos[vertexIndex];
 	vsOut.color = color[vertexIndex];
 	return vsOut;
 }
