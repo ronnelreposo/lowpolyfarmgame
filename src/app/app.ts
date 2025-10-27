@@ -64,10 +64,13 @@ export class App implements AfterViewInit {
 					}
 				}),
 				scan((acc, arr) => {
+					// Pßerspective constants, should match in shader.
+					const near = 0.1;
+					const far = 100;
 					return [
 						Math.min(Math.max(acc[0] + arr[0], -1), 1),
 						Math.min(Math.max(acc[1] + arr[1], -1), 1),
-						Math.min(Math.max(acc[2] + arr[2], 0.1), 100),
+						Math.min(Math.max(acc[2] + arr[2], near), far),
 						1
 					];
 				}, startingCamera),
