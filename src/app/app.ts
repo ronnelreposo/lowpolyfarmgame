@@ -6,7 +6,7 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Model } from "./models/unit";
+import { Mesh } from "./models/unit";
 import { puppy } from "./models/puppy";
 
 @Component({
@@ -135,7 +135,7 @@ export class App implements AfterViewInit {
 		];
 
 		// Transform: Final transform - Move to local space.
-		const finalLocalTransform = mapTree<Model, Model>(puppy, (cube) => {
+		const finalLocalTransform = mapTree<Mesh, Mesh>(puppy, (cube) => {
 			const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
 			const Rx = mat.rotationX44([], 0);
 			const Ry = mat.rotationY44([], 0);
@@ -150,11 +150,11 @@ export class App implements AfterViewInit {
 			// return mat.mulM44([], cube.model, M);
 
 			// World-space add:
-			const newModel = mat.mulM44([], M, cube.model);
+			const newModel = mat.mulM44([], M, cube.worldMatrix);
 
-			return <Model>{
+			return <Mesh>{
 				...cube,
-				model: newModel,
+				worldMatrix: newModel,
 			};
 		});
 
@@ -164,10 +164,11 @@ export class App implements AfterViewInit {
 			(acc, val) => {
 				const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
 				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
+				// Revisit performance.
 				return {
 					verticesArray: [...acc.verticesArray, ...val.vertices],
 					colorsArray: [...acc.colorsArray, ...val.colors],
-					modelsArray: [...acc.modelsArray, ...val.model],
+					modelsArray: [...acc.modelsArray, ...val.worldMatrix],
 					modelIdIncrement: acc.modelIdIncrement + 1,
 					modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
 					cubeCount: acc.cubeCount + 1

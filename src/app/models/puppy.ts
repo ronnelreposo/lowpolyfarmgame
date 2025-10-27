@@ -1,15 +1,15 @@
 
 import * as mat from "@thi.ng/matrices";
 import { createLeaf, createNode, mapTree, Tree } from "../ds/tree";
-import { Model, unitCube } from "./unit";
+import { Mesh, unitCube } from "./unit";
 import { toRadians } from "../ds/util";
 
-const head_unit: Tree<Model> = createNode(
+const head_unit: Tree<Mesh> = createNode(
 	unitCube("base-head"),
 	[createLeaf(unitCube("left-ear")), createLeaf(unitCube("right-ear"))]
 );
 		// Transform: Head w/ two ears model, box composition.
-		const headComposition = mapTree<Model, Model>(head_unit, (cube) => {
+		const headComposition = mapTree<Mesh, Mesh>(head_unit, (cube) => {
 			if (cube.id === "left-ear" || cube.id === "right-ear") {
 				const step = 0.5;
 				const earsAngleDeg = 25;
@@ -24,15 +24,15 @@ const head_unit: Tree<Model> = createNode(
 				const S = mat.scale44([], 0.7);
 				// M = T * Rx * Ry * Rz * S
 				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Model>{
+				return <Mesh>{
 					...cube,
-					model:  mat.mulM44([], cube.model, newModel), // local transform.
+					worldMatrix:  mat.mulM44([], cube.worldMatrix, newModel), // local transform.
 				};
 			}
 			return cube;
 		});
 		// Transform: Head w/ two ears model, box composition.
-const headComposition2 = mapTree<Model, Model>(headComposition, (cube) => {
+const headComposition2 = mapTree<Mesh, Mesh>(headComposition, (cube) => {
 	const T = mat.translation44([], [0, 0.4, 0.0]); // identity for now.
 	const Rx = mat.rotationX44([], 0);
 	const Ry = mat.rotationY44([], toRadians(25));
@@ -41,13 +41,13 @@ const headComposition2 = mapTree<Model, Model>(headComposition, (cube) => {
 	const S = mat.scale44([], 0.7);
 	// M = T * Rx * Ry * Rz * S
 	const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-	return <Model>{
+	return <Mesh>{
 		...cube,
-		model: mat.mulM44([], newModel, cube.model), // world transform.
+		worldMatrix: mat.mulM44([], newModel, cube.worldMatrix), // world transform.
 	};
 });
 
-const body: Tree<Model> = createNode(
+const body: Tree<Mesh> = createNode(
 	unitCube("body"),
 	[
 		headComposition2,
@@ -55,7 +55,7 @@ const body: Tree<Model> = createNode(
 	]
 );
 
-export const puppy = mapTree<Model, Model>(body, (cube) => {
+export const puppy = mapTree<Mesh, Mesh>(body, (cube) => {
 	if (cube.id === "body") {
 		const T = mat.translation44([], [0.0, -0.4, 0.0]); // identity for now.
 		const Rx = mat.rotationX44([], 0);
@@ -65,9 +65,9 @@ export const puppy = mapTree<Model, Model>(body, (cube) => {
 		const S = mat.scale44([], 0.85);
 		// M = T * Rx * Ry * Rz * S
 		const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-		return <Model>{
+		return <Mesh>{
 			...cube,
-			model: newModel,
+			worldMatrix: newModel,
 		};
 	}
 	if (cube.id === "left-leg" || cube.id === "right-leg") {
@@ -82,9 +82,9 @@ export const puppy = mapTree<Model, Model>(body, (cube) => {
 		const S = mat.scale44([], 0.5);
 		// M = T * Rx * Ry * Rz * S
 		const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-		return <Model>{
+		return <Mesh>{
 			...cube,
-			model: newModel,
+			worldMatrix: newModel,
 		};
 	}
 	return cube;
