@@ -6,8 +6,9 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh } from "./models/unit";
-import { puppy } from "./models/puppy";
+import { Mesh, unitCube } from "./models/unit";
+import { head_unit, myRobot, puppy, updateWorld } from "./models/puppy";
+import { toDegrees } from "./ds/util";
 
 @Component({
 	selector: "app-root",
@@ -28,7 +29,7 @@ export class App implements AfterViewInit {
 		}
 		const canvas = document.querySelector("canvas");
 
-		const startingCamera = [1, 1, 1, 1];
+		const startingCamera = [0, 0, 5, 1];
 		const camera$ = fromEvent<KeyboardEvent>(document!, 'keydown')
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
@@ -134,62 +135,102 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		// Transform: Final transform - Move to local space.
-		const finalLocalTransform = mapTree<Mesh, Mesh>(puppy, (cube) => {
-			const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
-			const Rx = mat.rotationX44([], 0);
-			const Ry = mat.rotationY44([], 0);
-			const Rz = mat.rotationZ44([], 0);
-			const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-			const S = mat.scale44([], 1);
-			// M = T * Rx * Ry * Rz * S
-			const M = mat.mulM44([], T, mat.mulM44([], R, S));
+		// // Transform: Final transform - Move to local space.
+		// const finalLocalTransform = mapTree<Mesh, Mesh>(head_unit, (cube) => {
+		// 	const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
+		// 	const Rx = mat.rotationX44([], 0);
+		// 	const Ry = mat.rotationY44([], 0);
+		// 	const Rz = mat.rotationZ44([], 0);
+		// 	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
+		// 	const S = mat.scale44([], 1);
+		// 	// M = T * Rx * Ry * Rz * S
+		// 	const M = mat.mulM44([], T, mat.mulM44([], R, S));
 
-			// choose one:
-			// Local-space add:
-			// return mat.mulM44([], cube.model, M);
+		// 	// choose one:
+		// 	// Local-space add:
+		// 	// return mat.mulM44([], cube.model, M);
 
-			// World-space add:
-			const newModel = mat.mulM44([], M, cube.worldMatrix);
+		// 	// World-space add:
+		// 	const newModel = mat.mulM44([], M, cube.worldMatrix);
 
-			return <Mesh>{
-				...cube,
-				worldMatrix: newModel,
-			};
-		});
+		// 	return <Mesh>{
+		// 		...cube,
+		// 		worldMatrix: newModel,
+		// 	};
+		// });
 
 		const floatsPerPosition = 4; // vec4f positions.
-		const foldedSceneGraph = reduceTree(
-			finalLocalTransform,
-			(acc, val) => {
-				const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
-				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
-				// Revisit performance.
-				return {
-					verticesArray: [...acc.verticesArray, ...val.vertices],
-					colorsArray: [...acc.colorsArray, ...val.colors],
-					modelsArray: [...acc.modelsArray, ...val.worldMatrix],
-					modelIdIncrement: acc.modelIdIncrement + 1,
-					modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
-					cubeCount: acc.cubeCount + 1
-				};
-			},
-			{
-				verticesArray: [] as number[],
-				colorsArray: [] as number[],
-				modelsArray: [] as number[],
-				modelIdIncrement: 0,
-				modelIdArray: [] as number[],
-				cubeCount: 0
-			}
-		);
+		// const foldedSceneGraph = reduceTree(
+		// 	finalLocalTransform,
+		// 	(acc, val) => {
+		// 		const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
+		// 		const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
+		// 		// Revisit performance.
+		// 		return {
+		// 			verticesArray: [...acc.verticesArray, ...val.vertices],
+		// 			colorsArray: [...acc.colorsArray, ...val.colors],
+		// 			// modelsArray: [...acc.modelsArray, ...val.worldMatrix],
+		// 			modelIdIncrement: acc.modelIdIncrement + 1,
+		// 			modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
+		// 			cubeCount: acc.cubeCount + 1
+		// 		};
+		// 	},
+		// 	{
+		// 		verticesArray: [] as number[],
+		// 		colorsArray: [] as number[],
+		// 		// modelsArray: [] as number[],
+		// 		modelIdIncrement: 0,
+		// 		modelIdArray: [] as number[],
+		// 		cubeCount: 0
+		// 	}
+		// );
+
+		// simplified for now, we could use tree later combining Mesh & Geometry
+		// const pos_xs = [
+		// 	unitCube("1").vertices,
+		// 	unitCube("2").vertices,
+		// 	unitCube("3").vertices,
+		// ];
+
+		// lazy version. put it on a tree along side with geometry.
+		// fudge (delete) the baselocal, local and world.
+		const reduced_result = [
+			unitCube("1"),
+			unitCube("2"),
+			unitCube("3"),
+		]
+		.reduce((acc, c) => {
+			const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
+			const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
+			return {
+				verticesArray: [...acc.verticesArray, ...c.vertices],
+				colorsArray: [...acc.colorsArray, ...c.colors],
+				modelIdIncrement: acc.modelIdIncrement + 1,
+				modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
+				cubeCount: acc.cubeCount + 1
+			};
+		},
+		{
+			verticesArray: [] as number[],
+			colorsArray: [] as number[],
+			// modelsArray: [] as number[],
+			modelIdIncrement: 0,
+			modelIdArray: [] as number[],
+			cubeCount: 0
+		});
+		const xs = reduceTree(
+			updateWorld(myRobot, mat.rotationZ44([], 25) as number[]),
+			(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+
+
+		console.log(reduced_result.modelIdArray);
 
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
-		const posStorageValues = new Float32Array(foldedSceneGraph.verticesArray);
+		const posStorageValues = new Float32Array(reduced_result.verticesArray);
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
 			size: posStorageValues.byteLength,
@@ -197,21 +238,21 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const modelsStorageValues = new Float32Array(foldedSceneGraph.modelsArray.flat());
+		const modelsStorageValues = new Float32Array(xs);
 		const modelsStorageBuffer = device.createBuffer({
 			label: `Models storage buffer`,
 			size: modelsStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const modelIdStorageValues = new Uint32Array(foldedSceneGraph.modelIdArray);
+		const modelIdStorageValues = new Uint32Array(reduced_result.modelIdArray);
 		const modelIdStorageBuffer = device.createBuffer({
 			label: `Model IDs storage buffer`,
 			size: modelIdStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const colorStorageValues = new Float32Array(foldedSceneGraph.colorsArray);
+		const colorStorageValues = new Float32Array(reduced_result.colorsArray);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
 			size: colorStorageValues.byteLength,
@@ -286,10 +327,27 @@ export class App implements AfterViewInit {
 				pass.setPipeline(pipeline);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(foldedSceneGraph.colorsArray));
+				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reduced_result.colorsArray));
+
+				// E.g. Turn all the scene graph tree.
+				const trs = mat.rotationZ44([], pingPongAngle(period)) as number[]; // Just a shortcut.
+				const xs = reduceTree(
+					updateWorld(myRobot, trs),
+					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+
+				// // E.g. Turn all the scene graph tree (TARGET)_.
+				// const targetLeftEar = mapTree(myRobot, trs => {
+				// 	if (trs.id === "left-ear") {
+				// 		return { ...trs, rzdeg: toDegrees(pingPongAngle(0)) }
+				// 	}
+				// 	return trs;
+				// })
+				// const xs = reduceTree(
+				// 	updateWorld(targetLeftEar), // no need to pass a matrix transform for the whole.
+				// 	(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelsStorageBuffer, 0, modelsStorageValues);
+				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(xs));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdStorageValues);
@@ -307,7 +365,7 @@ export class App implements AfterViewInit {
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(foldedSceneGraph.cubeCount * unitCubeNumOfVertices, drawInstances);
+				pass.draw(reduced_result.cubeCount * unitCubeNumOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
@@ -342,3 +400,22 @@ type Entity = (
 	| { kind: "free" })
 	// | { kind: "cool-hero" } // 🤣
 & { verts: number[], triangleCount: number, color: number[] }
+
+
+
+
+const fract = (x: number) => x - Math.floor(x);
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+const deg2rad = (d: number) => (d * Math.PI) / 180;
+
+// ping-pong in [0,1] given any time t (seconds) and frequency (cycles/sec)
+function pingPong01(t: number, freq = 1): number {
+  const phase = fract(t * freq);           // 0..1
+  return 1 - Math.abs(1 - 2 * phase);      // 0..1..0
+}
+
+// angle that goes back & forth between -maxDeg and +maxDeg
+function pingPongAngle(t: number, maxDeg = 25, freq = 1): number {
+  const w = pingPong01(t, freq);           // 0..1..0
+  return mix(-deg2rad(maxDeg), deg2rad(maxDeg), w);
+}

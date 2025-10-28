@@ -14,16 +14,26 @@ type TRS = {
 	s: number,
 }
 
-const myRobot: Tree<TRS> = createNode<TRS>(
-	{ id: "root", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
+// export const myRobot: Tree<TRS> = createNode<TRS>(
+// 	{ id: "root", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
+// 	[
+// 		createNode(
+// 			{ id: "head-base", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
+// 			[
+// 				createLeaf({ id: "left-ear", t: [-0.5, 5, 0], pivot: [0.0, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 }),
+// 				createLeaf({ id: "right-ear", t: [0.5, 5, 0], pivot: [0.0, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: 25, s: 0.5 })
+// 			]
+// 		),
+// 	]
+// );
+
+export const myRobot: Tree<TRS> = createNode<TRS>(
+	{ id: "head-base", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
 	[
-		createNode(
-			{ id: "head-base", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
-			[
-				createLeaf({ id: "left-ear", t: [-0.5, 5, 0], pivot: [0.0, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 }),
-				createLeaf({ id: "right-ear", t: [0.5, 5, 0], pivot: [0.0, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: 25, s: 0.5 })
-			]
-		),
+		// Using pivot even!!!
+
+		createLeaf({ id: "left-ear", t: [0.5, 0.5, 0], pivot: [0.5, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 }),
+		createLeaf({ id: "right-ear", t: [-0.5, 0.5, 0], pivot: [-0.5, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: 25, s: 0.5 })
 	]
 );
 
@@ -39,12 +49,12 @@ function matFromTRS({ t, pivot, rxdeg, rydeg, rzdeg, s }: TRS): number[] {
 	return mat.mulM44([], T, mat.mulM44([], P,  mat.mulM44([], R, mat.mulM44([], S, nP)))) as number[]; // T*(P*R*S*-P)
 }
 
-export function updateWorld(tree: Tree<TRS>, parentWorld: number[] = mat.IDENT44 as number[]): Tree<TRS> {
+export function updateWorld(tree: Tree<TRS>, parentWorld: number[] = mat.IDENT44 as number[]): Tree<TRS & { worldMatrix: number[] }> {
 	const value = tree.value;
 	const baseM = matFromTRS(value);
 	const world = mat.mulM44([], parentWorld, baseM); // parent * baseLocal
 
-	const updated = { ...value, worldMatrix: world };
+	const updated: TRS & { worldMatrix: number[] } = { ...value, worldMatrix: world as number[] };
 
 	if (tree.kind === "leaf") return createLeaf(updated);
 	return createNode(updated, tree.children.map(ch => updateWorld(ch, world as number[])));
@@ -52,7 +62,7 @@ export function updateWorld(tree: Tree<TRS>, parentWorld: number[] = mat.IDENT44
 
 
 
-const head_unit: Tree<Mesh> = createNode(
+export const head_unit: Tree<Mesh> = createNode(
 	unitCube("base-head"),
 	[createLeaf(unitCube("left-ear")), createLeaf(unitCube("right-ear"))]
 );
