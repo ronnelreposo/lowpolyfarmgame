@@ -27,13 +27,21 @@ type TRS = {
 // 	]
 // );
 
-export const myRobot: Tree<TRS> = createNode<TRS>(
-	{ id: "head-base", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1 },
+export const headGeom: Tree<TRS> = createNode<TRS>(
+	{ id: "head-base", t: [0, 0.9, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.7 },
 	[
-		// Using pivot even!!!
-
-		createLeaf({ id: "left-ear", t: [0.5, 0.5, 0], pivot: [0.5, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 }),
-		createLeaf({ id: "right-ear", t: [-0.5, 0.5, 0], pivot: [-0.5, 0.0, 0], rxdeg: 0, rydeg: 0, rzdeg: 25, s: 0.5 })
+		createLeaf({ id: "left-ear", t: [1.0, 1.0, 0], pivot: [-0.5, -0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 }),
+		createLeaf({ id: "right-ear", t: [-1.0, 1.0, 0], pivot: [0.5, -0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: -25, s: 0.5 })
+	]
+);
+export const bodyGeom: Tree<TRS> = createNode<TRS>(
+	{ id: "trunk", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.5 },
+	[
+		headGeom,
+		createLeaf({ id: "left-arm", t: [0.8, -0.3, 0], pivot: [0.0, 0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.5 }),
+		createLeaf({ id: "right-arm", t: [-0.8, -0.3, 0], pivot: [0.0, 0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.5 }),
+		createLeaf({ id: "left-leg", t: [0.3, -1.1, 0], pivot: [0.0, 0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.5 }),
+		createLeaf({ id: "right-leg", t: [-0.3, -1.1, 0], pivot: [0.0, 0.5, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 0.5 }),
 	]
 );
 
@@ -59,91 +67,3 @@ export function updateWorld(tree: Tree<TRS>, parentWorld: number[] = mat.IDENT44
 	if (tree.kind === "leaf") return createLeaf(updated);
 	return createNode(updated, tree.children.map(ch => updateWorld(ch, world as number[])));
 }
-
-
-
-export const head_unit: Tree<Mesh> = createNode(
-	unitCube("base-head"),
-	[createLeaf(unitCube("left-ear")), createLeaf(unitCube("right-ear"))]
-);
-		// Transform: Head w/ two ears model, box composition.
-		const headComposition = mapTree<Mesh, Mesh>(head_unit, (cube) => {
-			if (cube.id === "left-ear" || cube.id === "right-ear") {
-				const step = 0.5;
-				const earsAngleDeg = 25;
-				const T = mat.translation44([], [
-					cube.id === "left-ear" ? step : -step, 0.25, 0.0,
-				]); // identity for now.
-				const Rx = mat.rotationX44([], 0);
-				const Ry = mat.rotationY44([], 0);
-				const Rz = mat.rotationZ44([],
-					toRadians(cube.id === "left-ear" ? -earsAngleDeg : earsAngleDeg)); // tilt a bit.
-				const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-				const S = mat.scale44([], 0.7);
-				// M = T * Rx * Ry * Rz * S
-				const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-				return <Mesh>{
-					...cube,
-					worldMatrix:  mat.mulM44([], cube.worldMatrix, newModel), // local transform.
-				};
-			}
-			return cube;
-		});
-		// Transform: Head w/ two ears model, box composition.
-const headComposition2 = mapTree<Mesh, Mesh>(headComposition, (cube) => {
-	const T = mat.translation44([], [0, 0.4, 0.0]); // identity for now.
-	const Rx = mat.rotationX44([], 0);
-	const Ry = mat.rotationY44([], toRadians(25));
-	const Rz = mat.rotationZ44([], toRadians(15)); // tilt a bit.
-	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-	const S = mat.scale44([], 0.7);
-	// M = T * Rx * Ry * Rz * S
-	const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-	return <Mesh>{
-		...cube,
-		worldMatrix: mat.mulM44([], newModel, cube.worldMatrix), // world transform.
-	};
-});
-
-const body: Tree<Mesh> = createNode(
-	unitCube("body"),
-	[
-		headComposition2,
-		createLeaf(unitCube("left-leg")), createLeaf(unitCube("right-leg"))
-	]
-);
-
-export const puppy = mapTree<Mesh, Mesh>(body, (cube) => {
-	if (cube.id === "body") {
-		const T = mat.translation44([], [0.0, -0.4, 0.0]); // identity for now.
-		const Rx = mat.rotationX44([], 0);
-		const Ry = mat.rotationY44([], 0);
-		const Rz = mat.rotationZ44([], 0); // tilt a bit.
-		const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-		const S = mat.scale44([], 0.85);
-		// M = T * Rx * Ry * Rz * S
-		const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-		return <Mesh>{
-			...cube,
-			worldMatrix: newModel,
-		};
-	}
-	if (cube.id === "left-leg" || cube.id === "right-leg") {
-		const step = 0.5;
-		const T = mat.translation44([], [
-			cube.id === "left-leg" ? step : -step, -0.85, 0.0,
-		]); // identity for now.
-		const Rx = mat.rotationX44([], 0);
-		const Ry = mat.rotationY44([], 0);
-		const Rz = mat.rotationZ44([], 0);
-		const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-		const S = mat.scale44([], 0.5);
-		// M = T * Rx * Ry * Rz * S
-		const newModel = mat.mulM44([], T, mat.mulM44([], R, S));
-		return <Mesh>{
-			...cube,
-			worldMatrix: newModel,
-		};
-	}
-	return cube;
-});

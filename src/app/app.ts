@@ -7,7 +7,7 @@ import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map,
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
 import { Mesh, unitCube } from "./models/unit";
-import { head_unit, myRobot, puppy, updateWorld } from "./models/puppy";
+import { bodyGeom, updateWorld } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 
 @Component({
@@ -34,7 +34,7 @@ export class App implements AfterViewInit {
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
-					console.log("key", event)
+					// console.log("key", event)
 					switch (event.key) {
 						case "ArrowLeft": {
 							return of([0.1, 0, 0]);
@@ -194,43 +194,36 @@ export class App implements AfterViewInit {
 
 		// lazy version. put it on a tree along side with geometry.
 		// fudge (delete) the baselocal, local and world.
-		const reduced_result = [
-			unitCube("1"),
-			unitCube("2"),
-			unitCube("3"),
-		]
-		.reduce((acc, c) => {
-			const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
-			const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
-			return {
-				verticesArray: [...acc.verticesArray, ...c.vertices],
-				colorsArray: [...acc.colorsArray, ...c.colors],
-				modelIdIncrement: acc.modelIdIncrement + 1,
-				modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
-				cubeCount: acc.cubeCount + 1
-			};
-		},
-		{
-			verticesArray: [] as number[],
-			colorsArray: [] as number[],
-			// modelsArray: [] as number[],
-			modelIdIncrement: 0,
-			modelIdArray: [] as number[],
-			cubeCount: 0
-		});
-		const xs = reduceTree(
-			updateWorld(myRobot, mat.rotationZ44([], 25) as number[]),
+		const cubeNums = 8; // Should match the tree.
+		const reducedResult = Array(cubeNums).fill(0).map((_, i) => unitCube(`${i + 1}`))
+			.reduce((acc, c) => {
+				const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
+				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
+				return {
+					verticesArray: [...acc.verticesArray, ...c.vertices],
+					colorsArray: [...acc.colorsArray, ...c.colors],
+					modelIdIncrement: acc.modelIdIncrement + 1,
+					modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
+					cubeCount: acc.cubeCount + 1
+				};
+			},
+				{
+					verticesArray: [] as number[],
+					colorsArray: [] as number[],
+					modelIdIncrement: 0,
+					modelIdArray: [] as number[],
+					cubeCount: 0
+				});
+		const worldModels = reduceTree(
+			updateWorld(bodyGeom, mat.IDENT44 as number[]),
 			(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
-
-
-		console.log(reduced_result.modelIdArray);
 
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
-		const posStorageValues = new Float32Array(reduced_result.verticesArray);
+		const posStorageValues = new Float32Array(reducedResult.verticesArray);
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
 			size: posStorageValues.byteLength,
@@ -238,21 +231,21 @@ export class App implements AfterViewInit {
 		});
 		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const modelsStorageValues = new Float32Array(xs);
+		const modelsStorageValues = new Float32Array(worldModels);
 		const modelsStorageBuffer = device.createBuffer({
 			label: `Models storage buffer`,
 			size: modelsStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const modelIdStorageValues = new Uint32Array(reduced_result.modelIdArray);
+		const modelIdStorageValues = new Uint32Array(reducedResult.modelIdArray);
 		const modelIdStorageBuffer = device.createBuffer({
 			label: `Model IDs storage buffer`,
 			size: modelIdStorageValues.byteLength,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const colorStorageValues = new Float32Array(reduced_result.colorsArray);
+		const colorStorageValues = new Float32Array(reducedResult.colorsArray);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
 			size: colorStorageValues.byteLength,
@@ -327,27 +320,49 @@ export class App implements AfterViewInit {
 				pass.setPipeline(pipeline);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reduced_result.colorsArray));
+				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reducedResult.colorsArray));
 
-				// E.g. Turn all the scene graph tree.
-				const trs = mat.rotationZ44([], pingPongAngle(period)) as number[]; // Just a shortcut.
-				const xs = reduceTree(
-					updateWorld(myRobot, trs),
-					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
-
-				// // E.g. Turn all the scene graph tree (TARGET)_.
-				// const targetLeftEar = mapTree(myRobot, trs => {
-				// 	if (trs.id === "left-ear") {
-				// 		return { ...trs, rzdeg: toDegrees(pingPongAngle(0)) }
-				// 	}
-				// 	return trs;
-				// })
+				// // E.g. Turn all the scene graph tree.
+				// const trs = mat.rotationZ44([], pingPongAngle(period)) as number[]; // Just a shortcut.
 				// const xs = reduceTree(
-				// 	updateWorld(targetLeftEar), // no need to pass a matrix transform for the whole.
+				// 	updateWorld(bodyGeom, trs),
 				// 	(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
 
+				// E.g. Turn all the scene graph tree (TARGET)_.
+				const targetLeftEar = mapTree(bodyGeom, trs => {
+					if (trs.id === "head-base") {
+						return {
+							...trs,
+							rzdeg: toDegrees(pingPongAngle(period)),
+							rxdeg: toDegrees(pingPongAngle(period))
+						}
+					}
+					const earPronouncedAngle = 35;
+					if (trs.id === "left-ear" || trs.id === "right-ear") {
+						return { ...trs, rzdeg: toDegrees(easeInOutCubic(pingPongAngle(period, earPronouncedAngle))) }
+					}
+					if (trs.id === "left-leg" || trs.id === "right-arm") {
+						return { ...trs, rxdeg: toDegrees(-easeInOutCubic(pingPongAngle(period))) }
+					}
+					if (trs.id === "right-leg" || trs.id === "left-arm") {
+						return { ...trs, rxdeg: toDegrees(easeInOutCubic(pingPongAngle(period))) }
+					}
+					if (trs.id === "trunk") {
+						const angle = easeOutCubic(pingPongAngle(period));
+						return {
+							...trs,
+							rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
+							t: [0, angle, 0] // jump my child
+						}
+					}
+					return trs;
+				});
+				const models = reduceTree(
+					updateWorld(targetLeftEar), // no need to pass a matrix transform for the whole.
+					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(xs));
+				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdStorageValues);
@@ -365,7 +380,7 @@ export class App implements AfterViewInit {
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(reduced_result.cubeCount * unitCubeNumOfVertices, drawInstances);
+				pass.draw(reducedResult.cubeCount * unitCubeNumOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
@@ -418,4 +433,49 @@ function pingPong01(t: number, freq = 1): number {
 function pingPongAngle(t: number, maxDeg = 25, freq = 1): number {
   const w = pingPong01(t, freq);           // 0..1..0
   return mix(-deg2rad(maxDeg), deg2rad(maxDeg), w);
+}
+
+function easeInOutBack(x: number): number {
+	const c1 = 1.70158;
+	const c2 = c1 * 1.525;
+
+	return x < 0.5
+		? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+		: (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
+}
+
+function easeInOutSine(x: number): number {
+	return -(Math.cos(Math.PI * x) - 1) / 2;
+}
+function easeInOutQuad(x: number): number {
+	return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+}
+
+function easeOutCubic(x: number): number {
+	return 1 - Math.pow(1 - x, 3);
+}
+function easeInOutCubic(x: number): number {
+	return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+function easeOutSine(x: number): number {
+	return Math.sin((x * Math.PI) / 2);
+}
+
+function easeOutBounce(x: number): number {
+	const n1 = 7.5625;
+	const d1 = 2.75;
+
+	if (x < 1 / d1) {
+		return n1 * x * x;
+	} else if (x < 2 / d1) {
+		return n1 * (x -= 1.5 / d1) * x + 0.75;
+	} else if (x < 2.5 / d1) {
+		return n1 * (x -= 2.25 / d1) * x + 0.9375;
+	} else {
+		return n1 * (x -= 2.625 / d1) * x + 0.984375;
+	}
+}
+function easeInBounce(x: number): number {
+	return 1 - easeOutBounce(1 - x);
 }
