@@ -137,14 +137,14 @@ export class App implements AfterViewInit {
 		];
 
 		const floatsPerPosition = 4; // vec4f positions.
-		const subjects = 3;
-		const cubeNums = 8 * subjects; // Should match the tree.
+		const subjects = 30;
+		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
 
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
-		const MAX_BUFF_SIZE = 128 * 1024;
+		const MAX_BUFF_SIZE = 512 * 1024;
 
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
@@ -207,7 +207,7 @@ export class App implements AfterViewInit {
 			camera: camera$,
 		})
 			.subscribe(({ frame, canvasDimension, camera }) => {
-
+				const start = performance.now();
 				// console.log(camera);
 
 				const duration = 1_500;
@@ -282,12 +282,17 @@ export class App implements AfterViewInit {
 					if (trs.id === "right-leg" || trs.id === "left-arm") {
 						return { ...trs, rxdeg: toDegrees(easeInOutCubic(pingPongAngle(period))) }
 					}
-					if (trs.id === "trunk") {
+					if (trs.id.startsWith("cuberman")) {
+
+						// get the index. (poormans design)
+						const index = +trs.id.replace("cuberman:", "");
+						// console.log(index)
+
 						const angle = easeOutCubic(pingPongAngle(period));
 						return {
 							...trs,
 							rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
-							t: [0, angle, 0] // jump my child
+							t: [index - 10, angle, 0] // jump my child
 						}
 					}
 					return trs;
@@ -320,6 +325,9 @@ export class App implements AfterViewInit {
 				pass.end();
 				const commandBuffer = encoder.finish();
 				device.queue.submit([commandBuffer]);
+
+				const end = performance.now();
+				console.log(end - start);
 			});
 	}
 }
