@@ -7,8 +7,9 @@ import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map,
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
 import { Mesh, unitCube } from "./models/unit";
-import { bodyGeom, updateWorld } from "./models/puppy";
+import { bodyGeom } from "./models/puppy";
 import { toDegrees } from "./ds/util";
+import { updateWorld } from "./models/geom";
 
 @Component({
 	selector: "app-root",
@@ -135,65 +136,8 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		// // Transform: Final transform - Move to local space.
-		// const finalLocalTransform = mapTree<Mesh, Mesh>(head_unit, (cube) => {
-		// 	const T = mat.translation44([], [0.0, 0.0, 0.0]); // identity for now.
-		// 	const Rx = mat.rotationX44([], 0);
-		// 	const Ry = mat.rotationY44([], 0);
-		// 	const Rz = mat.rotationZ44([], 0);
-		// 	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
-		// 	const S = mat.scale44([], 1);
-		// 	// M = T * Rx * Ry * Rz * S
-		// 	const M = mat.mulM44([], T, mat.mulM44([], R, S));
-
-		// 	// choose one:
-		// 	// Local-space add:
-		// 	// return mat.mulM44([], cube.model, M);
-
-		// 	// World-space add:
-		// 	const newModel = mat.mulM44([], M, cube.worldMatrix);
-
-		// 	return <Mesh>{
-		// 		...cube,
-		// 		worldMatrix: newModel,
-		// 	};
-		// });
-
 		const floatsPerPosition = 4; // vec4f positions.
-		// const foldedSceneGraph = reduceTree(
-		// 	finalLocalTransform,
-		// 	(acc, val) => {
-		// 		const vertexCount = Math.floor(val.vertices.length / floatsPerPosition);
-		// 		const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
-		// 		// Revisit performance.
-		// 		return {
-		// 			verticesArray: [...acc.verticesArray, ...val.vertices],
-		// 			colorsArray: [...acc.colorsArray, ...val.colors],
-		// 			// modelsArray: [...acc.modelsArray, ...val.worldMatrix],
-		// 			modelIdIncrement: acc.modelIdIncrement + 1,
-		// 			modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
-		// 			cubeCount: acc.cubeCount + 1
-		// 		};
-		// 	},
-		// 	{
-		// 		verticesArray: [] as number[],
-		// 		colorsArray: [] as number[],
-		// 		// modelsArray: [] as number[],
-		// 		modelIdIncrement: 0,
-		// 		modelIdArray: [] as number[],
-		// 		cubeCount: 0
-		// 	}
-		// );
-
-		// simplified for now, we could use tree later combining Mesh & Geometry
-		// const pos_xs = [
-		// 	unitCube("1").vertices,
-		// 	unitCube("2").vertices,
-		// 	unitCube("3").vertices,
-		// ];
-
 		// lazy version. put it on a tree along side with geometry.
-		// fudge (delete) the baselocal, local and world.
 		const cubeNums = 8; // Should match the tree.
 		const reducedResult = Array(cubeNums).fill(0).map((_, i) => unitCube(`${i + 1}`))
 			.reduce((acc, c) => {
@@ -321,12 +265,6 @@ export class App implements AfterViewInit {
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reducedResult.colorsArray));
-
-				// // E.g. Turn all the scene graph tree.
-				// const trs = mat.rotationZ44([], pingPongAngle(period)) as number[]; // Just a shortcut.
-				// const xs = reduceTree(
-				// 	updateWorld(bodyGeom, trs),
-				// 	(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
 				const targetLeftEar = mapTree(bodyGeom, trs => {
