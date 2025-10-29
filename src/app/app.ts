@@ -7,7 +7,7 @@ import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map,
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
 import { Mesh, unitCube } from "./models/unit";
-import { bodyGeom } from "./models/puppy";
+import { myworld } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
 
@@ -137,62 +137,36 @@ export class App implements AfterViewInit {
 		];
 
 		const floatsPerPosition = 4; // vec4f positions.
-		// lazy version. put it on a tree along side with geometry.
-		const cubeNums = 8; // Should match the tree.
-		const reducedResult = Array(cubeNums).fill(0).map((_, i) => unitCube(`${i + 1}`))
-			.reduce((acc, c) => {
-				const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
-				const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
-				return {
-					verticesArray: [...acc.verticesArray, ...c.vertices],
-					colorsArray: [...acc.colorsArray, ...c.colors],
-					modelIdIncrement: acc.modelIdIncrement + 1,
-					modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
-					cubeCount: acc.cubeCount + 1
-				};
-			},
-				{
-					verticesArray: [] as number[],
-					colorsArray: [] as number[],
-					modelIdIncrement: 0,
-					modelIdArray: [] as number[],
-					cubeCount: 0
-				});
-		const worldModels = reduceTree(
-			updateWorld(bodyGeom, mat.IDENT44 as number[]),
-			(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+		const subjects = 3;
+		const cubeNums = 8 * subjects; // Should match the tree.
 
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
+		const MAX_BUFF_SIZE = 128 * 1024;
 
-		const posStorageValues = new Float32Array(reducedResult.verticesArray);
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
-			size: posStorageValues.byteLength,
+			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
-		device.queue.writeBuffer(posStorageBuffer, 0, posStorageValues);
 
-		const modelsStorageValues = new Float32Array(worldModels);
 		const modelsStorageBuffer = device.createBuffer({
 			label: `Models storage buffer`,
-			size: modelsStorageValues.byteLength,
+			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const modelIdStorageValues = new Uint32Array(reducedResult.modelIdArray);
 		const modelIdStorageBuffer = device.createBuffer({
 			label: `Model IDs storage buffer`,
-			size: modelIdStorageValues.byteLength,
+			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const colorStorageValues = new Float32Array(reducedResult.colorsArray);
 		const colorStorageBuffer = device.createBuffer({
 			label: `Color storage buffer`,
-			size: colorStorageValues.byteLength,
+			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
@@ -263,11 +237,34 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
+				const reducedResult = Array(cubeNums).fill(0).map((_, i) => unitCube(`${i + 1}`))
+					.reduce((acc, c) => {
+						const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
+						const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
+						return {
+							verticesArray: [...acc.verticesArray, ...c.vertices],
+							colorsArray: [...acc.colorsArray, ...c.colors],
+							modelIdIncrement: acc.modelIdIncrement + 1,
+							modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
+							cubeCount: acc.cubeCount + 1
+						};
+					},
+						{
+							verticesArray: [] as number[],
+							colorsArray: [] as number[],
+							modelIdIncrement: 0,
+							modelIdArray: [] as number[],
+							cubeCount: 0
+						});
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(posStorageBuffer, 0, new Float32Array(reducedResult.verticesArray));
+
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reducedResult.colorsArray));
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
-				const targetLeftEar = mapTree(bodyGeom, trs => {
+				const animatedModel = mapTree(myworld, trs => {
 					if (trs.id === "head-base") {
 						return {
 							...trs,
@@ -296,14 +293,14 @@ export class App implements AfterViewInit {
 					return trs;
 				});
 				const models = reduceTree(
-					updateWorld(targetLeftEar), // no need to pass a matrix transform for the whole.
+					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
 					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdStorageValues);
+				device.queue.writeBuffer(modelIdStorageBuffer, 0, new Uint32Array(reducedResult.modelIdArray));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));

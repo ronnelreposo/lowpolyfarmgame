@@ -1,10 +1,11 @@
 import { rgbaToColor } from "../ds/util";
+// import { TRS } from "./geom";
 
 export type Mesh = {
-	// Geometry
 	id: string,
 	vertices: number[], // improvement convert to float32array?
 	colors: number[],// improvement convert to float32array?
+	// geometry: TRS,
 }
 export function unitCube(id: string): Mesh {
 	const vertices = [
@@ -80,6 +81,6 @@ export function unitCube(id: string): Mesh {
 	return {
 		id,
 		vertices,
-		colors
+		colors,
 	};
 }
