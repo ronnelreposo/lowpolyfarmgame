@@ -145,7 +145,7 @@ export class App implements AfterViewInit {
 		];
 
 		const floatsPerPosition = 4; // vec4f positions.
-		const subjects = 100;
+		const subjects = 10;
 		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
 
 		const numOfVertices = 3; // Triangle primitive
@@ -316,7 +316,7 @@ export class App implements AfterViewInit {
 			}
 
 			if (models) {
-				// console.log("rendering", dt);
+				console.log("rendering", vertexValues.byteLength);
 
 
 
