@@ -144,14 +144,7 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const floatsPerPosition = 4; // vec4f positions.
-		const subjects = 10;
-		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
 
-		const numOfVertices = 3; // Triangle primitive
-		const cubeFaces = 6;
-		const trianglePerFace = 2;
-		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 		const MAX_BUFF_SIZE = 512 * 1024;
 
 		const posStorageBuffer = device.createBuffer({
@@ -213,7 +206,14 @@ export class App implements AfterViewInit {
 		const dt = 1 / 60; // fixed 60 Hz update
 
 		const duration = 1_500;
-		// const period = (frame.timestamp % duration) / duration;
+		const floatsPerPosition = 4; // vec4f positions.
+		const subjects = 10;
+		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
+
+		const numOfVertices = 3; // Triangle primitive
+		const cubeFaces = 6;
+		const trianglePerFace = 2;
+		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
 		const frame = (now: number) => {
 			const delta = (now - last) / 1000;
@@ -222,10 +222,7 @@ export class App implements AfterViewInit {
 
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
-			// console.log(period);
 
-			// let reducedResult = undefined;
-			// const verticesPerCube = 6 * 2 * 3; // 6 faces, 2 triangles per face, 3 vertices.
 			const cubeVertexCount = unitCubeNumOfVertices * floatsPerPosition;
 			const vertexValues = new Float32Array(cubeNums * cubeVertexCount);
 			const colorValues = new Float32Array(cubeNums * cubeVertexCount);
@@ -233,29 +230,6 @@ export class App implements AfterViewInit {
 			let models = undefined;
 
 			while (acc >= dt) {
-				// update(dt);     // physics, animation
-				// console.log("simulation", dt);
-				// const reducedResultSim = {
-				// 	verticesArray: [] as number[],
-				// 	colorsArray: [] as number[],
-				// 	modelIdIncrement: 0,
-				// 	modelIdArray: [] as number[],
-				// 	cubeCount: 0
-				// };
-
-
-
-				// Array.from({ length: cubeNums }, (_, i) => unitCube(`cube${i + 1}`))
-				// 	.forEach(c => {
-				// 		const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
-				// 		const idsForThisObject = Array(vertexCount).fill(reducedResultSim.modelIdIncrement);
-				// 		reducedResultSim.verticesArray.push(...c.vertices);
-				// 		reducedResultSim.colorsArray.push(...c.colors);
-				// 		reducedResultSim.modelIdArray.push(...idsForThisObject);
-				// 		reducedResultSim.modelIdIncrement++;
-				// 		reducedResultSim.cubeCount++;
-				// 	});
-				// reducedResult = reducedResultSim;
 
 				let vertexOffset = 0;
 				let modelId = 0;
@@ -270,7 +244,6 @@ export class App implements AfterViewInit {
 					vertexOffset += c.vertices.length;
 					modelId++;
 				}
-
 
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
@@ -296,7 +269,6 @@ export class App implements AfterViewInit {
 
 						// get the index. (poormans design)
 						const index = +trs.id.replace("cuberman:", "");
-						// console.log(index)
 
 						const angle = easeOutCubic(pingPongAngle(period));
 						return {
@@ -316,23 +288,6 @@ export class App implements AfterViewInit {
 			}
 
 			if (models) {
-				console.log("rendering", vertexValues.byteLength);
-
-
-
-		// combineLatest({
-		// 	frame: animationFrames(),
-		// 	// frame: of({ timestamp: 0 }),
-		// 	canvasDimension: canvasDimension$,
-		// 	// camera: camera$,
-		// })
-		// 	.subscribe(({ frame, canvasDimension, camera }) => {
-				// const start = performance.now();
-				// console.log(camera);
-
-			// 	const duration = 1_500;
-			// 	// const period = (frame.timestamp % duration) / duration;
-			// const period = 0;
 
 			const canvasDimension = canvasDimension$.value;
 				const width = canvasDimension.width;
@@ -358,8 +313,6 @@ export class App implements AfterViewInit {
 				const encoder = device.createCommandEncoder({ label: "our encoder" });
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
-
-			// if (!reducedResult && !models) { return;  }
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(posStorageBuffer, 0, vertexValues);
@@ -393,11 +346,6 @@ export class App implements AfterViewInit {
 				device.queue.submit([commandBuffer]);
 			}
 
-
-			// });
-
-			// render();          // always once per RAF
-			// console.log("rendering", delta);
 			requestAnimationFrame(frame);
 		}
 		requestAnimationFrame(frame);
