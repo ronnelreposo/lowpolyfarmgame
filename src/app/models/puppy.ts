@@ -25,5 +25,5 @@ function createCuberMan(id: string) {
 export const myworld: Tree<TRS> = createNode<TRS>(
 	{ id: "root-anchor", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1.0 },
 	// Array(3).map((_, i) => createCuberMan(i.toString())),
-	Array(30).fill(null).map((x, i) => createCuberMan(i.toString())),
+	Array(100).fill(null).map((x, i) => createCuberMan(i.toString())),
 );

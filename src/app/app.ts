@@ -22,6 +22,8 @@ export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 
+
+
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -31,7 +33,8 @@ export class App implements AfterViewInit {
 		const canvas = document.querySelector("canvas");
 
 		const startingCamera = [0, 0, 5, 1];
-		const camera$ = fromEvent<KeyboardEvent>(document!, 'keydown')
+		const camera$ = new BehaviorSubject(startingCamera);
+		fromEvent<KeyboardEvent>(document!, 'keydown')
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
@@ -77,9 +80,12 @@ export class App implements AfterViewInit {
 					];
 				}, startingCamera),
 				startWith(startingCamera),
-			);
+			).subscribe(camera$);
 
-		const canvasDimension$ = new ReplaySubject<{ width: number, height: number }>(1);
+		const canvasDimension$ = new BehaviorSubject<{ width: number, height: number }>({
+			width: canvas!.width,
+			height: canvas!.height,
+		});
 		this.ngZone.runOutsideAngular(async () => {
 			const observer = new ResizeObserver(entries => {
 				for (const entry of entries) {
@@ -95,6 +101,8 @@ export class App implements AfterViewInit {
 			});
 			observer.observe(canvas!);
 		});
+		// const canvasSubj = new
+		// canvasDimension$.subscribe()
 
 		const context = canvas?.getContext("webgpu");
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -137,7 +145,7 @@ export class App implements AfterViewInit {
 		];
 
 		const floatsPerPosition = 4; // vec4f positions.
-		const subjects = 30;
+		const subjects = 100;
 		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
 
 		const numOfVertices = 3; // Triangle primitive
@@ -200,68 +208,70 @@ export class App implements AfterViewInit {
 
 		// Render Loop.
 
-		combineLatest({
-			frame: animationFrames(),
-			// frame: of({ timestamp: 0 }),
-			canvasDimension: canvasDimension$,
-			camera: camera$,
-		})
-			.subscribe(({ frame, canvasDimension, camera }) => {
-				const start = performance.now();
-				// console.log(camera);
+		let last = performance.now();
+		let acc = 0;
+		const dt = 1 / 60; // fixed 60 Hz update
 
-				const duration = 1_500;
-				const period = (frame.timestamp % duration) / duration;
+		const duration = 1_500;
+		// const period = (frame.timestamp % duration) / duration;
 
-				const width = canvasDimension.width;
-				const height = canvasDimension.height;
-				const depthTexture = device.createTexture({
-					size: [canvasDimension.width, canvasDimension.height],
-					format: "depth24plus",
-					usage: GPUTextureUsage.RENDER_ATTACHMENT,
-				});
-				const renderPassDescriptor: GPURenderPassDescriptor = {
-					label: "our basic canvas renderpass",
-					colorAttachments: colorAttachments,
-					depthStencilAttachment: {
-						view: depthTexture.createView(),
-						depthClearValue: 1.0,
-						depthLoadOp: "clear",
-						depthStoreOp: "store"
-					}
-				};
+		const frame = (now: number) => {
+			const delta = (now - last) / 1000;
+			last = now;
+			acc += delta;
 
-				colorAttachments[0].view = context!?.getCurrentTexture().createView();
+			// normalized 0→1 value repeating every duration
+			const period = (now % duration) / duration;
+			// console.log(period);
 
-				const encoder = device.createCommandEncoder({ label: "our encoder" });
-				const pass = encoder.beginRenderPass(renderPassDescriptor);
-				pass.setPipeline(pipeline);
+			// let reducedResult = undefined;
+			// const verticesPerCube = 6 * 2 * 3; // 6 faces, 2 triangles per face, 3 vertices.
+			const cubeVertexCount = unitCubeNumOfVertices * floatsPerPosition;
+			const vertexValues = new Float32Array(cubeNums * cubeVertexCount);
+			const colorValues = new Float32Array(cubeNums * cubeVertexCount);
+			const modelIdValues = new Uint32Array(cubeNums * unitCubeNumOfVertices);
+			let models = undefined;
 
-				const reducedResult = Array(cubeNums).fill(0).map((_, i) => unitCube(`${i + 1}`))
-					.reduce((acc, c) => {
-						const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
-						const idsForThisObject = Array(vertexCount).fill(acc.modelIdIncrement);
-						return {
-							verticesArray: [...acc.verticesArray, ...c.vertices],
-							colorsArray: [...acc.colorsArray, ...c.colors],
-							modelIdIncrement: acc.modelIdIncrement + 1,
-							modelIdArray: [...acc.modelIdArray, ...idsForThisObject],
-							cubeCount: acc.cubeCount + 1
-						};
-					},
-						{
-							verticesArray: [] as number[],
-							colorsArray: [] as number[],
-							modelIdIncrement: 0,
-							modelIdArray: [] as number[],
-							cubeCount: 0
-						});
+			while (acc >= dt) {
+				// update(dt);     // physics, animation
+				// console.log("simulation", dt);
+				// const reducedResultSim = {
+				// 	verticesArray: [] as number[],
+				// 	colorsArray: [] as number[],
+				// 	modelIdIncrement: 0,
+				// 	modelIdArray: [] as number[],
+				// 	cubeCount: 0
+				// };
 
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(posStorageBuffer, 0, new Float32Array(reducedResult.verticesArray));
 
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(colorStorageBuffer, 0, new Float32Array(reducedResult.colorsArray));
+
+				// Array.from({ length: cubeNums }, (_, i) => unitCube(`cube${i + 1}`))
+				// 	.forEach(c => {
+				// 		const vertexCount = Math.floor(c.vertices.length / floatsPerPosition);
+				// 		const idsForThisObject = Array(vertexCount).fill(reducedResultSim.modelIdIncrement);
+				// 		reducedResultSim.verticesArray.push(...c.vertices);
+				// 		reducedResultSim.colorsArray.push(...c.colors);
+				// 		reducedResultSim.modelIdArray.push(...idsForThisObject);
+				// 		reducedResultSim.modelIdIncrement++;
+				// 		reducedResultSim.cubeCount++;
+				// 	});
+				// reducedResult = reducedResultSim;
+
+				let vertexOffset = 0;
+				let modelId = 0;
+				for (let i = 0; i < cubeNums; i++) {
+					const c = unitCube(`${i}`);
+					const vertexCount = c.vertices.length / floatsPerPosition;
+
+					vertexValues.set(c.vertices, vertexOffset);
+					colorValues.set(c.colors, vertexOffset);
+					modelIdValues.fill(modelId, vertexOffset / floatsPerPosition, vertexOffset / floatsPerPosition + vertexCount);
+
+					vertexOffset += c.vertices.length;
+					modelId++;
+				}
+
+
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
 				const animatedModel = mapTree(myworld, trs => {
@@ -292,23 +302,79 @@ export class App implements AfterViewInit {
 						return {
 							...trs,
 							rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
-							t: [index - 10, angle, 0] // jump my child
+							t: [index, angle, 0] // jump my child
 						}
 					}
 					return trs;
 				});
-				const models = reduceTree(
+				models = reduceTree(
 					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
 					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+
+				// Update time accumulator.
+				acc -= dt;
+			}
+
+			if (models) {
+				// console.log("rendering", dt);
+
+
+
+		// combineLatest({
+		// 	frame: animationFrames(),
+		// 	// frame: of({ timestamp: 0 }),
+		// 	canvasDimension: canvasDimension$,
+		// 	// camera: camera$,
+		// })
+		// 	.subscribe(({ frame, canvasDimension, camera }) => {
+				// const start = performance.now();
+				// console.log(camera);
+
+			// 	const duration = 1_500;
+			// 	// const period = (frame.timestamp % duration) / duration;
+			// const period = 0;
+
+			const canvasDimension = canvasDimension$.value;
+				const width = canvasDimension.width;
+				const height = canvasDimension.height;
+				const depthTexture = device.createTexture({
+					size: [canvasDimension.width, canvasDimension.height],
+					format: "depth24plus",
+					usage: GPUTextureUsage.RENDER_ATTACHMENT,
+				});
+				const renderPassDescriptor: GPURenderPassDescriptor = {
+					label: "our basic canvas renderpass",
+					colorAttachments: colorAttachments,
+					depthStencilAttachment: {
+						view: depthTexture.createView(),
+						depthClearValue: 1.0,
+						depthLoadOp: "clear",
+						depthStoreOp: "store"
+					}
+				};
+
+				colorAttachments[0].view = context!?.getCurrentTexture().createView();
+
+				const encoder = device.createCommandEncoder({ label: "our encoder" });
+				const pass = encoder.beginRenderPass(renderPassDescriptor);
+				pass.setPipeline(pipeline);
+
+			// if (!reducedResult && !models) { return;  }
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(posStorageBuffer, 0, vertexValues);
+
+				// Assign here later for write buffer.
+				device.queue.writeBuffer(colorStorageBuffer, 0, colorValues);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelIdStorageBuffer, 0, new Uint32Array(reducedResult.modelIdArray));
+				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdValues);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera));
+				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
@@ -320,15 +386,21 @@ export class App implements AfterViewInit {
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(reducedResult.cubeCount * unitCubeNumOfVertices, drawInstances);
+				pass.draw(cubeNums * unitCubeNumOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
 				device.queue.submit([commandBuffer]);
+			}
 
-				const end = performance.now();
-				console.log(end - start);
-			});
+
+			// });
+
+			// render();          // always once per RAF
+			// console.log("rendering", delta);
+			requestAnimationFrame(frame);
+		}
+		requestAnimationFrame(frame);
 	}
 }
 
