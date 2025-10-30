@@ -7,7 +7,7 @@ import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map,
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
 import { Mesh, unitCube } from "./models/unit";
-import { myworld } from "./models/puppy";
+import { cuberManCount, cuberManCubeCount, myworld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
 
@@ -32,7 +32,7 @@ export class App implements AfterViewInit {
 		}
 		const canvas = document.querySelector("canvas");
 
-		const startingCamera = [0, 0, 5, 1];
+		const startingCamera = [0, 5, 5, 1];
 		const camera$ = new BehaviorSubject(startingCamera);
 		fromEvent<KeyboardEvent>(document!, 'keydown')
 			.pipe(
@@ -73,8 +73,8 @@ export class App implements AfterViewInit {
 					const near = 0.1;
 					const far = 100;
 					return [
-						Math.min(Math.max(acc[0] + arr[0], -1), 1),
-						Math.min(Math.max(acc[1] + arr[1], -1), 1),
+						Math.min(Math.max(acc[0] + arr[0], -5), 5),
+						Math.min(Math.max(acc[1] + arr[1], -5), 5),
 						Math.min(Math.max(acc[2] + arr[2], near), far),
 						1
 					];
@@ -207,8 +207,9 @@ export class App implements AfterViewInit {
 
 		const duration = 1_500;
 		const floatsPerPosition = 4; // vec4f positions.
-		const subjects = 10;
-		const cubeNums = 8 * subjects + 1; // Should match the tree, one for anchor cube.
+		const subjects = cuberManCount;
+		const terrain = terrainWidth * terrainHeight + 1; // row * col + 1 anchor.
+		const cubeNums = cuberManCubeCount * subjects + terrain + 1; // Should match the tree, one for anchor cube, plus terrain.
 
 		const numOfVertices = 3; // Triangle primitive
 		const cubeFaces = 6;
@@ -239,7 +240,9 @@ export class App implements AfterViewInit {
 
 					vertexValues.set(c.vertices, vertexOffset);
 					colorValues.set(c.colors, vertexOffset);
-					modelIdValues.fill(modelId, vertexOffset / floatsPerPosition, vertexOffset / floatsPerPosition + vertexCount);
+					modelIdValues.fill(modelId,
+						vertexOffset / floatsPerPosition,
+						vertexOffset / floatsPerPosition + vertexCount);
 
 					vertexOffset += c.vertices.length;
 					modelId++;
@@ -270,11 +273,11 @@ export class App implements AfterViewInit {
 						// get the index. (poormans design)
 						const index = +trs.id.replace("cuberman:", "");
 
-						const angle = easeOutCubic(pingPongAngle(period));
 						return {
 							...trs,
 							rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
-							t: [index, angle, 0] // jump my child
+							t: [index - cuberManCount / 2, 1, period], // jump my child.
+							// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
 						}
 					}
 					return trs;

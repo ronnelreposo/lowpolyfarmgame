@@ -22,8 +22,38 @@ function createCuberMan(id: string) {
 	);
 }
 
+function terrain(row: number, col: number, gap = 0.01): Tree<TRS> {
+	let allTrs: TRS[] = [];
+	for (let i = 0; i < row; i++) {
+		for (let j = 0; j < col; j++) {
+			allTrs.push(<TRS>{
+				id: `terrain:${i}:${j}`,
+				t: [
+					(i - row / 2) * (1 + gap),
+					0,
+					(j - row / 2) * (1 + gap)
+				],
+				pivot: [0, 0, 0],
+				rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1
+			});
+		}
+	}
+	return createNode<TRS>(
+		{ id: "root-anchor", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1.0 },
+		allTrs.map(createLeaf)
+	)
+}
+
+export const terrainWidth = 10;
+export const terrainHeight = 10;
+export const cuberManCount = 10;
+export const cuberManCubeCount = 8;
 export const myworld: Tree<TRS> = createNode<TRS>(
 	{ id: "root-anchor", t: [0, 0, 0], pivot: [0, 0, 0], rxdeg: 0, rydeg: 0, rzdeg: 0, s: 1.0 },
-	// Array(3).map((_, i) => createCuberMan(i.toString())),
-	Array(10).fill(null).map((x, i) => createCuberMan(i.toString())),
+	[
+		// Cuberman army!
+		...Array(cuberManCount).fill(null).map((x, i) => createCuberMan(i.toString())),
+		// Terrain.
+		terrain(terrainWidth, terrainHeight)
+	],
 );
