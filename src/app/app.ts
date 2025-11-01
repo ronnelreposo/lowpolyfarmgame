@@ -201,9 +201,7 @@ export class App implements AfterViewInit {
 
 		// Render Loop.
 
-		let last = performance.now();
-		let acc = 0;
-		const dt = 1 / 60; // fixed 60 Hz update
+
 
 		const duration = 1_500;
 		const floatsPerPosition = 4; // vec4f positions.
@@ -216,10 +214,15 @@ export class App implements AfterViewInit {
 		const trianglePerFace = 2;
 		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
+		let previous = performance.now();
+		let lag = 0.0;
+		let MsPerUpdate = 1_000 / 60;
 		const frame = (now: number) => {
-			const delta = (now - last) / 1000;
-			last = now;
-			acc += delta;
+			const elapsed = now - previous;
+			previous = now;
+			lag += elapsed;
+
+			// Process Input here.
 
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
@@ -230,7 +233,7 @@ export class App implements AfterViewInit {
 			const modelIdValues = new Uint32Array(cubeNums * unitCubeNumOfVertices);
 			let models = undefined;
 
-			while (acc >= dt) {
+			while (lag >= MsPerUpdate) {
 
 				let vertexOffset = 0;
 				let modelId = 0;
@@ -247,7 +250,6 @@ export class App implements AfterViewInit {
 					vertexOffset += c.vertices.length;
 					modelId++;
 				}
-
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
 				const animatedModel = mapTree(myworld, trs => {
@@ -286,13 +288,12 @@ export class App implements AfterViewInit {
 					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
 					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
 
-				// Update time accumulator.
-				acc -= dt;
+				// Update lag of the game loop.
+				lag -= MsPerUpdate;
 			}
-
 			if (models) {
 
-			const canvasDimension = canvasDimension$.value;
+				const canvasDimension = canvasDimension$.value;
 				const width = canvasDimension.width;
 				const height = canvasDimension.height;
 				const depthTexture = device.createTexture({
@@ -348,9 +349,8 @@ export class App implements AfterViewInit {
 				const commandBuffer = encoder.finish();
 				device.queue.submit([commandBuffer]);
 			}
-
 			requestAnimationFrame(frame);
-		}
+		};
 		requestAnimationFrame(frame);
 	}
 }
