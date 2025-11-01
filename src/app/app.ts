@@ -6,8 +6,8 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, unitCube, Universal } from "./models/unit";
-import { cuberManCount, cuberManCubeCount, myworld, terrainHeight, terrainWidth } from "./models/puppy";
+import { Mesh, setDebugColors, unitCube, Universal } from "./models/unit";
+import { cuberManCount, cuberManCubeCount, myModelWorld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
 
@@ -221,7 +221,7 @@ export class App implements AfterViewInit {
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
 
-			const vertexValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
+			const positionValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
 			const colorValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
 			const modelIdValues = new Uint32Array(cubeNums * Universal.unitCube.numOfVertices);
 			let models = undefined;
@@ -231,58 +231,75 @@ export class App implements AfterViewInit {
 				let vertexOffset = 0;
 				let modelId = 0;
 				for (let i = 0; i < cubeNums; i++) {
-					const c = unitCube(`${i}`);
-
-					vertexValues.set(c.vertices, vertexOffset);
-					colorValues.set(c.colors, vertexOffset);
-					modelIdValues.fill(modelId,
-						vertexOffset / Universal.floatsPerVertex,
-						vertexOffset / Universal.floatsPerVertex + c.vertexCount);
-
-					vertexOffset += c.vertices.length;
-					modelId++;
 				}
 
+				// Set position, color and model id.
+				reduceTree(myModelWorld, (acc, model) => {
+					const coloredCubes = setDebugColors(model);
+					positionValues.set(coloredCubes.mesh.positions, vertexOffset);
+					colorValues.set(coloredCubes.material.basecolor, vertexOffset);
+					modelIdValues.fill(modelId,
+						vertexOffset / Universal.floatsPerVertex,
+						vertexOffset / Universal.floatsPerVertex + coloredCubes.mesh.vertexCount);
+
+					vertexOffset += coloredCubes.mesh.positions.length;
+					modelId++;
+					return acc;
+				}, {});
+
+
 				// E.g. Turn all the scene graph tree (TARGET)_.
-				const animatedModel = mapTree(myworld, trs => {
-					if (trs.id === "head-base") {
+				const animatedModel = mapTree(myModelWorld, model => {
+
+					if (model.id === "head-base") {
 						return {
-							...trs,
-							rzdeg: toDegrees(pingPongAngle(period)),
-							rxdeg: toDegrees(pingPongAngle(period))
+							...model,
+							trs: {
+								...model.trs,
+								rzdeg: toDegrees(pingPongAngle(period)),
+								rxdeg: toDegrees(pingPongAngle(period))
+							}
 						}
 					}
 					const earPronouncedAngle = 35;
-					if (trs.id === "left-ear" || trs.id === "right-ear") {
-						return { ...trs, rzdeg: toDegrees(easeInOutCubic(pingPongAngle(period, earPronouncedAngle))) }
+					if (model.id === "left-ear" || model.id === "right-ear") {
+						return { ...model, trs: { ...model.trs, rzdeg: toDegrees(easeInOutCubic(pingPongAngle(period, earPronouncedAngle))) } }
 					}
-					if (trs.id === "left-leg" || trs.id === "right-arm") {
-						return { ...trs, rxdeg: toDegrees(-easeInOutCubic(pingPongAngle(period))) }
+					if (model.id === "left-leg" || model.id === "right-arm") {
+						return { ...model, trs: { ...model.trs, rxdeg: toDegrees(-easeInOutCubic(pingPongAngle(period))) } }
 					}
-					if (trs.id === "right-leg" || trs.id === "left-arm") {
-						return { ...trs, rxdeg: toDegrees(easeInOutCubic(pingPongAngle(period))) }
+					if (model.id === "right-leg" || model.id === "left-arm") {
+						return { ...model, trs: { ...model.trs, rxdeg: toDegrees(easeInOutCubic(pingPongAngle(period))) } }
 					}
-					if (trs.id.startsWith("cuberman")) {
+					if (model.id.startsWith("cuberman")) {
 
 						// get the index. (poormans design)
-						const index = +trs.id.replace("cuberman:", "");
+						const index = +model.id.replace("cuberman:", "");
 
 						return {
-							...trs,
-							rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
-							t: [index - cuberManCount / 2, 1, period], // jump my child.
+							...model,
+							trs: {
+								...model.trs,
+								rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
+								t: [index - cuberManCount / 2, 1, period], // jump my child.
 							// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
+							}
 						}
 					}
-					return trs;
+					return model;
 				});
 				models = reduceTree(
 					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
-					(acc, trs) => acc.concat(trs.worldMatrix), [] as number[]);
+					(acc, trs) => acc.concat(trs.modelMatrix),
+					[] as number[]
+				);
 
 				// Update lag of the game loop.
 				lag -= MsPerUpdate;
 			}
+
+			// Render.
+
 			if (models) {
 
 				const canvasDimension = canvasDimension$.value;
@@ -311,7 +328,7 @@ export class App implements AfterViewInit {
 				pass.setPipeline(pipeline);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(posStorageBuffer, 0, vertexValues);
+				device.queue.writeBuffer(posStorageBuffer, 0, positionValues);
 
 				// Assign here later for write buffer.
 				device.queue.writeBuffer(colorStorageBuffer, 0, colorValues);

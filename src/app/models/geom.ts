@@ -1,9 +1,10 @@
 import * as mat from "@thi.ng/matrices";
 import { toRadians } from "../ds/util";
 import { createLeaf, createNode, Tree } from "../ds/tree";
+import { Model } from "./unit";
 
+// Note. TRS is per model instance, not per model.
 export type TRS = {
-	id: string, // temporary
 	t: number[],
 	pivot: number[],
 	rxdeg: number,
@@ -23,12 +24,12 @@ function matFromTRS({ t, pivot, rxdeg, rydeg, rzdeg, s }: TRS): number[] {
 	return mat.mulM44([], T, mat.mulM44([], P,  mat.mulM44([], R, mat.mulM44([], S, nP)))) as number[]; // T*(P*R*S*-P)
 }
 
-export function updateWorld(tree: Tree<TRS>, parentWorld: number[] = mat.IDENT44 as number[]): Tree<TRS & { worldMatrix: number[] }> {
+export function updateWorld(tree: Tree<Model>, parentWorld: number[] = mat.IDENT44 as number[]): Tree<Model> {
 	const value = tree.value;
-	const baseM = matFromTRS(value);
+	const baseM = matFromTRS(value.trs);
 	const world = mat.mulM44([], parentWorld, baseM); // parent * baseLocal
 
-	const updated: TRS & { worldMatrix: number[] } = { ...value, worldMatrix: world as number[] };
+	const updated: Model = { ...value, modelMatrix: world as number[] };
 
 	if (tree.kind === "leaf") return createLeaf(updated);
 	return createNode(updated, tree.children.map(ch => updateWorld(ch, world as number[])));

@@ -1,14 +1,19 @@
 import { rgbaToColor } from "../ds/util";
+import { TRS } from "./geom";
 // import { TRS } from "./geom";
 
 export type Mesh = {
 	id: string,
-	vertices: number[], // improvement convert to float32array?
-	colors: number[],// improvement convert to float32array?
-	// geometry: TRS,
+	positions: number[], // improvement convert to float32array?
+
+	// Useful data.
+	/**
+	 * Number of vertices not floats.
+	*/
 	vertexCount: number,
 	triangleCount: number,
 }
+//. TODO. remove id?
 export function unitCube(id: string): Mesh {
 	const vertices = [
 		// FRONT face (z = +0.5)
@@ -60,30 +65,10 @@ export function unitCube(id: string): Mesh {
 		0.5, -0.5, 0.5, 1.0,   // top-left
 	];
 
-	const colors: number[] = [
-		// FRONT face - orange
-		...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
-
-		// BACK face - violet (wisteria)
-		...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
-
-		// LEFT face - green (gree sea)
-		...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
-
-		// RIGHT face - blue (belize hole)
-		...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
-
-		// TOP face - yellow (sunflower)
-		...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
-
-		// BOTTOM face - red (pomegranate)
-		...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
-	];
-
 	return {
 		id,
-		vertices,
-		colors,
+		positions: vertices,
+		// colors,
 		vertexCount: vertices.length / Universal.floatsPerVertex,
 		triangleCount: vertices.length / (Universal.floatsPerVertex * 3), // three vertices to form a triangle.
 	};
@@ -110,3 +95,45 @@ export const Universal = (() => {
 		}
 	};
 })();
+
+export type Model = {
+	id: string,
+	mesh: Mesh,
+	trs: TRS,
+	// aka world matrix = parentworld * local.
+	modelMatrix: number[]; // mat.m44.
+	material: {
+		basecolor: number[],
+		// Later material.
+		// texture, metallic, roughness
+	}
+}
+
+// DEBUG cube. derive color from mesh.
+export function setDebugColors(model: Model): Model {
+	return {
+		...model,
+		material: {
+			...model.material,
+			basecolor: [
+				// FRONT face - orange
+				...Array(6).fill(rgbaToColor(243, 156, 18)).flat(),
+
+				// BACK face - violet (wisteria)
+				...Array(6).fill(rgbaToColor(142, 68, 173)).flat(),
+
+				// LEFT face - green (gree sea)
+				...Array(6).fill(rgbaToColor(22, 160, 133)).flat(),
+
+				// RIGHT face - blue (belize hole)
+				...Array(6).fill(rgbaToColor(41, 128, 185)).flat(),
+
+				// TOP face - yellow (sunflower)
+				...Array(6).fill(rgbaToColor(241, 196, 15)).flat(),
+
+				// BOTTOM face - red (pomegranate)
+				...Array(6).fill(rgbaToColor(192, 57, 43)).flat(),
+			]
+		}
+	};
+}
