@@ -16,11 +16,10 @@ function matFromTRS({ t, pivot, rxdeg, rydeg, rzdeg, s }: TRS): number[] {
 	const T = mat.translation44([], t);
 	const P = mat.translation44([], pivot);
 	const nP = mat.translation44([], pivot.map(p => -1 * p));
-	const Rx = mat.rotationX44([], toRadians(rxdeg));
-	const Ry = mat.rotationY44([], toRadians(rydeg));
-	const Rz = mat.rotationZ44([], toRadians(rzdeg));
-	const R = mat.mulM44([], Rz, mat.mulM44([], Ry, Rx));
 	const S = mat.scale44([], s);
+	const R = mat.quatToMat44([],
+		mat.quatFromEuler("xyz",
+			toRadians(rxdeg), toRadians(rydeg), toRadians(rzdeg)));
 	return mat.mulM44([], T, mat.mulM44([], P,  mat.mulM44([], R, mat.mulM44([], S, nP)))) as number[]; // T*(P*R*S*-P)
 }
 
