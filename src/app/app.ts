@@ -6,7 +6,7 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, setDebugColors, setTerrainColors, unitCube, Universal } from "./models/unit";
+import { Mesh, Model, setDebugColors, setInvisibleColors, setTerrainColors, unitCube, Universal } from "./models/unit";
 import { cuberManCount, cuberManCubeCount, myModelWorld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
@@ -206,7 +206,9 @@ export class App implements AfterViewInit {
 		const duration = 1_500;
 		const subjects = cuberManCount;
 		const terrain = terrainWidth * terrainHeight + 1; // row * col + 1 anchor.
-		const cubeNums = cuberManCubeCount * subjects + terrain + 1; // Should match the tree, one for anchor cube, plus terrain.
+		const cubeNums = cuberManCubeCount * subjects + terrain + 1 +  // Should match the tree, one for anchor cube, plus terrain.
+			8 + 1 // carrot, 8 cubes, 1 anchor.
+			;
 
 		let previous = performance.now();
 		let lag = 0.0;
@@ -235,7 +237,27 @@ export class App implements AfterViewInit {
 
 				// Set position, color and model id.
 				reduceTree(myModelWorld, (acc, model) => {
-					const coloredCubes = model.id.startsWith("terrain") ? setTerrainColors(model) : setDebugColors(model);
+
+					// if (model.id === "root-anchor") {
+					// 	return acc; // Don't add to the values.
+					// }
+
+					let coloredCubes: Model = undefined!;
+					if (model.id.startsWith("terrain")) {
+						coloredCubes = setTerrainColors(model)
+					}
+					if (model.id.startsWith("carrot-stalk") ||
+						model.id.startsWith("carrot-leaf") ||
+						model.id.startsWith("carrot-body")
+					) {
+						// Skipped, provided in the Model.
+						coloredCubes = model;
+					} else {
+						// a debug color.
+						coloredCubes = setDebugColors(model)
+					}
+					console.assert(coloredCubes !== undefined);
+
 					positionValues.set(coloredCubes.mesh.positions, vertexOffset);
 					colorValues.set(coloredCubes.material.basecolor, vertexOffset);
 					modelIdValues.fill(modelId,
