@@ -137,3 +137,31 @@ export function setDebugColors(model: Model): Model {
 		}
 	};
 }
+
+export function setTerrainColors(model: Model): Model {
+	return {
+		...model,
+		material: {
+			...model.material,
+			basecolor: [
+				// FRONT face - orange
+				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+
+				// BACK face - violet (wisteria)
+				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+
+				// LEFT face - green (gree sea)
+				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+
+				// RIGHT face - blue (belize hole)
+				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+
+				// TOP face - green (emerald)
+				...Array(6).fill(rgbaToColor(46, 204, 113)).flat(),
+
+				// BOTTOM face - red (pomegranate)
+				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+			]
+		}
+	};
+}

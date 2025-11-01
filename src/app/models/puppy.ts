@@ -81,8 +81,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 }
 
 
-export const terrainWidth = 4;
-export const terrainHeight = 4;
+export const terrainWidth = 5;
+export const terrainHeight = 5;
 export const cuberManCount = 2;
 export const cuberManCubeCount = 8;
 

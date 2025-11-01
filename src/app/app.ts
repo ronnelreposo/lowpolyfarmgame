@@ -6,7 +6,7 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, setDebugColors, unitCube, Universal } from "./models/unit";
+import { Mesh, setDebugColors, setTerrainColors, unitCube, Universal } from "./models/unit";
 import { cuberManCount, cuberManCubeCount, myModelWorld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
@@ -235,7 +235,7 @@ export class App implements AfterViewInit {
 
 				// Set position, color and model id.
 				reduceTree(myModelWorld, (acc, model) => {
-					const coloredCubes = setDebugColors(model);
+					const coloredCubes = model.id.startsWith("terrain") ? setTerrainColors(model) : setDebugColors(model);
 					positionValues.set(coloredCubes.mesh.positions, vertexOffset);
 					colorValues.set(coloredCubes.material.basecolor, vertexOffset);
 					modelIdValues.fill(modelId,
