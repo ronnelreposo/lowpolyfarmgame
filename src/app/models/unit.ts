@@ -6,6 +6,8 @@ export type Mesh = {
 	vertices: number[], // improvement convert to float32array?
 	colors: number[],// improvement convert to float32array?
 	// geometry: TRS,
+	vertexCount: number,
+	triangleCount: number,
 }
 export function unitCube(id: string): Mesh {
 	const vertices = [
@@ -82,5 +84,29 @@ export function unitCube(id: string): Mesh {
 		id,
 		vertices,
 		colors,
+		vertexCount: vertices.length / Universal.floatsPerVertex,
+		triangleCount: vertices.length / (Universal.floatsPerVertex * 3), // three vertices to form a triangle.
 	};
 }
+
+export const Universal = (() => {
+	const numOfVertices = 3; // Triangle primitive
+	const trianglePerFace = 2;
+	const floatsPerVertex = 4;
+
+	const cubeFaces = 6;
+	const cubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
+
+	return {
+		numOfVertices: numOfVertices,
+		floatsPerVertex,
+		// Dynamic if you dream of tesselation. LOL keep dreaming 😅
+		// Seriously. You could extend this model.
+		unitCube: {
+			faces: 6,
+			trianglePerFace: 2,
+			numOfVertices: cubeNumOfVertices,
+			vertexFloatCount: cubeNumOfVertices * floatsPerVertex,
+		}
+	};
+})();

@@ -6,7 +6,7 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, unitCube } from "./models/unit";
+import { Mesh, unitCube, Universal } from "./models/unit";
 import { cuberManCount, cuberManCubeCount, myworld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
@@ -204,15 +204,9 @@ export class App implements AfterViewInit {
 
 
 		const duration = 1_500;
-		const floatsPerPosition = 4; // vec4f positions.
 		const subjects = cuberManCount;
 		const terrain = terrainWidth * terrainHeight + 1; // row * col + 1 anchor.
 		const cubeNums = cuberManCubeCount * subjects + terrain + 1; // Should match the tree, one for anchor cube, plus terrain.
-
-		const numOfVertices = 3; // Triangle primitive
-		const cubeFaces = 6;
-		const trianglePerFace = 2;
-		const unitCubeNumOfVertices = numOfVertices * cubeFaces * trianglePerFace;
 
 		let previous = performance.now();
 		let lag = 0.0;
@@ -227,10 +221,9 @@ export class App implements AfterViewInit {
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
 
-			const cubeVertexCount = unitCubeNumOfVertices * floatsPerPosition;
-			const vertexValues = new Float32Array(cubeNums * cubeVertexCount);
-			const colorValues = new Float32Array(cubeNums * cubeVertexCount);
-			const modelIdValues = new Uint32Array(cubeNums * unitCubeNumOfVertices);
+			const vertexValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
+			const colorValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
+			const modelIdValues = new Uint32Array(cubeNums * Universal.unitCube.numOfVertices);
 			let models = undefined;
 
 			while (lag >= MsPerUpdate) {
@@ -239,13 +232,12 @@ export class App implements AfterViewInit {
 				let modelId = 0;
 				for (let i = 0; i < cubeNums; i++) {
 					const c = unitCube(`${i}`);
-					const vertexCount = c.vertices.length / floatsPerPosition;
 
 					vertexValues.set(c.vertices, vertexOffset);
 					colorValues.set(c.colors, vertexOffset);
 					modelIdValues.fill(modelId,
-						vertexOffset / floatsPerPosition,
-						vertexOffset / floatsPerPosition + vertexCount);
+						vertexOffset / Universal.floatsPerVertex,
+						vertexOffset / Universal.floatsPerVertex + c.vertexCount);
 
 					vertexOffset += c.vertices.length;
 					modelId++;
@@ -343,7 +335,7 @@ export class App implements AfterViewInit {
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(cubeNums * unitCubeNumOfVertices, drawInstances);
+				pass.draw(cubeNums * Universal.unitCube.numOfVertices, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
