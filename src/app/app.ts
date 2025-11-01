@@ -6,7 +6,7 @@ import { RouterOutlet } from "@angular/router";
 import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, Model, setDebugColors, setInvisibleColors, setTerrainColors, unitCube, Universal } from "./models/unit";
+import { Mesh, Model, setDebugColors, setTerrainColors, unitCube, Universal } from "./models/unit";
 import { cuberManCount, cuberManCubeCount, myModelWorld, terrainHeight, terrainWidth } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
