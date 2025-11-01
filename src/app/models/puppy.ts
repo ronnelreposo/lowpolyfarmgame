@@ -174,6 +174,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 	);
 }
 
+// Got limit trerain. 35x35.
+
 export const terrainWidth = 0;
 export const terrainHeight = 0;
 export const cuberManCount = 0;

@@ -246,13 +246,13 @@ export class App implements AfterViewInit {
 
 		const duration = 1_500;
 		const subjects = cuberManCount;
-		const terrain = terrainWidth * terrainHeight + 1; // row * col + 1 anchor.
+		const terrain = terrainWidth * terrainHeight + 0; // row * col + 1 anchor.
 		const cubeNums =
 			cuberManCubeCount * subjects +
 			terrain +
-			1 + // Should match the tree, one for anchor cube, plus terrain.
+			0 + // Should match the tree, one for anchor cube, plus terrain.
 			8 +
-			1; // carrot, 8 cubes, 1 anchor.
+			0; // carrot, 8 cubes, 1 anchor.
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
@@ -275,6 +275,7 @@ export class App implements AfterViewInit {
 			const modelIdValues = new Uint32Array(
 				cubeNums * Universal.unitCube.numOfVertices,
 			);
+			console.log("pos values:", positionValues.byteLength)
 			let models = undefined;
 
 			while (lag >= MsPerUpdate) {
@@ -286,9 +287,9 @@ export class App implements AfterViewInit {
 				reduceTree(
 					myModelWorld,
 					(acc, model) => {
-						// if (model.id === "root-anchor") {
-						// 	return acc; // Don't add to the values.
-						// }
+						if (model.id === "root-anchor") {
+							return acc; // Don't add to the values.
+						}
 
 						let coloredCubes: Model = undefined!;
 						if (model.id.startsWith("terrain")) {
@@ -400,7 +401,12 @@ export class App implements AfterViewInit {
 				});
 				models = reduceTree(
 					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
-					(acc, trs) => acc.concat(trs.modelMatrix),
+					(acc, trs) => {
+						if (trs.id === "root-anchor") {
+							return acc;
+						}
+						return acc.concat(trs.modelMatrix)
+					},
 					[] as number[],
 				);
 
