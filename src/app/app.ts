@@ -1,13 +1,47 @@
 /// <reference types="@webgpu/types" />
 
 import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
-import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
+import {
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	Component,
+	NgZone,
+	OnInit,
+} from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { animationFrames, BehaviorSubject, combineLatest, EMPTY, fromEvent, map, of, ReplaySubject, scan, startWith, Subject, switchMap, tap, throttleTime } from "rxjs";
+import {
+	animationFrames,
+	BehaviorSubject,
+	combineLatest,
+	EMPTY,
+	fromEvent,
+	map,
+	of,
+	ReplaySubject,
+	scan,
+	startWith,
+	Subject,
+	switchMap,
+	tap,
+	throttleTime,
+} from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
-import { Mesh, Model, setDebugColors, setTerrainColors, unitCube, Universal } from "./models/unit";
-import { cuberManCount, cuberManCubeCount, myModelWorld, terrainHeight, terrainWidth } from "./models/puppy";
+import {
+	Mesh,
+	Model,
+	setDebugColors,
+	setTerrainColors,
+	unitCube,
+	Universal,
+} from "./models/unit";
+import {
+	cuberManCount,
+	cuberManCubeCount,
+	myModelWorld,
+	terrainHeight,
+	terrainWidth,
+} from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
 
@@ -16,14 +50,11 @@ import { updateWorld } from "./models/geom";
 	imports: [RouterOutlet],
 	templateUrl: "./app.html",
 	styleUrl: "./app.scss",
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
-
-
-
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -34,7 +65,7 @@ export class App implements AfterViewInit {
 
 		const startingCamera = [0, 5, 5, 1];
 		const camera$ = new BehaviorSubject(startingCamera);
-		fromEvent<KeyboardEvent>(document!, 'keydown')
+		fromEvent<KeyboardEvent>(document!, "keydown")
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
@@ -76,27 +107,40 @@ export class App implements AfterViewInit {
 						Math.min(Math.max(acc[0] + arr[0], -5), 5),
 						Math.min(Math.max(acc[1] + arr[1], -5), 5),
 						Math.min(Math.max(acc[2] + arr[2], near), far),
-						1
+						1,
 					];
 				}, startingCamera),
 				startWith(startingCamera),
-			).subscribe(camera$);
+			)
+			.subscribe(camera$);
 
-		const canvasDimension$ = new BehaviorSubject<{ width: number, height: number }>({
+		const canvasDimension$ = new BehaviorSubject<{
+			width: number;
+			height: number;
+		}>({
 			width: canvas!.width,
 			height: canvas!.height,
 		});
 		this.ngZone.runOutsideAngular(async () => {
-			const observer = new ResizeObserver(entries => {
+			const observer = new ResizeObserver((entries) => {
 				for (const entry of entries) {
 					const width = entry.contentBoxSize[0].inlineSize;
 					const height = entry.contentBoxSize[0].blockSize;
 					const canvas = entry.target as any;
-					const newWidth = Math.max(1, Math.min(width, device.limits.maxTextureDimension2D));
-					const newHeight = Math.max(1, Math.min(height, device.limits.maxTextureDimension2D));
+					const newWidth = Math.max(
+						1,
+						Math.min(width, device.limits.maxTextureDimension2D),
+					);
+					const newHeight = Math.max(
+						1,
+						Math.min(height, device.limits.maxTextureDimension2D),
+					);
 					canvas.width = newWidth;
 					canvas.height = newHeight;
-					canvasDimension$.next({ width: newWidth, height: newHeight });
+					canvasDimension$.next({
+						width: newWidth,
+						height: newHeight,
+					});
 				}
 			});
 			observer.observe(canvas!);
@@ -133,7 +177,7 @@ export class App implements AfterViewInit {
 				format: "depth24plus",
 				depthWriteEnabled: true,
 				depthCompare: "less",
-			}
+			},
 		});
 		const colorAttachments: GPURenderPassColorAttachment[] = [
 			{
@@ -143,7 +187,6 @@ export class App implements AfterViewInit {
 				clearValue: { r: 0.3, g: 0.3, b: 0.3, a: 1 },
 			},
 		];
-
 
 		const MAX_BUFF_SIZE = 512 * 1024;
 
@@ -189,27 +232,27 @@ export class App implements AfterViewInit {
 			label: `Position only bind group`,
 			layout: pipeline.getBindGroupLayout(0),
 			entries: [
-				{ binding: 0, resource: { buffer: posStorageBuffer }, },
-				{ binding: 1, resource: { buffer: colorStorageBuffer }, },
-				{ binding: 2, resource: { buffer: modelsStorageBuffer }, },
-				{ binding: 3, resource: { buffer: modelIdStorageBuffer }, },
-				{ binding: 4, resource: { buffer: cameraUniformBuffer }, },
-				{ binding: 5, resource: { buffer: aspectUniformBuffer }, },
-				{ binding: 6, resource: { buffer: timeUniformBuffer }, },
+				{ binding: 0, resource: { buffer: posStorageBuffer } },
+				{ binding: 1, resource: { buffer: colorStorageBuffer } },
+				{ binding: 2, resource: { buffer: modelsStorageBuffer } },
+				{ binding: 3, resource: { buffer: modelIdStorageBuffer } },
+				{ binding: 4, resource: { buffer: cameraUniformBuffer } },
+				{ binding: 5, resource: { buffer: aspectUniformBuffer } },
+				{ binding: 6, resource: { buffer: timeUniformBuffer } },
 			],
 		});
 
 		// Render Loop.
 
-
-
 		const duration = 1_500;
 		const subjects = cuberManCount;
 		const terrain = terrainWidth * terrainHeight + 1; // row * col + 1 anchor.
-		const cubeNums = cuberManCubeCount * subjects + terrain + 1 +  // Should match the tree, one for anchor cube, plus terrain.
-			8 + 1 // carrot, 8 cubes, 1 anchor.
-			;
-
+		const cubeNums =
+			cuberManCubeCount * subjects +
+			terrain +
+			1 + // Should match the tree, one for anchor cube, plus terrain.
+			8 +
+			1; // carrot, 8 cubes, 1 anchor.
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
@@ -223,78 +266,121 @@ export class App implements AfterViewInit {
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
 
-			const positionValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
-			const colorValues = new Float32Array(cubeNums * Universal.unitCube.vertexFloatCount);
-			const modelIdValues = new Uint32Array(cubeNums * Universal.unitCube.numOfVertices);
+			const positionValues = new Float32Array(
+				cubeNums * Universal.unitCube.vertexFloatCount,
+			);
+			const colorValues = new Float32Array(
+				cubeNums * Universal.unitCube.vertexFloatCount,
+			);
+			const modelIdValues = new Uint32Array(
+				cubeNums * Universal.unitCube.numOfVertices,
+			);
 			let models = undefined;
 
 			while (lag >= MsPerUpdate) {
-
 				let vertexOffset = 0;
 				let modelId = 0;
-				for (let i = 0; i < cubeNums; i++) {
-				}
+				for (let i = 0; i < cubeNums; i++) {}
 
 				// Set position, color and model id.
-				reduceTree(myModelWorld, (acc, model) => {
+				reduceTree(
+					myModelWorld,
+					(acc, model) => {
+						// if (model.id === "root-anchor") {
+						// 	return acc; // Don't add to the values.
+						// }
 
-					// if (model.id === "root-anchor") {
-					// 	return acc; // Don't add to the values.
-					// }
+						let coloredCubes: Model = undefined!;
+						if (model.id.startsWith("terrain")) {
+							coloredCubes = setTerrainColors(model);
+						}
+						if (
+							model.id.startsWith("carrot-stalk") ||
+							model.id.startsWith("carrot-leaf") ||
+							model.id.startsWith("carrot-body")
+						) {
+							// Skipped, provided in the Model.
+							coloredCubes = model;
+						} else {
+							// a debug color.
+							coloredCubes = setDebugColors(model);
+						}
+						console.assert(coloredCubes !== undefined);
 
-					let coloredCubes: Model = undefined!;
-					if (model.id.startsWith("terrain")) {
-						coloredCubes = setTerrainColors(model)
-					}
-					if (model.id.startsWith("carrot-stalk") ||
-						model.id.startsWith("carrot-leaf") ||
-						model.id.startsWith("carrot-body")
-					) {
-						// Skipped, provided in the Model.
-						coloredCubes = model;
-					} else {
-						// a debug color.
-						coloredCubes = setDebugColors(model)
-					}
-					console.assert(coloredCubes !== undefined);
+						positionValues.set(
+							coloredCubes.mesh.positions,
+							vertexOffset,
+						);
+						colorValues.set(
+							coloredCubes.material.basecolor,
+							vertexOffset,
+						);
+						modelIdValues.fill(
+							modelId,
+							vertexOffset / Universal.floatsPerVertex,
+							vertexOffset / Universal.floatsPerVertex +
+								coloredCubes.mesh.vertexCount,
+						);
 
-					positionValues.set(coloredCubes.mesh.positions, vertexOffset);
-					colorValues.set(coloredCubes.material.basecolor, vertexOffset);
-					modelIdValues.fill(modelId,
-						vertexOffset / Universal.floatsPerVertex,
-						vertexOffset / Universal.floatsPerVertex + coloredCubes.mesh.vertexCount);
-
-					vertexOffset += coloredCubes.mesh.positions.length;
-					modelId++;
-					return acc;
-				}, {});
-
+						vertexOffset += coloredCubes.mesh.positions.length;
+						modelId++;
+						return acc;
+					},
+					{},
+				);
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
-				const animatedModel = mapTree(myModelWorld, model => {
-
+				const animatedModel = mapTree(myModelWorld, (model) => {
 					if (model.id === "head-base") {
 						return {
 							...model,
 							trs: {
 								...model.trs,
 								rzdeg: toDegrees(pingPongAngle(period)),
-								rxdeg: toDegrees(pingPongAngle(period))
-							}
-						}
+								rxdeg: toDegrees(pingPongAngle(period)),
+							},
+						};
 					}
 					const earPronouncedAngle = 35;
 					if (model.id === "left-ear" || model.id === "right-ear") {
-						return { ...model, trs: { ...model.trs, rzdeg: toDegrees(easeInOutCubic(pingPongAngle(period, earPronouncedAngle))) } }
+						return {
+							...model,
+							trs: {
+								...model.trs,
+								rzdeg: toDegrees(
+									easeInOutCubic(
+										pingPongAngle(
+											period,
+											earPronouncedAngle,
+										),
+									),
+								),
+							},
+						};
 					}
 					if (model.id === "left-leg" || model.id === "right-arm") {
-						return { ...model, trs: { ...model.trs, rxdeg: toDegrees(-easeInOutCubic(pingPongAngle(period))) } }
+						return {
+							...model,
+							trs: {
+								...model.trs,
+								rxdeg: toDegrees(
+									-easeInOutCubic(pingPongAngle(period)),
+								),
+							},
+						};
 					}
 					if (model.id === "right-leg" || model.id === "left-arm") {
-						return { ...model, trs: { ...model.trs, rxdeg: toDegrees(easeInOutCubic(pingPongAngle(period))) } }
+						return {
+							...model,
+							trs: {
+								...model.trs,
+								rxdeg: toDegrees(
+									easeInOutCubic(pingPongAngle(period)),
+								),
+							},
+						};
 					}
 					if (model.id.startsWith("cuberman")) {
-
 						// get the index. (poormans design)
 						const index = +model.id.replace("cuberman:", "");
 
@@ -302,18 +388,20 @@ export class App implements AfterViewInit {
 							...model,
 							trs: {
 								...model.trs,
-								rydeg: toDegrees(easeOutSine(pingPongAngle(period))),
+								rydeg: toDegrees(
+									easeOutSine(pingPongAngle(period)),
+								),
 								t: [index - cuberManCount / 2, 1, period], // jump my child.
-							// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
-							}
-						}
+								// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
+							},
+						};
 					}
 					return model;
 				});
 				models = reduceTree(
 					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
 					(acc, trs) => acc.concat(trs.modelMatrix),
-					[] as number[]
+					[] as number[],
 				);
 
 				// Update lag of the game loop.
@@ -323,7 +411,6 @@ export class App implements AfterViewInit {
 			// Render.
 
 			if (models) {
-
 				const canvasDimension = canvasDimension$.value;
 				const width = canvasDimension.width;
 				const height = canvasDimension.height;
@@ -339,13 +426,17 @@ export class App implements AfterViewInit {
 						view: depthTexture.createView(),
 						depthClearValue: 1.0,
 						depthLoadOp: "clear",
-						depthStoreOp: "store"
-					}
+						depthStoreOp: "store",
+					},
 				};
 
-				colorAttachments[0].view = context!?.getCurrentTexture().createView();
+				colorAttachments[0].view = context!
+					?.getCurrentTexture()
+					.createView();
 
-				const encoder = device.createCommandEncoder({ label: "our encoder" });
+				const encoder = device.createCommandEncoder({
+					label: "our encoder",
+				});
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
@@ -356,25 +447,48 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(colorStorageBuffer, 0, colorValues);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
+				device.queue.writeBuffer(
+					modelsStorageBuffer,
+					0,
+					new Float32Array(models),
+				);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdValues);
+				device.queue.writeBuffer(
+					modelIdStorageBuffer,
+					0,
+					modelIdValues,
+				);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
+				device.queue.writeBuffer(
+					cameraUniformBuffer,
+					0,
+					new Float32Array(camera$.value),
+				);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
+				device.queue.writeBuffer(
+					aspectUniformBuffer,
+					0,
+					new Float32Array([width, height]),
+				);
 
 				// Assign here later for write buffer.
-				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
+				device.queue.writeBuffer(
+					timeUniformBuffer,
+					0,
+					new Float32Array([period]),
+				);
 
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(cubeNums * Universal.unitCube.numOfVertices, drawInstances);
+				pass.draw(
+					cubeNums * Universal.unitCube.numOfVertices,
+					drawInstances,
+				);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
@@ -386,35 +500,30 @@ export class App implements AfterViewInit {
 	}
 }
 
-
-type Dimension = { width: number, height: number}
-type Coord = { x: number, y: number, z: number, w: number }
-const transformToClipSpace = (dimension: Dimension) => (coord: Coord): [number, number, number, number] => {
-	return [
-		((coord.x / dimension.width) * 2 - 1),
-		(1 - (coord.y / dimension.height) * 2),
-		coord.z,
-		coord.w
-	];
-}
+type Dimension = { width: number; height: number };
+type Coord = { x: number; y: number; z: number; w: number };
+const transformToClipSpace =
+	(dimension: Dimension) =>
+	(coord: Coord): [number, number, number, number] => {
+		return [
+			(coord.x / dimension.width) * 2 - 1,
+			1 - (coord.y / dimension.height) * 2,
+			coord.z,
+			coord.w,
+		];
+	};
 // const normMinMax = (min: number, max: number) => (value: number): number => {
 // 	return max - value / (max - min);
 // };
 
 // hard coded resolution.
 const resWidth = 2400;
-const resHeight = 970
+const resHeight = 970;
 const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
 
-type Entity = (
-	| { kind: "tri" }
-	| { kind: "quad" }
-	| { kind: "free" })
+type Entity = ({ kind: "tri" } | { kind: "quad" } | { kind: "free" }) &
 	// | { kind: "cool-hero" } // 🤣
-& { verts: number[], triangleCount: number, color: number[] }
-
-
-
+	{ verts: number[]; triangleCount: number; color: number[] };
 
 const fract = (x: number) => x - Math.floor(x);
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -422,14 +531,14 @@ const deg2rad = (d: number) => (d * Math.PI) / 180;
 
 // ping-pong in [0,1] given any time t (seconds) and frequency (cycles/sec)
 function pingPong01(t: number, freq = 1): number {
-  const phase = fract(t * freq);           // 0..1
-  return 1 - Math.abs(1 - 2 * phase);      // 0..1..0
+	const phase = fract(t * freq); // 0..1
+	return 1 - Math.abs(1 - 2 * phase); // 0..1..0
 }
 
 // angle that goes back & forth between -maxDeg and +maxDeg
 function pingPongAngle(t: number, maxDeg = 25, freq = 1): number {
-  const w = pingPong01(t, freq);           // 0..1..0
-  return mix(-deg2rad(maxDeg), deg2rad(maxDeg), w);
+	const w = pingPong01(t, freq); // 0..1..0
+	return mix(-deg2rad(maxDeg), deg2rad(maxDeg), w);
 }
 
 function easeInOutBack(x: number): number {
