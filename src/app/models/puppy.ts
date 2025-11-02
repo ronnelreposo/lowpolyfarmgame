@@ -255,7 +255,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 				id: "root-anchor",
 				mesh: unitCube("unit-cube"),
 				trs: {
-					t: [0, 2, 0],
+					t: [0, 0, 0],
 					pivot: [0, 1, 0],
 					rxdeg: 0,
 					rydeg: 0,

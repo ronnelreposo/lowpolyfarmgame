@@ -1,18 +1,20 @@
 
 struct VsOutput {
 	@builtin(position) position: vec4f,
-	@location(0) color: vec4f,
+	@location(0) normal: vec4f,
+	@location(1) color: vec4f,
 };
 
 @group(0) @binding(0) var<storage, read> pos: array<vec4f>;
 @group(0) @binding(1) var<storage, read> color: array<vec4f>;
-@group(0) @binding(2) var<storage, read> models: array<mat4x4f>;
+@group(0) @binding(2) var<storage, read> normal: array<vec4f>;
+@group(0) @binding(3) var<storage, read> models: array<mat4x4f>;
 // Model ID per vertex.
-@group(0) @binding(3) var<storage, read> modelIds: array<u32>;
+@group(0) @binding(4) var<storage, read> modelIds: array<u32>;
 
-@group(0) @binding(4) var<uniform> camera: vec4f;
-@group(0) @binding(5) var<uniform> aspect: vec2f;
-@group(0) @binding(6) var<uniform> time: f32;
+@group(0) @binding(5) var<uniform> camera: vec4f;
+@group(0) @binding(6) var<uniform> aspect: vec2f;
+@group(0) @binding(7) var<uniform> time: f32;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -28,14 +30,14 @@ struct VsOutput {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye = camera.xyz; // where your camera in world space.
-	// let orbitRadius = 5.1;
-	// let PI = 3.141592653589793;
-	// let eye = vec3f(
-	// 	orbitRadius * cos(time * PI * 2.0),
-	// 	camera.y,
-	// 	orbitRadius * sin(time * PI * 2.0),
-	// ); // where your camera in world space.
+	let eye1 = camera.xyz; // where your camera in world space.
+	let orbitRadius = 5.1;
+	let PI = 3.141592653589793;
+	let eye = vec3f(
+		orbitRadius * cos(time * PI * 2.0),
+		camera.y,
+		orbitRadius * sin(time * PI * 2.0),
+	); // where your camera in world space.
 	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
@@ -43,11 +45,18 @@ struct VsOutput {
 	var vsOut: VsOutput;
 	vsOut.position = P * V * models[modelIds[vertexIndex]] * pos[vertexIndex];
 	vsOut.color = color[vertexIndex];
+	vsOut.normal = normal[vertexIndex];
 	return vsOut;
 }
 
 @fragment fn fs(vsOut: VsOutput) -> @location(0) vec4f {
-	return vsOut.color;
+	let Normal = normalize(vsOut.normal.xyz);
+	let Light = normalize(vec3f(0.4, 0.7, 0.5));
+	let ndotl = max(dot(Normal, Light), 0.0);
+	let ambient = 0.75;
+
+	let lit = vsOut.color.rgb * (ambient + ndotl);
+	return vec4(lit, vsOut.color.a);
 }
 
 fn perspective(fovY: f32, aspect: f32, near: f32, far: f32) -> mat4x4f {

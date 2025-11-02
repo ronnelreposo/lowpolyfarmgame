@@ -214,6 +214,12 @@ export class App implements AfterViewInit {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
+		const normalStorageBuffer = device.createBuffer({
+			label: `Normal storage buffer`,
+			size: MAX_BUFF_SIZE,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
+
 		const cameraUniformBuffer = device.createBuffer({
 			size: 4 * 4, // 4 floats, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -234,11 +240,12 @@ export class App implements AfterViewInit {
 			entries: [
 				{ binding: 0, resource: { buffer: posStorageBuffer } },
 				{ binding: 1, resource: { buffer: colorStorageBuffer } },
-				{ binding: 2, resource: { buffer: modelsStorageBuffer } },
-				{ binding: 3, resource: { buffer: modelIdStorageBuffer } },
-				{ binding: 4, resource: { buffer: cameraUniformBuffer } },
-				{ binding: 5, resource: { buffer: aspectUniformBuffer } },
-				{ binding: 6, resource: { buffer: timeUniformBuffer } },
+				{ binding: 2, resource: { buffer: normalStorageBuffer } },
+				{ binding: 3, resource: { buffer: modelsStorageBuffer } },
+				{ binding: 4, resource: { buffer: modelIdStorageBuffer } },
+				{ binding: 5, resource: { buffer: cameraUniformBuffer } },
+				{ binding: 6, resource: { buffer: aspectUniformBuffer } },
+				{ binding: 7, resource: { buffer: timeUniformBuffer } },
 			],
 		});
 
@@ -270,6 +277,9 @@ export class App implements AfterViewInit {
 				cubeNums * Universal.unitCube.vertexFloatCount,
 			);
 			const colorValues = new Float32Array(
+				cubeNums * Universal.unitCube.vertexFloatCount,
+			);
+			const normalValues = new Float32Array(
 				cubeNums * Universal.unitCube.vertexFloatCount,
 			);
 			const modelIdValues = new Uint32Array(
@@ -314,6 +324,10 @@ export class App implements AfterViewInit {
 						);
 						colorValues.set(
 							coloredCubes.material.basecolor,
+							vertexOffset,
+						);
+						normalValues.set(
+							coloredCubes.mesh.normals,
 							vertexOffset,
 						);
 						modelIdValues.fill(
@@ -446,46 +460,14 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				// Assign here later for write buffer.
 				device.queue.writeBuffer(posStorageBuffer, 0, positionValues);
-
-				// Assign here later for write buffer.
 				device.queue.writeBuffer(colorStorageBuffer, 0, colorValues);
-
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(
-					modelsStorageBuffer,
-					0,
-					new Float32Array(models),
-				);
-
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(
-					modelIdStorageBuffer,
-					0,
-					modelIdValues,
-				);
-
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(
-					cameraUniformBuffer,
-					0,
-					new Float32Array(camera$.value),
-				);
-
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(
-					aspectUniformBuffer,
-					0,
-					new Float32Array([width, height]),
-				);
-
-				// Assign here later for write buffer.
-				device.queue.writeBuffer(
-					timeUniformBuffer,
-					0,
-					new Float32Array([period]),
-				);
+				device.queue.writeBuffer(normalStorageBuffer, 0, normalValues);
+				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
+				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdValues);
+				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
+				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
+				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
 
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);

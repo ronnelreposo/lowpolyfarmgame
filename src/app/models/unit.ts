@@ -5,6 +5,7 @@ import { TRS } from "./geom";
 export type Mesh = {
 	id: string,
 	positions: number[], // improvement convert to float32array?
+	normals: number[],
 
 	// Useful data.
 	/**
@@ -65,10 +66,25 @@ export function unitCube(id: string): Mesh {
 		0.5, -0.5, 0.5, 1.0,   // top-left
 	];
 
+	const normals = [
+		// FRONT face
+		...Array(6).fill([0, 0, 1, 0]).flat(),
+		// BACK face
+		...Array(6).fill([0, 0, -1, 0]).flat(),
+		// LEFT face
+		...Array(6).fill([-1, 0, 0, 0]).flat(),
+		// RIGHT face
+		...Array(6).fill([1, 0, 0, 0]).flat(),
+		// TOP face
+		...Array(6).fill([0, 1, 0, 0]).flat(),
+		// BOTTOM face
+		...Array(6).fill([0, -1, 0, 0]).flat(),
+	];
+
 	return {
 		id,
 		positions: vertices,
-		// colors,
+		normals,
 		vertexCount: vertices.length / Universal.floatsPerVertex,
 		triangleCount: vertices.length / (Universal.floatsPerVertex * 3), // three vertices to form a triangle.
 	};
