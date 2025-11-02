@@ -165,6 +165,7 @@ export class App implements AfterViewInit {
 			label: "our hardcoded red triangle shaders",
 			code: shaderCode,
 		});
+		const sampleCount = 4;
 		const pipeline = device.createRenderPipeline({
 			label: "our hardcoded red triangle pipeline",
 			layout: "auto",
@@ -182,6 +183,9 @@ export class App implements AfterViewInit {
 				depthWriteEnabled: true,
 				depthCompare: "less",
 			},
+			multisample: {
+				count: sampleCount
+			}
 		});
 		const colorAttachments: GPURenderPassColorAttachment[] = [
 			{
@@ -445,7 +449,15 @@ export class App implements AfterViewInit {
 				const depthTexture = device.createTexture({
 					size: [canvasDimension.width, canvasDimension.height],
 					format: "depth24plus",
+					sampleCount,
 					usage: GPUTextureUsage.RENDER_ATTACHMENT,
+				});
+				const msaaTex = device.createTexture({
+					label: "our msaa tex",
+					size: [canvasDimension.width, canvasDimension.height],
+					format: presentationFormat,
+					sampleCount,
+					usage: GPUTextureUsage.RENDER_ATTACHMENT
 				});
 				const renderPassDescriptor: GPURenderPassDescriptor = {
 					label: "our basic canvas renderpass",
@@ -458,9 +470,8 @@ export class App implements AfterViewInit {
 					},
 				};
 
-				colorAttachments[0].view = context!
-					?.getCurrentTexture()
-					.createView();
+				colorAttachments[0].view = msaaTex.createView();
+				colorAttachments[0].resolveTarget = context!.getCurrentTexture().createView();
 
 				const encoder = device.createCommandEncoder({
 					label: "our encoder",
