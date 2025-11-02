@@ -15,6 +15,7 @@ struct VsOutput {
 @group(0) @binding(5) var<uniform> camera: vec4f;
 @group(0) @binding(6) var<uniform> aspect: vec2f;
 @group(0) @binding(7) var<uniform> time: f32;
+@group(0) @binding(8) var<uniform> subj: vec4f;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -38,9 +39,8 @@ struct VsOutput {
 	// 	camera.y,
 	// 	orbitRadius * sin(time * PI * 2.0),
 	// ); // where your camera in world space.
-	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
-	let V = lookAt(eye, subj, up);
+	let V = lookAt(eye, subj.xyz, up);
 
 	var vsOut: VsOutput;
 	vsOut.position = P * V * models[modelIds[vertexIndex]] * pos[vertexIndex];

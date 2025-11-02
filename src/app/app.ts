@@ -308,6 +308,10 @@ export class App implements AfterViewInit {
 			size: 1 * 4, // 1 float, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
+		const subjUniformBuffer = device.createBuffer({
+			size: 4 * 4, // 1 float, 4 bytes each.
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
 
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
@@ -322,6 +326,7 @@ export class App implements AfterViewInit {
 				{ binding: 5, resource: { buffer: cameraUniformBuffer } },
 				{ binding: 6, resource: { buffer: aspectUniformBuffer } },
 				{ binding: 7, resource: { buffer: timeUniformBuffer } },
+				{ binding: 8, resource: { buffer: subjUniformBuffer } },
 			],
 		});
 
@@ -410,9 +415,6 @@ export class App implements AfterViewInit {
 						};
 					}
 					if (model.id.startsWith("cuberman")) {
-						// get the index. (poormans design)
-						const index = +model.id.replace("cuberman:", "");
-
 						return {
 							...model,
 							trs: {
@@ -563,6 +565,7 @@ export class App implements AfterViewInit {
 				// device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(startingCamera));
 				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
+				device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
 
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);

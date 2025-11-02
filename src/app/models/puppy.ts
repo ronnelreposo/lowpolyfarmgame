@@ -204,8 +204,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 // Got pushed trerain. 100x100.
 // Got pushed cuberman to 100.
 
-export const terrainWidth = 10;
-export const terrainHeight = 10;
+export const terrainWidth = 100;
+export const terrainHeight = 100;
 export const cuberManCount = 1;
 
 const fencePolePerRow = 23;
