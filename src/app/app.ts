@@ -290,7 +290,6 @@ export class App implements AfterViewInit {
 			while (lag >= MsPerUpdate) {
 				let vertexOffset = 0;
 				let modelId = 0;
-				for (let i = 0; i < cubeNums; i++) {}
 
 				// Set position, color and model id.
 				reduceTree(
