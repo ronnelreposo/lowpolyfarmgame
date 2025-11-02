@@ -44,15 +44,19 @@ import {
 } from "./models/puppy";
 import { toDegrees } from "./ds/util";
 import { updateWorld } from "./models/geom";
+import { CommonModule } from "@angular/common";
 
 @Component({
 	selector: "app-root",
-	imports: [RouterOutlet],
+	imports: [RouterOutlet, CommonModule],
 	templateUrl: "./app.html",
 	styleUrl: "./app.scss",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App implements AfterViewInit {
+
+	public simFPS$ = new BehaviorSubject(0);
+
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 		const adapter = await navigator.gpu?.requestAdapter();
@@ -188,7 +192,7 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const MAX_BUFF_SIZE = 2 * 1024 * 1024; // 2 MB
+		const MAX_BUFF_SIZE = 8 * 1024 * 1024; // 8 MB
 
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
@@ -273,75 +277,15 @@ export class App implements AfterViewInit {
 			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
 
-			const positionValues = new Float32Array(
-				cubeNums * Universal.unitCube.vertexFloatCount,
-			);
-			const colorValues = new Float32Array(
-				cubeNums * Universal.unitCube.vertexFloatCount,
-			);
-			const normalValues = new Float32Array(
-				cubeNums * Universal.unitCube.vertexFloatCount,
-			);
-			const modelIdValues = new Uint32Array(
-				cubeNums * Universal.unitCube.numOfVertices,
-			);
-			let models = undefined;
 
+			let animatedModel = undefined;
+
+			const perfStart = performance.now();
 			while (lag >= MsPerUpdate) {
-				let vertexOffset = 0;
-				let modelId = 0;
-
-				// Set position, color and model id.
-				reduceTree(
-					myModelWorld,
-					(acc, model) => {
-						if (model.id === "root-anchor") {
-							return acc; // Don't add to the values.
-						}
-
-						let coloredCubes: Model = undefined!;
-						if (
-							model.id.startsWith("carrot-stalk") ||
-							model.id.startsWith("carrot-leaf") ||
-							model.id.startsWith("carrot-body") ||
-							model.id.startsWith("terrain")
-						) {
-							// Skipped, provided in the Model.
-							coloredCubes = model;
-						} else {
-							// a debug color.
-							coloredCubes = setDebugColors(model);
-						}
-						console.assert(coloredCubes !== undefined);
-
-						positionValues.set(
-							coloredCubes.mesh.positions,
-							vertexOffset,
-						);
-						colorValues.set(
-							coloredCubes.material.basecolor,
-							vertexOffset,
-						);
-						normalValues.set(
-							coloredCubes.mesh.normals,
-							vertexOffset,
-						);
-						modelIdValues.fill(
-							modelId,
-							vertexOffset / Universal.floatsPerVertex,
-							vertexOffset / Universal.floatsPerVertex +
-								coloredCubes.mesh.vertexCount,
-						);
-
-						vertexOffset += coloredCubes.mesh.positions.length;
-						modelId++;
-						return acc;
-					},
-					{},
-				);
 
 				// E.g. Turn all the scene graph tree (TARGET)_.
-				const animatedModel = mapTree(myModelWorld, (model) => {
+				animatedModel = mapTree(myModelWorld, (model) => {
+
 					if (model.id === "head-base") {
 						return {
 							...model,
@@ -409,24 +353,105 @@ export class App implements AfterViewInit {
 					}
 					return model;
 				});
-				models = reduceTree(
-					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
-					(acc, trs) => {
-						if (trs.id === "root-anchor") {
-							return acc;
-						}
-						return acc.concat(trs.modelMatrix)
-					},
-					[] as number[],
-				);
 
 				// Update lag of the game loop.
 				lag -= MsPerUpdate;
 			}
+			const perfEnd = performance.now();
+			this.simFPS$.next(perfEnd - perfStart);
 
 			// Render.
 
-			if (models) {
+			if (animatedModel) {
+
+				const modelOffset = 16; // 4*4 matrix.
+
+				// Reduce everything before rendering.
+				const models = reduceTree(
+					updateWorld(animatedModel), // no need to pass a matrix transform for the whole.
+					(acc, model) => {
+
+						if (model.id === "root-anchor") {
+							return acc; // Don't add to the values.
+						}
+
+						let coloredCubes: Model = undefined!;
+						if (
+							model.id.startsWith("carrot-stalk") ||
+							model.id.startsWith("carrot-leaf") ||
+							model.id.startsWith("carrot-body") ||
+							model.id.startsWith("terrain")
+						) {
+							// Skipped, provided in the Model.
+							coloredCubes = model;
+						} else {
+							// a debug color.
+							coloredCubes = setDebugColors(model);
+						}
+						console.assert(coloredCubes !== undefined);
+
+						acc.positionValues.set(
+							coloredCubes.mesh.positions,
+							acc.vertexOffset,
+						);
+						acc.colorValues.set(
+							coloredCubes.material.basecolor,
+							acc.vertexOffset,
+						);
+						acc.normalValues.set(
+							coloredCubes.mesh.normals,
+							acc.vertexOffset,
+						);
+						acc.modelIdValues.fill(
+							acc.modelId,
+							acc.vertexOffset / Universal.floatsPerVertex,
+							acc.vertexOffset / Universal.floatsPerVertex +
+								coloredCubes.mesh.vertexCount,
+						);
+						acc.modelMatrices.set(model.modelMatrix, acc.modelOffset);
+
+
+						if (model.id === "root-anchor") {
+							return acc;
+						}
+
+						return {
+							vertexOffset: acc.vertexOffset + coloredCubes.mesh.positions.length,
+							modelId: acc.modelId + 1,
+							modelOffset: acc.modelOffset + modelOffset,
+
+							positionValues: acc.positionValues,
+							colorValues: acc.colorValues,
+							normalValues: acc.normalValues,
+							modelIdValues: acc.modelIdValues,
+							modelMatrices: acc.modelMatrices,
+						}
+					},
+					{
+						// Incremental informations.
+						vertexOffset: 0,
+						modelId: 0,
+						modelOffset: 0,
+
+						// Values.
+						positionValues: new Float32Array(
+							cubeNums * Universal.unitCube.vertexFloatCount,
+						),
+						colorValues: new Float32Array(
+							cubeNums * Universal.unitCube.vertexFloatCount,
+						),
+						normalValues: new Float32Array(
+							cubeNums * Universal.unitCube.vertexFloatCount,
+						),
+						modelIdValues: new Uint32Array(
+							cubeNums * Universal.unitCube.numOfVertices,
+						),
+						modelMatrices: new Float32Array(
+							cubeNums * modelOffset,
+						),
+					}
+				);
+
 				const canvasDimension = canvasDimension$.value;
 				const width = canvasDimension.width;
 				const height = canvasDimension.height;
@@ -456,11 +481,11 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				device.queue.writeBuffer(posStorageBuffer, 0, positionValues);
-				device.queue.writeBuffer(colorStorageBuffer, 0, colorValues);
-				device.queue.writeBuffer(normalStorageBuffer, 0, normalValues);
-				device.queue.writeBuffer(modelsStorageBuffer, 0, new Float32Array(models));
-				device.queue.writeBuffer(modelIdStorageBuffer, 0, modelIdValues);
+				device.queue.writeBuffer(posStorageBuffer, 0, models.positionValues);
+				device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
+				device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
+				device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
+				device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
 				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
