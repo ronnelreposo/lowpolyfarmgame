@@ -188,7 +188,7 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const MAX_BUFF_SIZE = 1 * 1024 * 1024; // 1 MB
+		const MAX_BUFF_SIZE = 2 * 1024 * 1024; // 2 MB
 
 		const posStorageBuffer = device.createBuffer({
 			label: `Position storage buffer`,
