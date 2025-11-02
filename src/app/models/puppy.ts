@@ -151,7 +151,34 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 					s: 1,
 				},
 				modelMatrix: [],
-				material: { basecolor: [] },
+				material: {
+					basecolor: [
+						// Front face.
+						...Array(6)
+							.fill(rgbaToColor(149, 165, 166))
+							.flat(),
+						// Back face.
+						...Array(6)
+							.fill(rgbaToColor(149, 165, 166))
+							.flat(),
+						// Left face.
+						...Array(6)
+							.fill(rgbaToColor(149, 165, 166))
+							.flat(),
+						// Right face.
+						...Array(6)
+							.fill(rgbaToColor(149, 165, 166))
+							.flat(),
+						// Top face.
+						...Array(6)
+							.fill(rgbaToColor(39, 174, 96)) // nephritis
+							.flat(),
+						// Bottom face.
+						...Array(6)
+							.fill(rgbaToColor(149, 165, 166)) // concrete
+							.flat(),
+					]
+				},
 			});
 		}
 	}
@@ -176,9 +203,9 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 
 // Got limit trerain. 35x35.
 
-export const terrainWidth = 0;
-export const terrainHeight = 0;
-export const cuberManCount = 0;
+export const terrainWidth = 10;
+export const terrainHeight = 10;
+export const cuberManCount = 1;
 
 export const cuberManCubeCount = 8;
 

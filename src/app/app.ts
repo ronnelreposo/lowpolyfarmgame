@@ -285,7 +285,6 @@ export class App implements AfterViewInit {
 			const modelIdValues = new Uint32Array(
 				cubeNums * Universal.unitCube.numOfVertices,
 			);
-			console.log("pos values:", positionValues.byteLength)
 			let models = undefined;
 
 			while (lag >= MsPerUpdate) {
@@ -302,13 +301,11 @@ export class App implements AfterViewInit {
 						}
 
 						let coloredCubes: Model = undefined!;
-						if (model.id.startsWith("terrain")) {
-							coloredCubes = setTerrainColors(model);
-						}
 						if (
 							model.id.startsWith("carrot-stalk") ||
 							model.id.startsWith("carrot-leaf") ||
-							model.id.startsWith("carrot-body")
+							model.id.startsWith("carrot-body") ||
+							model.id.startsWith("terrain")
 						) {
 							// Skipped, provided in the Model.
 							coloredCubes = model;

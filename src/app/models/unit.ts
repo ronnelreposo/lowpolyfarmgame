@@ -160,23 +160,30 @@ export function setTerrainColors(model: Model): Model {
 		material: {
 			...model.material,
 			basecolor: [
-				// FRONT face - orange
-				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
-
-				// BACK face - violet (wisteria)
-				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
-
-				// LEFT face - green (gree sea)
-				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
-
-				// RIGHT face - blue (belize hole)
-				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
-
-				// TOP face - green (emerald)
-				...Array(6).fill(rgbaToColor(46, 204, 113)).flat(),
-
-				// BOTTOM face - red (pomegranate)
-				...Array(6).fill(rgbaToColor(149, 165, 166)).flat(),
+				// Front face.
+				...Array(6)
+					.fill(rgbaToColor(1, 1, 1))
+					.flat(),
+				// Back face.
+				...Array(6)
+					.fill(rgbaToColor(243, 156, 18))
+					.flat(),
+				// Left face.
+				...Array(6)
+					.fill(rgbaToColor(243, 156, 18))
+					.flat(),
+				// Right face.
+				...Array(6)
+					.fill(rgbaToColor(243, 156, 18))
+					.flat(),
+				// Top face.
+				...Array(6)
+					.fill(rgbaToColor(1, 1, 1))
+					.flat(), // carrot
+				// Bottom face.
+				...Array(6)
+					.fill(rgbaToColor(243, 156, 18))
+					.flat(),
 			]
 		}
 	};
