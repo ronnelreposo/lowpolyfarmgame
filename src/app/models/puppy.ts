@@ -206,7 +206,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 
 export const terrainWidth = 10;
 export const terrainHeight = 10;
-export const cuberManCount = 0;
+export const cuberManCount = 1;
 
 const fencePolePerRow = 23;
 const fenceRowDistanceToCenter = 5;

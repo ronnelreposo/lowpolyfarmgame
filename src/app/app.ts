@@ -23,7 +23,7 @@ import {
 	Subject,
 	switchMap,
 	tap,
-	throttleTime,
+	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
 import { mapTree, reduceTree } from "./ds/tree";
@@ -44,7 +44,7 @@ import {
 	terrainHeight,
 	terrainWidth,
 } from "./models/puppy";
-import { toDegrees } from "./ds/util";
+import { toDegrees, toRadians } from "./ds/util";
 import { updateWorld } from "./models/geom";
 import { CommonModule } from "@angular/common";
 
@@ -69,7 +69,7 @@ export class App implements AfterViewInit {
 		}
 		const canvas = document.querySelector("canvas");
 
-		const startingCamera = [0, 5, 5, 1];
+		const startingCamera = [0, 3, 10, 1];
 		const camera$ = new BehaviorSubject(startingCamera);
 		fromEvent<KeyboardEvent>(document!, "keydown")
 			.pipe(
@@ -119,6 +119,72 @@ export class App implements AfterViewInit {
 				startWith(startingCamera),
 			)
 			.subscribe(camera$);
+
+
+
+		const turnAngleDeg = 0;
+		const turnAngleDeg$ = new BehaviorSubject(turnAngleDeg);
+		fromEvent<KeyboardEvent>(document!, "keydown")
+			.pipe(
+				tap((event: KeyboardEvent) => event.preventDefault()),
+				switchMap((event: KeyboardEvent) => {
+					// console.log("key", event)
+					const turnRate = 15.0
+					switch (event.key) {
+						case "a": {
+							return of(-turnRate);
+						}
+						case "d": {
+							return of(turnRate);
+						}
+						default:
+							return EMPTY;
+					}
+				}),
+				scan((acc, turnRateDelta) => acc + turnRateDelta, turnAngleDeg),
+				startWith(turnAngleDeg),
+			)
+			.subscribe(angle => {
+				turnAngleDeg$.next(angle);
+			});
+
+		const startingMove = [0, 0, 0, 1];
+		const move$ = new BehaviorSubject(startingMove);
+		// Move with respect to the turn.
+		fromEvent<KeyboardEvent>(document!, "keydown")
+			.pipe(
+				tap((event: KeyboardEvent) => event.preventDefault()),
+				switchMap((event: KeyboardEvent) => {
+					// console.log("key", event)
+					const strafeSpeed = 0.1;
+					switch (event.key) {
+						case "w": {
+							return of([0, 0, strafeSpeed, 1.0]);
+						}
+						case "s": {
+							return of([0, 0, -strafeSpeed, 1.0]);
+						}
+						default:
+							return EMPTY;
+					}
+				}),
+				withLatestFrom(turnAngleDeg$),
+				scan((acc, [deltaMove, turnAngleDeg]) => {
+					const forwardX = Math.sin(toRadians(turnAngleDeg));
+					const forwardZ = Math.cos(toRadians(turnAngleDeg));
+					const forwardAmount = deltaMove[2]; // from W/S
+					return [
+						acc[0] + forwardX * forwardAmount,
+						0,
+						acc[2] + forwardZ * forwardAmount,
+						1,
+					];
+				}, startingMove),
+				startWith(startingMove),
+			)
+			.subscribe(m => {
+				move$.next(m);
+			});
 
 		const canvasDimension$ = new BehaviorSubject<{
 			width: number;
@@ -351,12 +417,14 @@ export class App implements AfterViewInit {
 							...model,
 							trs: {
 								...model.trs,
-								rydeg: toDegrees(
-									easeOutSine(pingPongAngle(period)),
-								),
-								t: [index - (cuberManCount - 1) / 2, 1, period], // jump my child.
-								// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
-							},
+								rydeg: turnAngleDeg$.value, // rotate only on Y axis.
+								t: [
+									move$.value[0],
+									1,
+									move$.value[2],
+									1
+								],
+							}
 						};
 					}
 					return model;
@@ -489,6 +557,10 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
 				device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
 				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
+				// // FOV Primier.
+				// device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([move$.value[0] + 1, 1, move$.value[2] + 1, 1]));
+				// // Static camera.
+				// device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(startingCamera));
 				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
 
