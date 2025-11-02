@@ -343,22 +343,22 @@ export class App implements AfterViewInit {
 							},
 						};
 					}
-					if (model.id.startsWith("cuberman")) {
-						// get the index. (poormans design)
-						const index = +model.id.replace("cuberman:", "");
+					// if (model.id.startsWith("cuberman")) {
+					// 	// get the index. (poormans design)
+					// 	const index = +model.id.replace("cuberman:", "");
 
-						return {
-							...model,
-							trs: {
-								...model.trs,
-								rydeg: toDegrees(
-									easeOutSine(pingPongAngle(period)),
-								),
-								t: [index - cuberManCount / 2, 1, period], // jump my child.
-								// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
-							},
-						};
-					}
+					// 	return {
+					// 		...model,
+					// 		trs: {
+					// 			...model.trs,
+					// 			rydeg: toDegrees(
+					// 				easeOutSine(pingPongAngle(period)),
+					// 			),
+					// 			t: [index - cuberManCount / 2, 1, period], // jump my child.
+					// 			// rxdeg: -toDegrees(period * 2 * Math.PI) // tumbling.
+					// 		},
+					// 	};
+					// }
 					return model;
 				});
 
