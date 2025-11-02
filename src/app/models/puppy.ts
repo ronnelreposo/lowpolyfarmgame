@@ -59,7 +59,7 @@ function createCuberMan(id: string) {
 			id: `cuberman:${id}`,
 			mesh: unitCube("unit-cube"),
 			trs: {
-				t: [0, 0, 0],
+				t: [1, 1, 0],
 				pivot: [0, 0, 0],
 				rxdeg: 0,
 				rydeg: 0,
@@ -204,54 +204,27 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 // Got pushed trerain. 100x100.
 // Got pushed cuberman to 100.
 
-export const terrainWidth = 100;
-export const terrainHeight = 100;
-export const cuberManCount = 100;
+export const terrainWidth = 10;
+export const terrainHeight = 10;
+export const cuberManCount = 0;
 
-export const cuberManCubeCount = 8;
+const fencePolePerRow = 23;
+const fenceRowDistanceToCenter = 5;
+const fenceScale = 0.3;
+export const fencePoleCount = fencePolePerRow * 4; // 4x sides.
+
+export const cuberManMeshCubeCount = 8;
+export const fencePoleMeshCubeCount = 4;
 
 const carrotOffset = 1.0;
 const carrotBodyHeight = 0.5 + 0.7 + 0.4 + carrotOffset;
-const carrotStalkAndLeavesColors = [
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(39, 174, 96))
-		.flat(), // nephritis
-];
-const carrotBodyColors = [
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(),
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(), // carrot
-	...Array(6)
-		.fill(rgbaToColor(243, 156, 18))
-		.flat(),
-];
+const carrotStalkAndLeavesColors = Array(36)
+	.fill(rgbaToColor(39, 174, 96)) // nephritis
+	.flat();
+const carrotBodyColors = Array(36)
+	.fill(rgbaToColor(243, 156, 18)) // carrot
+	.flat();
+
 // Bare no colors and not placed in the world yet.
 export const myModelWorld: Tree<Model> = createNode<Model>(
 	{
@@ -439,5 +412,119 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 				}),
 			],
 		),
+
+		// left side fence.
+		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.5 }),
+		// right side fence.
+		createRowFencePolesModel(fencePolePerRow, [-fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.5 }),
+		// front fence.
+		createRowFencePolesModel(fencePolePerRow, [0, 0, fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.5 }),
+		// // back fence.
+		createRowFencePolesModel(fencePolePerRow, [0, 0, -fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.5 }),
 	],
 );
+
+function createFencePoleModel(pos: number[]): Tree<Model> {
+	return createNode<Model>(
+		{
+			id: "root-anchor",
+			mesh: unitCube("unit-cube"),
+			trs: {
+				t: pos,
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1,
+			},
+			// To be filled by update world.
+			modelMatrix: [],
+			material: { basecolor: [] },
+		},
+		[
+			createLeaf({
+				id: "fence-body",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 1, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 1,
+				}, // 0.7
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+			}),
+			createLeaf({
+				id: "fence-body",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 2, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 1,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+			}),
+			createLeaf({
+				id: "fence-body",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 3, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 1,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+			}),
+			createLeaf({
+				id: "fence-body",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 3.75, 0], // 3 + (scale/2)
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.5,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+			})
+		],
+	);
+}
+
+function createRowFencePolesModel(count: number,
+	t: [number, number, number], rydeg: number, scale: number, config: { spacing: number }): Tree<Model> {
+	return createNode({
+		id: "root-anchor",
+		mesh: unitCube("unit-cube"),
+		trs: {
+			t: t,
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: rydeg,
+			rzdeg: 0,
+			s: scale,
+		},
+		// To be filled by update world.
+		modelMatrix: [],
+		material: { basecolor: [] },
+	},
+		Array(count)
+			.fill(null)
+			.map((x, i) => createFencePoleModel([(i - (count - 1) / 2) * config.spacing, 0, 0])) // centered.
+	);
+}

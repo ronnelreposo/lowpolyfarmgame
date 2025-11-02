@@ -37,7 +37,9 @@ import {
 } from "./models/unit";
 import {
 	cuberManCount,
-	cuberManCubeCount,
+	cuberManMeshCubeCount,
+	fencePoleCount,
+	fencePoleMeshCubeCount,
 	myModelWorld,
 	terrainHeight,
 	terrainWidth,
@@ -261,13 +263,15 @@ export class App implements AfterViewInit {
 
 		const duration = 1_500;
 		const subjects = cuberManCount;
-		const terrain = terrainWidth * terrainHeight + 0; // row * col + 1 anchor.
+		const terrain = terrainWidth * terrainHeight;
+		const carrotCubeCount = 8;
+		// No anchors.
 		const cubeNums =
-			cuberManCubeCount * subjects +
-			terrain +
-			0 + // Should match the tree, one for anchor cube, plus terrain.
-			8 +
-			0; // carrot, 8 cubes, 1 anchor.
+			cuberManMeshCubeCount * subjects +
+			terrain + carrotCubeCount +
+			fencePoleMeshCubeCount * fencePoleCount // fence for now.
+			;
+
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
