@@ -198,30 +198,30 @@ const carrotStalkAndLeavesColors = [
 		.fill(rgbaToColor(39, 174, 96))
 		.flat(),
 	...Array(6)
-		.fill(rgbaToColor(46, 204, 113))
-		.flat(), // emerald
+		.fill(rgbaToColor(39, 174, 96))
+		.flat(),
 	...Array(6)
 		.fill(rgbaToColor(39, 174, 96))
 		.flat(), // nephritis
 ];
 const carrotBodyColors = [
 	...Array(6)
-		.fill(rgbaToColor(230, 126, 34))
-		.flat(), // orange
-	...Array(6)
-		.fill(rgbaToColor(230, 126, 34))
+		.fill(rgbaToColor(243, 156, 18))
 		.flat(),
 	...Array(6)
-		.fill(rgbaToColor(230, 126, 34))
+		.fill(rgbaToColor(243, 156, 18))
 		.flat(),
 	...Array(6)
-		.fill(rgbaToColor(230, 126, 34))
+		.fill(rgbaToColor(243, 156, 18))
+		.flat(),
+	...Array(6)
+		.fill(rgbaToColor(243, 156, 18))
 		.flat(),
 	...Array(6)
 		.fill(rgbaToColor(243, 156, 18))
 		.flat(), // carrot
 	...Array(6)
-		.fill(rgbaToColor(230, 126, 34))
+		.fill(rgbaToColor(243, 156, 18))
 		.flat(),
 ];
 // Bare no colors and not placed in the world yet.

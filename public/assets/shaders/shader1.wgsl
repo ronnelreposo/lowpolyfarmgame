@@ -30,14 +30,14 @@ struct VsOutput {
 	let P = perspective(fov, aspect, near, far);
 
 	// Camera
-	let eye1 = camera.xyz; // where your camera in world space.
-	let orbitRadius = 5.1;
-	let PI = 3.141592653589793;
-	let eye = vec3f(
-		orbitRadius * cos(time * PI * 2.0),
-		camera.y,
-		orbitRadius * sin(time * PI * 2.0),
-	); // where your camera in world space.
+	let eye = camera.xyz; // where your camera in world space.
+	// let orbitRadius = 5.1;
+	// let PI = 3.141592653589793;
+	// let eye = vec3f(
+	// 	orbitRadius * cos(time * PI * 2.0),
+	// 	camera.y,
+	// 	orbitRadius * sin(time * PI * 2.0),
+	// ); // where your camera in world space.
 	let subj = vec3f(0.0, 0.0, 0.0); // where to look at - (looking at origin (0,0,0))
 	let up = vec3f(0.0, 1.0, 0.0);
 	let V = lookAt(eye, subj, up);
@@ -53,7 +53,7 @@ struct VsOutput {
 	let Normal = normalize(vsOut.normal.xyz);
 	let Light = normalize(vec3f(0.4, 0.7, 0.5));
 	let ndotl = max(dot(Normal, Light), 0.0);
-	let ambient = 0.75;
+	let ambient = 0.45;
 
 	let lit = vsOut.color.rgb * (ambient + ndotl);
 	return vec4(lit, vsOut.color.a);
