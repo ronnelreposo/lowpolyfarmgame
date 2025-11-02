@@ -140,9 +140,9 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
-						(i - row / 2) * (1 + gap),
+						(i - (row - 1) / 2) * (1 + gap),
 						0,
-						(j - row / 2) * (1 + gap),
+						(j - (col - 1) / 2) * (1 + gap),
 					],
 					pivot: [0, 0, 0],
 					rxdeg: 0,
