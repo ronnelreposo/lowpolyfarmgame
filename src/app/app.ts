@@ -375,38 +375,25 @@ export class App implements AfterViewInit {
 							return acc; // Don't add to the values.
 						}
 
-						let coloredCubes: Model = undefined!;
-						if (
-							model.id.startsWith("carrot-stalk") ||
-							model.id.startsWith("carrot-leaf") ||
-							model.id.startsWith("carrot-body") ||
-							model.id.startsWith("terrain")
-						) {
-							// Skipped, provided in the Model.
-							coloredCubes = model;
-						} else {
-							// a debug color.
-							coloredCubes = setDebugColors(model);
-						}
-						console.assert(coloredCubes !== undefined);
+						console.assert(model !== undefined);
 
 						acc.positionValues.set(
-							coloredCubes.mesh.positions,
+							model.mesh.positions,
 							acc.vertexOffset,
 						);
 						acc.colorValues.set(
-							coloredCubes.material.basecolor,
+							model.material.basecolor,
 							acc.vertexOffset,
 						);
 						acc.normalValues.set(
-							coloredCubes.mesh.normals,
+							model.mesh.normals,
 							acc.vertexOffset,
 						);
 						acc.modelIdValues.fill(
 							acc.modelId,
 							acc.vertexOffset / Universal.floatsPerVertex,
 							acc.vertexOffset / Universal.floatsPerVertex +
-								coloredCubes.mesh.vertexCount,
+								model.mesh.vertexCount,
 						);
 						acc.modelMatrices.set(model.modelMatrix, acc.modelOffset);
 
@@ -416,7 +403,7 @@ export class App implements AfterViewInit {
 						}
 
 						return {
-							vertexOffset: acc.vertexOffset + coloredCubes.mesh.positions.length,
+							vertexOffset: acc.vertexOffset + model.mesh.positions.length,
 							modelId: acc.modelId + 1,
 							modelOffset: acc.modelOffset + modelOffset,
 

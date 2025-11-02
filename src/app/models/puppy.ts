@@ -1,6 +1,6 @@
-import { createLeaf, createNode, Tree } from "../ds/tree";
+import { createLeaf, createNode, mapTree, Tree } from "../ds/tree";
 import { rgbaToColor } from "../ds/util";
-import { Model, unitCube } from "./unit";
+import { Model, setDebugColors, unitCube } from "./unit";
 
 const headGeom: Tree<Model> = createNode<Model>(
 	{
@@ -201,7 +201,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 	);
 }
 
-// Got limit trerain. 35x35.
+// Got pushed trerain. 100x100.
+// Got pushed cuberman to 100.
 
 export const terrainWidth = 100;
 export const terrainHeight = 100;
@@ -272,7 +273,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		// Cuberman army!
 		...Array(cuberManCount)
 			.fill(null)
-			.map((x, i) => createCuberMan(i.toString())),
+			.map((x, i) => mapTree(createCuberMan(i.toString()), setDebugColors)),
 		// Terrain.
 		terrain(terrainWidth, terrainHeight),
 
