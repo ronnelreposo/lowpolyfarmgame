@@ -3,6 +3,7 @@ struct VsOutput {
 	@builtin(position) position: vec4f,
 	@location(0) normal: vec4f,
 	@location(1) color: vec4f,
+	@location(2) worldPos: vec4f, // world matrix.
 };
 
 @group(0) @binding(0) var<storage, read> pos: array<vec4f>;
@@ -43,9 +44,11 @@ struct VsOutput {
 	let V = lookAt(eye, subj.xyz, up);
 
 	var vsOut: VsOutput;
-	vsOut.position = P * V * models[modelIds[vertexIndex]] * pos[vertexIndex];
+	let worldPos = models[modelIds[vertexIndex]] * pos[vertexIndex];
+	vsOut.position = P * V * worldPos;
 	vsOut.color = color[vertexIndex];
 	vsOut.normal = normal[vertexIndex];
+	vsOut.worldPos = worldPos;
 	return vsOut;
 }
 
@@ -55,7 +58,24 @@ struct VsOutput {
 	let ndotl = max(dot(Normal, Light), 0.0);
 	let ambient = 0.45;
 
-	let lit = vsOut.color.rgb * (ambient + ndotl);
+	// TODO: replace this fake positional shadow with a proper ray-march visibility test.
+	// Later plan:
+	// 1. Start the ray slightly above the surface: rayPos = vsOut.worldPos + Normal * 0.01
+	// 2. Move the ray toward the light: rayDir = -normalize(Light)
+	// 3. For each step (or using voxel-DDA):
+	//      rayPos += rayDir * stepSize
+	//      if isVoxelSolid(rayPos): shadow = 0.0; break;
+	// 4. stepSize ≈ voxel size (1.0 for unit cubes)
+	// 5. Terminate after some max distance or when we reach light range
+	// 6. Optionally blur / accumulate for soft edges
+	//
+	// For now this if-block just fakes the shadowed region between x=0.0 and x=0.5.
+	var shadow = 1.0;
+	if (vsOut.worldPos.x >= 0.0 && vsOut.worldPos.x <= 0.5) {
+		shadow = 0.0; // full dark in this region.
+	}
+
+	let lit = vsOut.color.rgb * (ambient + ndotl * shadow);
 	return vec4(lit, vsOut.color.a);
 }
 
