@@ -203,12 +203,13 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 
 // Got pushed trerain. 100x100.
 // Got pushed cuberman to 100.
+// Upon introduction of shadows, the performance hits on gpu not on sim.
 
-export const terrainWidth = 100;
-export const terrainHeight = 100;
+export const terrainWidth = 10;
+export const terrainHeight = 10;
 export const cuberManCount = 1;
 
-const fencePolePerRow = 23;
+const fencePolePerRow = 20;
 const fenceRowDistanceToCenter = 5;
 const fenceScale = 0.3;
 export const fencePoleCount = fencePolePerRow * 4; // 4x sides.
@@ -414,13 +415,13 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		),
 
 		// left side fence.
-		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.5 }),
+		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
 		// right side fence.
-		createRowFencePolesModel(fencePolePerRow, [-fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.5 }),
+		createRowFencePolesModel(fencePolePerRow, [-fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
 		// front fence.
-		createRowFencePolesModel(fencePolePerRow, [0, 0, fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.5 }),
+		createRowFencePolesModel(fencePolePerRow, [0, 0, fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
 		// // back fence.
-		createRowFencePolesModel(fencePolePerRow, [0, 0, -fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.5 }),
+		createRowFencePolesModel(fencePolePerRow, [0, 0, -fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
 	],
 );
 

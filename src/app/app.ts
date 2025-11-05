@@ -312,6 +312,10 @@ export class App implements AfterViewInit {
 			size: 4 * 4, // 1 float, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
+		const cubeCountUniformBuffer = device.createBuffer({
+			size: 1 * 4, // 1 float, 4 bytes each.
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
 
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
@@ -327,6 +331,7 @@ export class App implements AfterViewInit {
 				{ binding: 6, resource: { buffer: aspectUniformBuffer } },
 				{ binding: 7, resource: { buffer: timeUniformBuffer } },
 				{ binding: 8, resource: { buffer: subjUniformBuffer } },
+				{ binding: 9, resource: { buffer: cubeCountUniformBuffer } },
 			],
 		});
 
@@ -566,6 +571,7 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
 				device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
+				device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
 
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);
