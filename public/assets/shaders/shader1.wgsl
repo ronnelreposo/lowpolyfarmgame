@@ -66,7 +66,8 @@ struct VsOutput {
 
 @fragment fn fs(vsOut: VsOutput) -> @location(0) vec4f {
 	let Normal = normalize(vsOut.normal.xyz);
-	let Light = normalize(vec3f(0.4, 0.7, 0.5));
+	// let Light = normalize(vec3f(0.4, 0.7, 0.5));
+	let Light = normalize(vec3f(time, time, 0.5));
 	let ndotl = max(dot(Normal, Light), 0.0);
 	let ambient = 0.45;
 
