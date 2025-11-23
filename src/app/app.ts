@@ -220,6 +220,73 @@ export class App implements AfterViewInit {
 		// const canvasSubj = new
 		// canvasDimension$.subscribe()
 
+		const ray$ = new Subject<[number, number, number]>();
+		// canvas pixel coords
+		fromEvent(canvas!, 'pointerdown')
+			.pipe(withLatestFrom(canvasDimension$, camera$))
+			.subscribe(([e, { width, height }, camera]) => {
+				// In full screen, use bounding rect if not.
+				const x = (e as PointerEvent).clientX;
+				const y = (e as PointerEvent).clientY;
+
+				// Note for PV. This is duplicated logic from shader.
+
+				const fov = 60 * Math.PI / 180;
+				const aspect = width / height;
+				const near = 0.1;
+				const far = 100.0;
+				const P = mat.perspective([], fov, aspect, near, far);
+
+				const eye = [camera[0], camera[1], camera[2]];
+				const subj = [0, 0, 0];
+				const up = [0, 1, 0];
+				const V = mat.lookAt([], eye, subj, up);
+
+				const PV = mat.mulM44([], P, V);
+				const invPV = mat.invert44([], PV);
+
+				// screen (pixel) -> NDC
+				const ndcX = (x / width) * 2.0 - 1.0;
+				const ndcY = 1.0 - (y / height) * 2.0;
+
+				const clipNear = [ndcX, ndcY, 0.0, 1.0];
+				const clipFar = [ndcX, ndcY, 1.0, 1.0];
+
+				if (invPV) {
+					// Backprojection/Unproject: world = inverse(P*V) * clip.
+					const worldNear4 = mat.mulV44([], invPV, clipNear);
+					const worldFar4 = mat.mulV44([], invPV, clipFar);
+
+					// Find out more about homogenous coords.
+					const worldNear = [
+						worldNear4[0] / worldNear4[3],
+						worldNear4[1] / worldNear4[3],
+						worldNear4[2] / worldNear4[3]
+					];
+
+					// Find out more about homogenous coords.
+					const worldFar = [
+						worldFar4[0] / worldFar4[3],
+						worldFar4[1] / worldFar4[3],
+						worldFar4[2] / worldFar4[3]
+					];
+
+					const rayOrigin = worldNear;
+					const rayDirectionRaw = mat.sub([], worldFar, rayOrigin);
+					// const rayDirection = mat.normal33([], );
+
+					const len = Math.hypot(rayDirectionRaw[0], rayDirectionRaw[1], rayDirectionRaw[2]);
+					// Ray direction normalized. Avoid divide-by-zero
+					const rayDirection: [number, number, number] =
+						len > 0
+							? [rayDirectionRaw[0] / len, rayDirectionRaw[1] / len, rayDirectionRaw[2] / len]
+							: [0, 0, 0];
+
+					console.log("[debug] Ray!", rayDirection);
+					ray$.next(rayDirection);
+				}
+			});
+
 		const context = canvas?.getContext("webgpu");
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 		context?.configure({

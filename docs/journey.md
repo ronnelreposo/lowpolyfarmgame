@@ -1,4 +1,9 @@
 
+Nov 23, 2025 10:36PM
+- Ray from mouse pointer.
+- Note that I've duplicated the shader and the typescript for 'P' and 'V',
+make sure the parameters are aligned, refactor later.
+
 Oct 26, 2025 9:11PM
 - `mat.mulM44([], cube.model, M); // local space.`
 - `mat.mulM44([], M, cube.model); // world space.`
