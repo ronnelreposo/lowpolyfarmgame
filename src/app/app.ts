@@ -659,31 +659,6 @@ export class App implements AfterViewInit {
 	}
 }
 
-type Dimension = { width: number; height: number };
-type Coord = { x: number; y: number; z: number; w: number };
-const transformToClipSpace =
-	(dimension: Dimension) =>
-	(coord: Coord): [number, number, number, number] => {
-		return [
-			(coord.x / dimension.width) * 2 - 1,
-			1 - (coord.y / dimension.height) * 2,
-			coord.z,
-			coord.w,
-		];
-	};
-// const normMinMax = (min: number, max: number) => (value: number): number => {
-// 	return max - value / (max - min);
-// };
-
-// hard coded resolution.
-const resWidth = 2400;
-const resHeight = 970;
-const toCp = transformToClipSpace({ width: resWidth, height: resHeight });
-
-type Entity = ({ kind: "tri" } | { kind: "quad" } | { kind: "free" }) &
-	// | { kind: "cool-hero" } // 🤣
-	{ verts: number[]; triangleCount: number; color: number[] };
-
 const fract = (x: number) => x - Math.floor(x);
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const deg2rad = (d: number) => (d * Math.PI) / 180;
