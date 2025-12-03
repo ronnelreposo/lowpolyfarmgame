@@ -14,11 +14,11 @@ struct VsOutput {
 // Model ID per vertex.
 @group(0) @binding(4) var<storage, read> modelIds: array<u32>;
 
-@group(0) @binding(5) var<uniform> camera: vec4f;
-@group(0) @binding(6) var<uniform> aspect: vec2f;
+// @group(0) @binding(6) var<uniform> aspect: vec2f;
 @group(0) @binding(7) var<uniform> time: f32;
-@group(0) @binding(8) var<uniform> subj: vec4f;
+// @group(0) @binding(8) var<uniform> subj: vec4f;
 @group(0) @binding(9) var<uniform> cubeCount: u32;
+@group(0) @binding(10) var<uniform> viewProjection: mat4x4f;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
@@ -27,28 +27,30 @@ struct VsOutput {
 
 	let t = time; // temporary assignment, dummy usage.
 
-	let fov = radians(60.0);  // 45° field of view
-	let aspect = aspect.x / aspect.y;
-	let near = 0.1;
-	let far = 100.0;
-	let P = perspective(fov, aspect, near, far);
+	// let fov = radians(60.0);  // 45° field of view
+	// let aspect = aspect.x / aspect.y;
+	// let near = 0.1;
+	// let far = 100.0;
+	// let P = perspective(fov, aspect, near, far);
 
-	// Camera
-	let eye = camera.xyz; // where your camera in world space.
-	// let orbitRadius = 5.1;
-	// let PI = 3.141592653589793;
-	// let eye = vec3f(
-	// 	orbitRadius * cos(time * PI * 2.0),
-	// 	camera.y,
-	// 	orbitRadius * sin(time * PI * 2.0),
-	// ); // where your camera in world space.
-	let up = vec3f(0.0, 1.0, 0.0);
-	let V = lookAt(eye, subj.xyz, up);
+	// // Camera
+	// let eye = camera.xyz; // where your camera in world space.
+	// // let orbitRadius = 5.1;
+	// // let PI = 3.141592653589793;
+	// // let eye = vec3f(
+	// // 	orbitRadius * cos(time * PI * 2.0),
+	// // 	camera.y,
+	// // 	orbitRadius * sin(time * PI * 2.0),
+	// // ); // where your camera in world space.
+	// let up = vec3f(0.0, 1.0, 0.0);
+	// let V = lookAt(eye, subj.xyz, up);
 
 	var vsOut: VsOutput;
 	let model = models[modelIds[vertexIndex]];
 	let worldPos = model * pos[vertexIndex];
-	vsOut.position = P * V * worldPos;
+
+
+	vsOut.position = viewProjection * worldPos;
 	vsOut.color = color[vertexIndex];
 
 	// Rotate the normal.
@@ -76,6 +78,8 @@ struct VsOutput {
 	if (ndotl > 0.0) {
 		shadow = shadow_all_cubes_OBB(vsOut.worldPos.xyz, Normal, Light);
 	}
+
+	//
 
 	let lit = vsOut.color.rgb * (ambient + ndotl * shadow);
 	return vec4(lit, vsOut.color.a);

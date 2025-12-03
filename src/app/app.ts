@@ -48,6 +48,11 @@ import { toDegrees, toRadians } from "./ds/util";
 import { updateWorld } from "./models/geom";
 import { CommonModule } from "@angular/common";
 
+// Perspective constants, should match in shader.
+const near = 1;
+const far = 1000.0;
+const startingCamera = [74, 34, 177, 1];
+
 @Component({
 	selector: "app-root",
 	imports: [RouterOutlet, CommonModule],
@@ -69,7 +74,6 @@ export class App implements AfterViewInit {
 		}
 		const canvas = document.querySelector("canvas");
 
-		const startingCamera = [0, 3, 10, 1];
 		const camera$ = new BehaviorSubject(startingCamera);
 		fromEvent<KeyboardEvent>(document!, "keydown")
 			.pipe(
@@ -106,12 +110,10 @@ export class App implements AfterViewInit {
 					}
 				}),
 				scan((acc, arr) => {
-					// Pßerspective constants, should match in shader.
-					const near = 0.1;
-					const far = 100;
+
 					return [
-						Math.min(Math.max(acc[0] + arr[0], -5), 5),
-						Math.min(Math.max(acc[1] + arr[1], -5), 5),
+						Math.min(Math.max(acc[0] + arr[0], -5), 100),
+						Math.min(Math.max(acc[1] + arr[1], -5), 100),
 						Math.min(Math.max(acc[2] + arr[2], near), far),
 						1,
 					];
@@ -230,20 +232,13 @@ export class App implements AfterViewInit {
 				const y = (e as PointerEvent).clientY;
 
 				// Note for PV. This is duplicated logic from shader.
+				const viewProjected = viewProjection({
+					width,
+					height,
+					camera
+				});
 
-				const fov = 60 * Math.PI / 180;
-				const aspect = width / height;
-				const near = 0.1;
-				const far = 100.0;
-				const P = mat.perspective([], fov, aspect, near, far);
-
-				const eye = [camera[0], camera[1], camera[2]];
-				const subj = [0, 0, 0];
-				const up = [0, 1, 0];
-				const V = mat.lookAt([], eye, subj, up);
-
-				const PV = mat.mulM44([], P, V);
-				const invPV = mat.invert44([], PV);
+				const invPV = mat.invert44([], viewProjected);
 
 				// screen (pixel) -> NDC
 				const ndcX = (x / width) * 2.0 - 1.0;
@@ -363,14 +358,6 @@ export class App implements AfterViewInit {
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
 
-		const cameraUniformBuffer = device.createBuffer({
-			size: 4 * 4, // 4 floats, 4 bytes each.
-			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		});
-		const aspectUniformBuffer = device.createBuffer({
-			size: 4 * 4, // 4 floats, 4 bytes each.
-			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		});
 		const timeUniformBuffer = device.createBuffer({
 			size: 1 * 4, // 1 float, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -381,6 +368,10 @@ export class App implements AfterViewInit {
 		});
 		const cubeCountUniformBuffer = device.createBuffer({
 			size: 1 * 4, // 1 float, 4 bytes each.
+			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		});
+		const viewProjectionUniformBuffer = device.createBuffer({
+			size: 16 * 4, // 4x4 matrix, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
 
@@ -394,11 +385,9 @@ export class App implements AfterViewInit {
 				{ binding: 2, resource: { buffer: normalStorageBuffer } },
 				{ binding: 3, resource: { buffer: modelsStorageBuffer } },
 				{ binding: 4, resource: { buffer: modelIdStorageBuffer } },
-				{ binding: 5, resource: { buffer: cameraUniformBuffer } },
-				{ binding: 6, resource: { buffer: aspectUniformBuffer } },
 				{ binding: 7, resource: { buffer: timeUniformBuffer } },
-				{ binding: 8, resource: { buffer: subjUniformBuffer } },
 				{ binding: 9, resource: { buffer: cubeCountUniformBuffer } },
+				{ binding: 10, resource: { buffer: viewProjectionUniformBuffer } },
 			],
 		});
 
@@ -630,15 +619,18 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
 				device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
-				device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(camera$.value));
-				// // FOV Primier.
-				// device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array([move$.value[0] + 1, 1, move$.value[2] + 1, 1]));
-				// // Static camera.
-				// device.queue.writeBuffer(cameraUniformBuffer, 0, new Float32Array(startingCamera));
-				device.queue.writeBuffer(aspectUniformBuffer, 0, new Float32Array([width, height]));
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
 				device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
 				device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
+
+				const viewProjected = viewProjection({
+					width,
+					height,
+					camera: camera$.value,
+				});
+				const pvData = new Float32Array(viewProjected);
+				// console.log(viewProjected);
+				device.queue.writeBuffer(viewProjectionUniformBuffer, 0, pvData);
 
 				// Assign resource
 				pass.setBindGroup(0, bindGroup);
@@ -718,4 +710,18 @@ function easeOutBounce(x: number): number {
 }
 function easeInBounce(x: number): number {
 	return 1 - easeOutBounce(1 - x);
+}
+
+function viewProjection(params: { width: number, height: number, camera: number[] }): number[] {
+	const fov = toRadians(60);
+	const aspect = params.width / params.height;
+
+	const P = mat.perspective([], fov, aspect, near, far);
+
+	const eye = [params.camera[0], params.camera[1], params.camera[2]];
+	const subj = [0, 0, 0];
+	const up = [0, 1, 0];
+	const V = mat.lookAt([], eye, subj, up);
+
+	return mat.mulM44([], P, V) as number[];
 }
