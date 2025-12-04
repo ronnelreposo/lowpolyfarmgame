@@ -49,9 +49,9 @@ import { updateWorld } from "./models/geom";
 import { CommonModule } from "@angular/common";
 
 // Perspective constants, should match in shader.
-const near = 1;
-const far = 1000.0;
-const startingCamera = [74, 34, 177, 1];
+const near = 0.1;
+const far = 100.0;
+const startingCamera = [0, 3, 10, 1];
 
 @Component({
 	selector: "app-root",
@@ -713,10 +713,10 @@ function easeInBounce(x: number): number {
 }
 
 function viewProjection(params: { width: number, height: number, camera: number[] }): number[] {
-	const fov = toRadians(60);
+	const fovDegrees = 60;
 	const aspect = params.width / params.height;
 
-	const P = mat.perspective([], fov, aspect, near, far);
+	const P = mat.perspective([], fovDegrees, aspect, near, far);
 
 	const eye = [params.camera[0], params.camera[1], params.camera[2]];
 	const subj = [0, 0, 0];
