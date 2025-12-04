@@ -385,9 +385,9 @@ export class App implements AfterViewInit {
 				{ binding: 2, resource: { buffer: normalStorageBuffer } },
 				{ binding: 3, resource: { buffer: modelsStorageBuffer } },
 				{ binding: 4, resource: { buffer: modelIdStorageBuffer } },
-				{ binding: 7, resource: { buffer: timeUniformBuffer } },
-				{ binding: 9, resource: { buffer: cubeCountUniformBuffer } },
-				{ binding: 10, resource: { buffer: viewProjectionUniformBuffer } },
+				{ binding: 5, resource: { buffer: timeUniformBuffer } },
+				{ binding: 6, resource: { buffer: cubeCountUniformBuffer } },
+				{ binding: 7, resource: { buffer: viewProjectionUniformBuffer } },
 			],
 		});
 
