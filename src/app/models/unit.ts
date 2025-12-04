@@ -122,7 +122,9 @@ export type Model = {
 		basecolor: number[],
 		// Later material.
 		// texture, metallic, roughness
-	}
+	},
+	aabbMin?: [number, number, number];
+	aabbMax?: [number, number, number];
 }
 
 // DEBUG cube. derive color from mesh.

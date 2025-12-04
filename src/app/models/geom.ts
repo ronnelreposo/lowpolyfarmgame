@@ -34,3 +34,111 @@ export function updateWorld(tree: Tree<Model>, parentWorld: number[] = mat.IDENT
 	if (tree.kind === "leaf") return createLeaf(updated);
 	return createNode(updated, tree.children.map(ch => updateWorld(ch, world as number[])));
 }
+
+
+// somewhere shared, e.g. geometry.ts
+export const UNIT_CUBE_LOCAL_CORNERS: [number, number, number][] = [
+	[-0.5, -0.5, -0.5],
+	[0.5, -0.5, -0.5],
+	[-0.5, 0.5, -0.5],
+	[0.5, 0.5, -0.5],
+	[-0.5, -0.5, 0.5],
+	[0.5, -0.5, 0.5],
+	[-0.5, 0.5, 0.5],
+	[0.5, 0.5, 0.5],
+];
+
+function transformPoint(M: number[], p: [number, number, number]): [number, number, number] {
+	const [x, y, z] = p;
+
+	const wx = M[0] * x + M[4] * y + M[8] * z + M[12];
+	const wy = M[1] * x + M[5] * y + M[9] * z + M[13];
+	const wz = M[2] * x + M[6] * y + M[10] * z + M[14];
+
+	return [wx, wy, wz];
+}
+
+function computeModelAabb(modelMatrix: number[]) {
+	let min: [number, number, number] = [ Infinity,  Infinity,  Infinity];
+	let max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+
+	for (const c of UNIT_CUBE_LOCAL_CORNERS) {
+		const w = transformPoint(modelMatrix, c);
+
+		min = [
+			Math.min(min[0], w[0]),
+			Math.min(min[1], w[1]),
+			Math.min(min[2], w[2]),
+		];
+		max = [
+			Math.max(max[0], w[0]),
+			Math.max(max[1], w[1]),
+			Math.max(max[2], w[2]),
+		];
+	}
+
+	return { min, max };
+}
+type Vec3 = [number, number, number];
+
+export function withBounds(
+	tree: Tree<Model>
+): {
+	min: Vec3;
+	max: Vec3;
+	tree: Tree<Model>;
+} {
+	if (tree.kind === "leaf") {
+		const model = tree.value;
+		const { min, max } = computeModelAabb(model.modelMatrix);
+
+		const newModel: Model = {
+			...model,
+			aabbMin: min,
+			aabbMax: max,
+		};
+
+		return {
+			min,
+			max,
+			tree: { kind: "leaf", value: newModel },
+		};
+	}
+
+	// node: union children
+	let min: Vec3 = [ Infinity,  Infinity,  Infinity];
+	let max: Vec3 = [-Infinity, -Infinity, -Infinity];
+	const newChildren: Tree<Model>[] = [];
+
+	for (const child of tree.children) {
+		const r = withBounds(child);
+		newChildren.push(r.tree);
+
+		min = [
+			Math.min(min[0], r.min[0]),
+			Math.min(min[1], r.min[1]),
+			Math.min(min[2], r.min[2]),
+		];
+		max = [
+			Math.max(max[0], r.max[0]),
+			Math.max(max[1], r.max[1]),
+			Math.max(max[2], r.max[2]),
+		];
+	}
+
+	const newModel: Model = {
+		...tree.value,
+		aabbMin: min,
+		aabbMax: max,
+	};
+
+	return {
+		min,
+		max,
+		tree: {
+			kind: "node",
+			value: newModel,
+			children: newChildren,
+		},
+	};
+}
