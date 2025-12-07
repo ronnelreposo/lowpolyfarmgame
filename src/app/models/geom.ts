@@ -83,11 +83,8 @@ type Vec3 = [number, number, number];
 
 export function withBounds(
 	tree: Tree<Model>
-): {
-	min: Vec3;
-	max: Vec3;
-	tree: Tree<Model>;
-} {
+): Tree<Model>
+{
 	if (tree.kind === "leaf") {
 		const model = tree.value;
 		const { min, max } = computeModelAabb(model.modelMatrix);
@@ -98,11 +95,7 @@ export function withBounds(
 			aabbMax: max,
 		};
 
-		return {
-			min,
-			max,
-			tree: { kind: "leaf", value: newModel },
-		};
+		return { kind: "leaf", value: newModel };
 	}
 
 	// node: union children
@@ -112,17 +105,17 @@ export function withBounds(
 
 	for (const child of tree.children) {
 		const r = withBounds(child);
-		newChildren.push(r.tree);
+		newChildren.push(r);
 
 		min = [
-			Math.min(min[0], r.min[0]),
-			Math.min(min[1], r.min[1]),
-			Math.min(min[2], r.min[2]),
+			Math.min(min[0], r.value.aabbMin?.[0] ?? min[0]),
+			Math.min(min[1], r.value.aabbMin?.[1] ?? min[1]),
+			Math.min(min[2], r.value.aabbMin?.[2] ?? min[2]),
 		];
 		max = [
-			Math.max(max[0], r.max[0]),
-			Math.max(max[1], r.max[1]),
-			Math.max(max[2], r.max[2]),
+			Math.max(max[0], r.value.aabbMax?.[0] ?? max[0]),
+			Math.max(max[1], r.value.aabbMax?.[1] ?? max[1]),
+			Math.max(max[2], r.value.aabbMax?.[2] ?? max[2]),
 		];
 	}
 
@@ -133,12 +126,8 @@ export function withBounds(
 	};
 
 	return {
-		min,
-		max,
-		tree: {
-			kind: "node",
-			value: newModel,
-			children: newChildren,
-		},
+		kind: "node",
+		value: newModel,
+		children: newChildren,
 	};
 }

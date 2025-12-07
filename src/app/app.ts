@@ -505,14 +505,9 @@ export class App implements AfterViewInit {
 
 				const modelOffset = 16; // 4*4 matrix.
 
-				const m1 = updateWorld(animatedModel);
-				// pickup here.
-				const m2 = withBounds(m1);
-				console.log(m2);
-
 				// Reduce everything before rendering.
 				const models = reduceTree(
-					m1, // no need to pass a matrix transform for the whole.
+					withBounds(updateWorld(animatedModel)),
 					(acc, model) => {
 
 						if (model.id === "root-anchor") {
