@@ -47,6 +47,7 @@ import {
 import { toDegrees, toRadians } from "./ds/util";
 import { withBounds, updateWorld } from "./models/geom";
 import { CommonModule } from "@angular/common";
+import * as vec from "@thi.ng/vectors";
 
 // Perspective constants, should match in shader.
 const near = 0.1;
@@ -222,7 +223,7 @@ export class App implements AfterViewInit {
 		// const canvasSubj = new
 		// canvasDimension$.subscribe()
 
-		const ray$ = new Subject<[number, number, number]>();
+		const ray$ = new Subject<vec.Vec>();
 		// canvas pixel coords
 		fromEvent(canvas!, 'pointerdown')
 			.pipe(withLatestFrom(canvasDimension$, camera$))
@@ -268,14 +269,7 @@ export class App implements AfterViewInit {
 
 					const rayOrigin = worldNear;
 					const rayDirectionRaw = mat.sub([], worldFar, rayOrigin);
-					// const rayDirection = mat.normal33([], );
-
-					const len = Math.hypot(rayDirectionRaw[0], rayDirectionRaw[1], rayDirectionRaw[2]);
-					// Ray direction normalized. Avoid divide-by-zero
-					const rayDirection: [number, number, number] =
-						len > 0
-							? [rayDirectionRaw[0] / len, rayDirectionRaw[1] / len, rayDirectionRaw[2] / len]
-							: [0, 0, 0];
+					const rayDirection = vec.normalize3([], rayDirectionRaw);
 
 					console.log("[debug] Ray!", rayDirection);
 					ray$.next(rayDirection);
