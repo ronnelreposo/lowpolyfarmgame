@@ -35,10 +35,9 @@ const headGeom: Tree<Model> = createNode<Model>(
 			material: { basecolor: [] },
 		}),
 		createLeaf({
-			id: "head-base",
+			id: "right-ear",
 			mesh: unitCube("unit-cube"),
 			trs: {
-				id: "right-ear",
 				t: [-1.0, 1.0, 0],
 				pivot: [0.5, -0.5, 0],
 				rxdeg: 0,
