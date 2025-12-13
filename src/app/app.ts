@@ -410,7 +410,7 @@ export class App implements AfterViewInit {
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
-		let hit: any = undefined;
+		let hit: IntersectedModel | undefined = undefined;
 		const frame = (now: number) => {
 			hit = undefined;
 			const elapsed = now - previous;
@@ -513,7 +513,7 @@ export class App implements AfterViewInit {
 				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
 				hit = selectModel(ray$.value, modelOnWorldWithBounds);
 				if (hit) {
-					console.log("hit", hit, modelOnWorldWithBounds.value.id);
+					console.log("hit", hit.modelId);
 				}
 
 				// Reduce everything before rendering.
