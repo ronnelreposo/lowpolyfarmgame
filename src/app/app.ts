@@ -410,9 +410,9 @@ export class App implements AfterViewInit {
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
-		let hit: IntersectedModel | undefined = undefined;
+		let hits: IntersectedModel[] = [];
 		const frame = (now: number) => {
-			hit = undefined;
+			hits = [];
 			const elapsed = now - previous;
 			previous = now;
 			lag += elapsed;
@@ -511,9 +511,9 @@ export class App implements AfterViewInit {
 				const modelOffset = 16; // 4*4 matrix.
 
 				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
-				hit = selectModel(ray$.value, modelOnWorldWithBounds);
-				if (hit) {
-					console.log("hit", hit.modelId);
+				hits = selectModels(ray$.value, modelOnWorldWithBounds);
+				if (hits.length > 0) {
+					console.log("hits", hits.map(hit => hit.modelId));
 				}
 
 				// Reduce everything before rendering.
@@ -810,6 +810,7 @@ function selectModel(ray: Ray, worldTree: Tree<Model>): IntersectedModel | undef
 			let closestHit: IntersectedModel | undefined;
 			for (const child of worldTree.children) {
 				const childResult = selectModel(ray, child);
+				// console.log(childResult);
 				if (childResult) {
 					if (!closestHit || childResult.minDistance < closestHit.minDistance) {
 						closestHit = childResult;
@@ -817,6 +818,36 @@ function selectModel(ray: Ray, worldTree: Tree<Model>): IntersectedModel | undef
 				}
 			}
 			return closestHit;
+		}
+	}
+}
+
+function selectModels(ray: Ray, worldTree: Tree<Model>): IntersectedModel[] {
+	switch (worldTree.kind) {
+		case "leaf": {
+			const model = worldTree.value;
+			const hit = intersectRayAabb(
+				ray.origin.buf as number[],
+				ray.direction.buf as number[],
+				model.aabbMin as number[],
+				model.aabbMax as number[]
+			);
+			if (!hit) { return []; }
+			return [{ modelId: model.id, minDistance: hit }];
+		}
+		case "node": {
+			const groupModel = worldTree.value;
+			const groupHit = intersectRayAabb(
+				ray.origin.buf as number[],
+				ray.direction.buf as number[],
+				groupModel.aabbMin as number[],
+				groupModel.aabbMax as number[]
+			);
+			// Group didn't hit, return immediately.
+			if (!groupHit) {
+				return [];
+			}
+			return worldTree.children.flatMap(child => selectModels(ray, child));
 		}
 	}
 }
