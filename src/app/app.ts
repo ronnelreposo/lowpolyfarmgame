@@ -88,16 +88,16 @@ export class App implements AfterViewInit {
 					// console.log("key", event)
 					switch (event.key) {
 						case "ArrowLeft": {
-							return of([0.1, 0, 0]);
-						}
-						case "ArrowRight": {
 							return of([-0.1, 0, 0]);
 						}
+						case "ArrowRight": {
+							return of([0.1, 0, 0]);
+						}
 						case "ArrowUp": {
-							return of([0, 0.1, 0]);
+							return of([0, 0, -0.1]);
 						}
 						case "ArrowDown": {
-							return of([0, -0.1, 0]);
+							return of([0, 0, 0.1]);
 						}
 						case "PageUp": {
 							return of([0, 0, 0.1]);
@@ -118,8 +118,8 @@ export class App implements AfterViewInit {
 				scan((acc, arr) => {
 
 					return [
-						Math.min(Math.max(acc[0] + arr[0], -5), 100),
-						Math.min(Math.max(acc[1] + arr[1], -5), 100),
+						Math.min(Math.max(acc[0] + arr[0], -Infinity), Infinity),
+						Math.min(Math.max(acc[1] + arr[1], -Infinity), Infinity),
 						Math.min(Math.max(acc[2] + arr[2], near), far),
 						1,
 					];
@@ -241,7 +241,8 @@ export class App implements AfterViewInit {
 				const viewProjected = viewProjection({
 					width,
 					height,
-					camera
+					camera,
+					initialCameraPosition: startingCamera
 				});
 
 				const invPV = mat.invert44([], viewProjected);
@@ -639,6 +640,7 @@ export class App implements AfterViewInit {
 					width,
 					height,
 					camera: camera$.value,
+					initialCameraPosition: startingCamera
 				});
 				const pvData = new Float32Array(viewProjected);
 				// console.log(viewProjected);
@@ -724,14 +726,18 @@ function easeInBounce(x: number): number {
 	return 1 - easeOutBounce(1 - x);
 }
 
-function viewProjection(params: { width: number, height: number, camera: number[] }): number[] {
+function viewProjection(params: { width: number, height: number, camera: number[], initialCameraPosition: number[] }): number[] {
+	console.log(params.camera);
 	const fovDegrees = 60;
 	const aspect = params.width / params.height;
 
 	const P = mat.perspective([], fovDegrees, aspect, near, far);
 
 	const eye = [params.camera[0], params.camera[1], params.camera[2]];
-	const subj = [0, 0, 0];
+	const subj = [
+		params.camera[0] - params.initialCameraPosition[0],
+		params.camera[1],
+		params.camera[2] - params.initialCameraPosition[2]];
 	const up = [0, 1, 0];
 	const V = mat.lookAt([], eye, subj, up);
 
