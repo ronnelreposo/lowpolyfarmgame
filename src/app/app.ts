@@ -727,7 +727,6 @@ function easeInBounce(x: number): number {
 }
 
 function viewProjection(params: { width: number, height: number, camera: number[], initialCameraPosition: number[] }): number[] {
-	console.log(params.camera);
 	const fovDegrees = 60;
 	const aspect = params.width / params.height;
 
