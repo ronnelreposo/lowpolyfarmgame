@@ -26,7 +26,7 @@ import {
 	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
-import { mapTree, reduceTree } from "./ds/tree";
+import { mapTree, reduceTree, Tree } from "./ds/tree";
 import {
 	Mesh,
 	Model,
@@ -53,6 +53,11 @@ import * as vec from "@thi.ng/vectors";
 const near = 0.1;
 const far = 100.0;
 const startingCamera = [0, 3, 10, 1];
+
+type Ray = {
+	origin: vec.Vec3,
+	direction: vec.Vec3
+}
 
 @Component({
 	selector: "app-root",
@@ -223,7 +228,7 @@ export class App implements AfterViewInit {
 		// const canvasSubj = new
 		// canvasDimension$.subscribe()
 
-		const ray$ = new Subject<vec.Vec>();
+		const ray$ = new BehaviorSubject<Ray>({ direction: vec.vec3(0, 0, 0), origin: vec.vec3(0, 0, 0) });
 		// canvas pixel coords
 		fromEvent(canvas!, 'pointerdown')
 			.pipe(withLatestFrom(canvasDimension$, camera$))
@@ -271,8 +276,12 @@ export class App implements AfterViewInit {
 					const rayDirectionRaw = mat.sub([], worldFar, rayOrigin);
 					const rayDirection = vec.normalize3([], rayDirectionRaw);
 
-					console.log("[debug] Ray!", rayDirection);
-					ray$.next(rayDirection);
+
+					const ray = {
+						origin: vec.vec3(...rayOrigin),
+						direction: vec.vec3(...rayDirection),
+					};
+					ray$.next(ray);
 				}
 			});
 
@@ -401,7 +410,9 @@ export class App implements AfterViewInit {
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
+		let hit: any = undefined;
 		const frame = (now: number) => {
+			hit = undefined;
 			const elapsed = now - previous;
 			previous = now;
 			lag += elapsed;
@@ -499,12 +510,19 @@ export class App implements AfterViewInit {
 
 				const modelOffset = 16; // 4*4 matrix.
 
+				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
+				hit = selectModel(ray$.value, modelOnWorldWithBounds);
+				if (hit) {
+					console.log("hit", hit, modelOnWorldWithBounds.value.id);
+				}
+
 				// Reduce everything before rendering.
 				const models = reduceTree(
-					withBounds(updateWorld(animatedModel)),
+					modelOnWorldWithBounds,
 					(acc, model) => {
 
 						if (model.id === "root-anchor") {
+
 							return acc; // Don't add to the values.
 						}
 
@@ -718,4 +736,87 @@ function viewProjection(params: { width: number, height: number, camera: number[
 	const V = mat.lookAt([], eye, subj, up);
 
 	return mat.mulM44([], P, V) as number[];
+}
+
+type RayHit = {
+	distance: number;
+	model: Model;
+}
+// Standard "Slab Method" for Ray vs AABB
+export function intersectRayAabb(
+	rayOrigin: number[],
+	rayDir: number[],
+	boxMin: number[],
+	boxMax: number[]
+): number | null {
+	// tMin is the distance to enter the intersection volume
+	// tMax is the distance to exit the intersection volume
+	let tMin = 0.0;
+	let tMax = Infinity;
+
+	for (let i = 0; i < 3; i++) {
+		// 1.0 / dir checks for parallel rays automatically due to IEEE 754 Infinity
+		const invD = 1.0 / rayDir[i];
+
+		let t0 = (boxMin[i] - rayOrigin[i]) * invD;
+		let t1 = (boxMax[i] - rayOrigin[i]) * invD;
+
+		// If the ray is coming from the negative direction, swap entry/exit
+		if (invD < 0.0) {
+			const temp = t0;
+			t0 = t1;
+			t1 = temp;
+		}
+
+		// Narrow down the intersection window
+		tMin = t0 > tMin ? t0 : tMin;
+		tMax = t1 < tMax ? t1 : tMax;
+
+		// If the exit is behind the entry, we missed
+		if (tMax <= tMin) return null;
+	}
+
+	return tMin;
+}
+
+
+type IntersectedModel = { modelId: Model["id"], minDistance: number }
+function selectModel(ray: Ray, worldTree: Tree<Model>): IntersectedModel | undefined {
+	switch (worldTree.kind) {
+		case "leaf": {
+			const model = worldTree.value;
+			const hit = intersectRayAabb(
+				ray.origin.buf as number[],
+				ray.direction.buf as number[],
+				model.aabbMin as number[],
+				model.aabbMax as number[]
+			);
+			if (!hit) { return undefined; }
+			return { modelId: model.id, minDistance: hit };
+		}
+		case "node": {
+			const groupModel = worldTree.value;
+			const groupHit = intersectRayAabb(
+				ray.origin.buf as number[],
+				ray.direction.buf as number[],
+				groupModel.aabbMin as number[],
+				groupModel.aabbMax as number[]
+			);
+			// Group didn't hit, return immediately.
+			if (!groupHit) {
+				return undefined;
+			}
+			// Alternative. Map → Filter → Sort → Head (or some bias.)
+			let closestHit: IntersectedModel | undefined;
+			for (const child of worldTree.children) {
+				const childResult = selectModel(ray, child);
+				if (childResult) {
+					if (!closestHit || childResult.minDistance < closestHit.minDistance) {
+						closestHit = childResult;
+					}
+				}
+			}
+			return closestHit;
+		}
+	}
 }
