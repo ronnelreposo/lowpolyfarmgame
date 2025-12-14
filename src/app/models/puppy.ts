@@ -204,8 +204,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 // Got pushed cuberman to 100.
 // Upon introduction of shadows, the performance hits on gpu not on sim.
 
-export const terrainWidth = 10;
-export const terrainHeight = 10;
+export const terrainWidth = 12;
+export const terrainHeight = 12;
 export const cuberManCount = 1;
 
 const fencePolePerRow = 20;

@@ -52,7 +52,7 @@ import * as vec from "@thi.ng/vectors";
 // Perspective constants, should match in shader.
 const near = 0.1;
 const far = 100.0;
-const startingCamera = [0, 3, 10, 1];
+const startingCamera = [0, 15, 10, 1];
 
 type Ray = {
 	origin: vec.Vec3,
@@ -735,7 +735,7 @@ function viewProjection(params: { width: number, height: number, camera: number[
 	const eye = [params.camera[0], params.camera[1], params.camera[2]];
 	const subj = [
 		params.camera[0] - params.initialCameraPosition[0],
-		params.camera[1],
+		params.camera[1] - params.initialCameraPosition[1],
 		params.camera[2] - params.initialCameraPosition[2]];
 	const up = [0, 1, 0];
 	const V = mat.lookAt([], eye, subj, up);
