@@ -17,6 +17,7 @@ const headGeom: Tree<Model> = createNode<Model>(
 		// To be filled by update world.
 		modelMatrix: [],
 		material: { basecolor: [] },
+		cubeCount: 1,
 	},
 	[
 		createLeaf({
@@ -33,6 +34,7 @@ const headGeom: Tree<Model> = createNode<Model>(
 			// To be filled by update world.
 			modelMatrix: [],
 			material: { basecolor: [] },
+			cubeCount: 1,
 		}),
 		createLeaf({
 			id: "right-ear",
@@ -48,6 +50,7 @@ const headGeom: Tree<Model> = createNode<Model>(
 			// To be filled by update world.
 			modelMatrix: [],
 			material: { basecolor: [] },
+			cubeCount: 1,
 		}),
 	],
 );
@@ -67,6 +70,7 @@ function createCuberMan(id: string) {
 			},
 			modelMatrix: [],
 			material: { basecolor: [] },
+			cubeCount: 1,
 		},
 		[
 			headGeom,
@@ -83,6 +87,7 @@ function createCuberMan(id: string) {
 					rzdeg: 0,
 					s: 0.5,
 				},
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "right-arm",
@@ -97,6 +102,7 @@ function createCuberMan(id: string) {
 					rzdeg: 0,
 					s: 0.5,
 				},
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "left-leg",
@@ -111,6 +117,7 @@ function createCuberMan(id: string) {
 					rzdeg: 0,
 					s: 0.5,
 				},
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "right-leg",
@@ -125,6 +132,7 @@ function createCuberMan(id: string) {
 					rzdeg: 0,
 					s: 0.5,
 				},
+				cubeCount: 1,
 			}),
 		],
 	);
@@ -178,6 +186,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 							.flat(),
 					]
 				},
+				cubeCount: 1,
 			});
 		}
 	}
@@ -195,6 +204,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 			},
 			modelMatrix: [],
 			material: { basecolor: [] },
+			cubeCount: 0,
 		},
 		spanModels.map(createLeaf),
 	);
@@ -204,17 +214,13 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 // Got pushed cuberman to 100.
 // Upon introduction of shadows, the performance hits on gpu not on sim.
 
-export const terrainWidth = 12;
-export const terrainHeight = 12;
-export const cuberManCount = 1;
+const terrainWidth = 12;
+const terrainHeight = 12;
+const cuberManCount = 1;
 
 const fencePolePerRow = 20;
 const fenceRowDistanceToCenter = 5;
 const fenceScale = 0.3;
-export const fencePoleCount = fencePolePerRow * 4; // 4x sides.
-
-export const cuberManMeshCubeCount = 8;
-export const fencePoleMeshCubeCount = 4;
 
 const carrotOffset = 1.0;
 const carrotBodyHeight = 0.5 + 0.7 + 0.4 + carrotOffset;
@@ -241,6 +247,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		// To be filled by update world.
 		modelMatrix: [],
 		material: { basecolor: [] },
+		cubeCount: 0,
 	},
 	[
 		// Cuberman army!
@@ -266,6 +273,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 				// To be filled by update world.
 				modelMatrix: [],
 				material: { basecolor: [] },
+				cubeCount: 0,
 			},
 			[
 				createLeaf({
@@ -282,6 +290,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotBodyColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-body2",
@@ -297,6 +306,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotBodyColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-body3",
@@ -312,6 +322,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotBodyColors },
+					cubeCount: 1,
 				}),
 				// Carrot leaves.
 				createLeaf({
@@ -333,6 +344,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotStalkAndLeavesColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-leaf1",
@@ -352,6 +364,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotStalkAndLeavesColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-leaf2",
@@ -371,6 +384,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotStalkAndLeavesColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-leaf3",
@@ -390,6 +404,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotStalkAndLeavesColors },
+					cubeCount: 1,
 				}),
 				createLeaf({
 					id: "carrot-leaf4",
@@ -409,6 +424,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 					// To be filled by update world.
 					modelMatrix: [],
 					material: { basecolor: carrotStalkAndLeavesColors },
+					cubeCount: 1,
 				}),
 			],
 		),
@@ -440,6 +456,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 			// To be filled by update world.
 			modelMatrix: [],
 			material: { basecolor: [] },
+			cubeCount: 0,
 		},
 		[
 			createLeaf({
@@ -456,6 +473,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				// To be filled by update world.
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "fence-body",
@@ -471,6 +489,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				// To be filled by update world.
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "fence-body",
@@ -486,6 +505,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				// To be filled by update world.
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
 			}),
 			createLeaf({
 				id: "fence-body",
@@ -501,6 +521,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				// To be filled by update world.
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
 			})
 		],
 	);
@@ -522,6 +543,7 @@ function createRowFencePolesModel(count: number,
 		// To be filled by update world.
 		modelMatrix: [],
 		material: { basecolor: [] },
+		cubeCount: 0,
 	},
 		Array(count)
 			.fill(null)

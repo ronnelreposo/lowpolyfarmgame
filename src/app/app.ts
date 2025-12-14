@@ -36,16 +36,10 @@ import {
 	Universal,
 } from "./models/unit";
 import {
-	cuberManCount,
-	cuberManMeshCubeCount,
-	fencePoleCount,
-	fencePoleMeshCubeCount,
 	myModelWorld,
-	terrainHeight,
-	terrainWidth,
 } from "./models/puppy";
 import { toDegrees, toRadians } from "./ds/util";
-import { withBounds, updateWorld } from "./models/geom";
+import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
 
@@ -398,15 +392,6 @@ export class App implements AfterViewInit {
 		// Render Loop.
 
 		const duration = 1_500;
-		const subjects = cuberManCount;
-		const terrain = terrainWidth * terrainHeight;
-		const carrotCubeCount = 8;
-		// No anchors.
-		const cubeNums =
-			cuberManMeshCubeCount * subjects +
-			terrain + carrotCubeCount +
-			fencePoleMeshCubeCount * fencePoleCount // fence for now.
-			;
 
 		let previous = performance.now();
 		let lag = 0.0;
@@ -511,11 +496,13 @@ export class App implements AfterViewInit {
 
 				const modelOffset = 16; // 4*4 matrix.
 
-				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
+				const modelOnWorldWithBounds = withBounds(updateWorld(summarizeCubeCount(animatedModel)));
 				hits = selectModels(ray$.value, modelOnWorldWithBounds);
 				if (hits.length > 0) {
 					console.log("hits", hits.map(hit => hit.modelId));
 				}
+				const cubeNums = modelOnWorldWithBounds.value.cubeCount;
+
 
 				// Reduce everything before rendering.
 				const models = reduceTree(
@@ -525,6 +512,9 @@ export class App implements AfterViewInit {
 						if (model.id === "root-anchor") {
 
 							return acc; // Don't add to the values.
+						}
+						if (model.id === hits.sort((a, b) => a.minDistance - b.minDistance)[0]?.modelId) {
+							return acc;
 						}
 
 						console.assert(model !== undefined);
@@ -592,8 +582,6 @@ export class App implements AfterViewInit {
 				);
 
 				const canvasDimension = canvasDimension$.value;
-				const width = canvasDimension.width;
-				const height = canvasDimension.height;
 				const depthTexture = device.createTexture({
 					size: [canvasDimension.width, canvasDimension.height],
 					format: "depth24plus",
@@ -637,8 +625,8 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
 
 				const viewProjected = viewProjection({
-					width,
-					height,
+					width: canvasDimension.width,
+					height: canvasDimension.height,
 					camera: camera$.value,
 					initialCameraPosition: startingCamera
 				});

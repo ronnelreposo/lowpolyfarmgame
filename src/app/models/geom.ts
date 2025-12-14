@@ -2,6 +2,7 @@ import * as mat from "@thi.ng/matrices";
 import { toRadians } from "../ds/util";
 import { createLeaf, createNode, Tree } from "../ds/tree";
 import { Model } from "./unit";
+import { assertNever } from "../util";
 
 // Note. TRS is per model instance, not per model.
 export type TRS = {
@@ -130,4 +131,33 @@ export function withBounds(
 		value: newModel,
 		children: newChildren,
 	};
+}
+
+// function getCubeCount
+export function summarizeCubeCount(tree: Tree<Model>): Tree<Model> {
+
+	switch (tree.kind) {
+		case "leaf": {
+			return tree;
+		}
+		case "node": {
+
+			const newChildren = tree.children.map(summarizeCubeCount);
+
+			const totalChildrenCubeCount = newChildren.reduce(
+				(acc, child) => acc + child.value.cubeCount,
+				tree.value.cubeCount
+			);
+
+			return {
+				...tree,
+				value: {
+					...tree.value,
+					cubeCount: totalChildrenCubeCount
+				},
+				children: newChildren
+			}
+		}
+		default: { return assertNever(tree); }
+	}
 }

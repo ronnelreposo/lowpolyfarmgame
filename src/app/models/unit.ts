@@ -125,6 +125,8 @@ export type Model = {
 	},
 	aabbMin?: [number, number, number];
 	aabbMax?: [number, number, number];
+	// Sums
+	cubeCount: number;
 }
 
 // DEBUG cube. derive color from mesh.
