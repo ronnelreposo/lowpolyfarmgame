@@ -820,7 +820,7 @@ function selectModel(ray: Ray, worldTree: Tree<Model>): IntersectedModel | undef
 	}
 }
 
-function selectModels(ray: Ray, worldTree: Tree<Model>): IntersectedModel[] {
+function selectModels(ray: Ray, worldTree: Tree<Model>, selectEntireModel = true): IntersectedModel[] {
 	switch (worldTree.kind) {
 		case "leaf": {
 			const model = worldTree.value;
@@ -845,7 +845,14 @@ function selectModels(ray: Ray, worldTree: Tree<Model>): IntersectedModel[] {
 			if (!groupHit) {
 				return [];
 			}
-			return worldTree.children.flatMap(child => selectModels(ray, child));
+			const selectedChildrenModels = worldTree.children.flatMap(child => selectModels(ray, child));
+			if (groupModel.id === "root-anchor" && selectEntireModel) {
+				return selectedChildrenModels;
+			}
+			return [
+				{ modelId: groupModel.id, minDistance: groupHit },
+				...selectedChildrenModels
+			];
 		}
 	}
 }
