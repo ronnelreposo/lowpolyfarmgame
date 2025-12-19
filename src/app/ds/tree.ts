@@ -46,3 +46,25 @@ export function reduceTree<T, R>(
 		)
 		: accHere;
 }
+
+export function filterTree<T>(tree: Tree<T>, predicate: (value: T) => boolean): Tree<T> | null {
+	if (!predicate(tree.value)) {
+		return null;
+	}
+
+	switch (tree.kind) {
+		case "leaf": {
+			return tree;
+		}
+		case "node": {
+			// Recursively fitler children.
+			const filteredChildren = tree.children
+				.map(child => filterTree(child, predicate))
+				.filter(child => child !== null);
+			return {
+				...tree,
+				children: filteredChildren
+			}
+		}
+	}
+}

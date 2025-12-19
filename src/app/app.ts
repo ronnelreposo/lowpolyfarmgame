@@ -26,7 +26,7 @@ import {
 	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
-import { mapTree, reduceTree, Tree } from "./ds/tree";
+import { filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
 import {
 	Mesh,
 	Model,
@@ -94,7 +94,7 @@ export class App implements AfterViewInit {
 							return of([0, 0, 0.1]);
 						}
 						case "PageUp": {
-							return of([0, 0, 0.1]);
+							return of([0, 0.1, 0.0]);
 						}
 						case "-": {
 							return of([0, 0, 0.1]);
@@ -103,7 +103,7 @@ export class App implements AfterViewInit {
 							return of([0, 0, -0.1]);
 						}
 						case "PageDown": {
-							return of([0, 0, -0.1]);
+							return of([0, -0.1, 0.0]);
 						}
 						default:
 							return EMPTY;
@@ -496,25 +496,30 @@ export class App implements AfterViewInit {
 
 				const modelOffset = 16; // 4*4 matrix.
 
-				const modelOnWorldWithBounds = withBounds(updateWorld(summarizeCubeCount(animatedModel)));
+				const modelOnWorldWithBounds = withBounds(updateWorld((animatedModel)));
 				hits = selectModels(ray$.value, modelOnWorldWithBounds);
 				if (hits.length > 0) {
 					console.log("hits", hits.map(hit => hit.modelId));
 				}
-				const cubeNums = modelOnWorldWithBounds.value.cubeCount;
 
+				const filteredModels = filterTree(modelOnWorldWithBounds, model =>
+					!(model.id === hits.sort((a, b) => a.minDistance - b.minDistance)[0]?.modelId));
+
+				// Skip this frame.
+				if (filteredModels === null) {
+					requestAnimationFrame(frame);
+					return;
+				}
+				const finalModels = summarizeCubeCount(filteredModels);
+				const cubeNums =  finalModels.value.cubeCount;
 
 				// Reduce everything before rendering.
 				const models = reduceTree(
-					modelOnWorldWithBounds,
+					finalModels,
 					(acc, model) => {
 
 						if (model.id === "root-anchor") {
-
 							return acc; // Don't add to the values.
-						}
-						if (model.id === hits.sort((a, b) => a.minDistance - b.minDistance)[0]?.modelId) {
-							return acc;
 						}
 
 						console.assert(model !== undefined);
