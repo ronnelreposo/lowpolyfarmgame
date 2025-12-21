@@ -56,19 +56,21 @@ const headGeom: Tree<Model> = createNode<Model>(
 	],
 );
 
-function createCuberMan(id: string) {
+function createCuberMan(id: string, trs: Partial<TRS>) {
+	const defaultTrs: TRS = {
+		t: [1, 1, 0],
+		pivot: [0, 1, 0],
+		rxdeg: 0,
+		rydeg: 0,
+		rzdeg: 0,
+		s: 1.0,
+	};
+	const mergedTrs = { ...defaultTrs, ...trs };
 	return createNode<Model>(
 		{
 			id: `cuberman:${id}`,
 			mesh: unitCube("unit-cube"),
-			trs: {
-				t: [1, 1, 0],
-				pivot: [0, 0, 0],
-				rxdeg: 0,
-				rydeg: 0,
-				rzdeg: 0,
-				s: 1.0,
-			},
+			trs: mergedTrs,
 			modelMatrix: [],
 			material: { basecolor: [] },
 			cubeCount: 1,
@@ -254,7 +256,8 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		// Cuberman army!
 		...Array(cuberManCount)
 			.fill(null)
-			.map((x, i) => mapTree(createCuberMan(i.toString()), setDebugColors)),
+			.map((x, i) => mapTree(createCuberMan(i.toString(), { t: [ 0, 1.5, 0 ] }), setDebugColors)),
+
 		// Terrain.
 		terrain(terrainWidth, terrainHeight),
 
