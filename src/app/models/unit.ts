@@ -1,3 +1,4 @@
+import { Tree } from "../ds/tree";
 import { rgbaToColor } from "../ds/util";
 import { TRS } from "./geom";
 // import { TRS } from "./geom";
@@ -190,5 +191,94 @@ export function setTerrainColors(model: Model): Model {
 					.flat(),
 			]
 		}
+	};
+}
+
+// type FlatNode = { modelId: string; skipIndex: number }
+// export function flatten(tree: Tree<Model>, currentIndex: number = 0): { nodes: FlatNode[]; nextIndex: number } {
+// 	if (tree.kind === "leaf") {
+// 		const leafNode: FlatNode = {
+// 			modelId: tree.value.id, skipIndex: currentIndex + 1 };
+// 		return { nodes: [leafNode], nextIndex: currentIndex + 1 };
+// 	}
+
+// 	// Process children
+// 	const result = tree.children.reduce(
+// 		(acc, child) => {
+// 			const { nodes: childNodes, nextIndex } = flatten(child, acc.currentIndex);
+// 			return {
+// 				nodes: [...acc.nodes, ...childNodes],
+// 				currentIndex: nextIndex
+// 			}
+// 		},
+// 		{ nodes: [{ modelId: tree.value.id, skipIndex: 0 }], currentIndex: currentIndex + 1 }
+// 	);
+
+// 	// Backfill the skipindex for the current node.
+// 	const nodes = [...result.nodes];
+// 	nodes[0] = { ...nodes[0], skipIndex: result.currentIndex };
+
+// 	return { nodes, nextIndex: result.currentIndex };
+// }
+
+type FlattenedNode = {
+	modelId: string;
+	firstChild: string | undefined;
+	nextSibling: string | undefined;
+	parent: string | undefined;
+}
+type FlattenedIndices = {
+	modelId: string;
+	index: number;
+
+	// -1 would be undefined.
+
+	firstChild: number;
+	nextSibling: number;
+	parent: number;
+}
+
+export function flattenedTreeConnections(
+	tree: Tree<Model>,
+	parentId: string | undefined = undefined,
+	nextSiblingId: string | undefined = undefined
+): FlattenedNode[] {
+	switch (tree.kind) {
+		case "leaf": {
+			return [
+				{
+					modelId: tree.value.id,
+					firstChild: undefined,
+					nextSibling: nextSiblingId,
+					parent: parentId
+				}
+			];
+		}
+		case "node": {
+			// Process children.
+			const flattenedChildren = tree.children
+				.flatMap((c, i) => flattenedTreeConnections(c, tree.value.id, tree.children[i + 1]?.value.id))
+			return [
+				<FlattenedNode>{
+					modelId: tree.value.id,
+					firstChild: tree.children[0]?.value.id,
+					nextSibling: nextSiblingId,
+					parent: parentId
+				}
+			].concat(flattenedChildren);
+		}
+	}
+}
+export function buildFlattenedIndices(
+	fNode: FlattenedNode,
+	// modelId, flattened index.
+	lookup: Map<string, number>
+): FlattenedIndices {
+	return {
+		modelId: fNode.modelId,
+		index: lookup.get(fNode.modelId) ?? -1,
+		firstChild: fNode.firstChild ? lookup.get(fNode.firstChild) ?? -1 : -1,
+		nextSibling: fNode.nextSibling ? lookup.get(fNode.nextSibling) ?? -1 : -1,
+		parent: fNode.parent ? lookup.get(fNode.parent) ?? -1 : -1,
 	};
 }

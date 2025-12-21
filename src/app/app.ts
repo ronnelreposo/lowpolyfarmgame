@@ -28,10 +28,12 @@ import {
 import * as mat from "@thi.ng/matrices";
 import { filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
 import {
+	flattenedTreeConnections,
 	Mesh,
 	Model,
 	setDebugColors,
 	setTerrainColors,
+	buildFlattenedIndices,
 	unitCube,
 	Universal,
 } from "./models/unit";
@@ -389,6 +391,12 @@ export class App implements AfterViewInit {
 			],
 		});
 
+		// TODO. Upload to GPU.
+		const flattenedRelationships = flattenedTreeConnections(myModelWorld);
+		const modelIndexLookup = new Map(flattenedRelationships.map((m, i) => [m.modelId, i]));
+		const flattenedIndices = flattenedRelationships.map(d => buildFlattenedIndices(d, modelIndexLookup));
+		console.log(flattenedRelationships, modelIndexLookup, flattenedIndices);
+
 		// Render Loop.
 
 		const duration = 1_500;
@@ -474,9 +482,9 @@ export class App implements AfterViewInit {
 								rydeg: turnAngleDeg$.value, // rotate only on Y axis.
 								t: [
 									move$.value[0],
-									1,
+									model.trs.t[1],
 									move$.value[2],
-									1
+									model.trs.t[3]
 								],
 							}
 						};
