@@ -37,7 +37,7 @@ import {
 } from "./models/unit";
 import {
 	myModelWorld,
-} from "./models/puppy";
+} from "./models/scene";
 import { toDegrees, toRadians } from "./ds/util";
 import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
 import { CommonModule } from "@angular/common";
