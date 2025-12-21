@@ -1,5 +1,6 @@
 import { createLeaf, createNode, mapTree, Tree } from "../ds/tree";
 import { rgbaToColor } from "../ds/util";
+import { TRS } from "./geom";
 import { Model, setDebugColors, unitCube } from "./unit";
 
 const headGeom: Tree<Model> = createNode<Model>(
@@ -66,7 +67,7 @@ function createCuberMan(id: string) {
 				rxdeg: 0,
 				rydeg: 0,
 				rzdeg: 0,
-				s: 0.5,
+				s: 1.0,
 			},
 			modelMatrix: [],
 			material: { basecolor: [] },
@@ -258,9 +259,9 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		terrain(terrainWidth, terrainHeight),
 
 		// carrot.
-		createCarrotModel("carrot0", [0, 0, 0]),
-		createCarrotModel("carrot1", [1, 0, 0]),
-		createCarrotModel("carrot2", [2, 0, 0]),
+		createCarrotModel("carrot0", { t: [ 0, 0, 0 ] }),
+		createCarrotModel("carrot1", { t: [ 1, 0, 0 ] }),
+		createCarrotModel("carrot2", { t: [ 2, 0, 0 ] }),
 
 		// left side fence.
 		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
@@ -384,19 +385,21 @@ function createRowFencePolesModel(count: number,
 	);
 }
 
-function createCarrotModel(idTag: string, pos: number[] = [0,0,0]): Tree<Model> {
+function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
+	const defaultTrs: TRS = {
+		t: [0, 0, 0],
+		pivot: [0, 1, 0],
+		rxdeg: 0,
+		rydeg: 0,
+		rzdeg: 0,
+		s: 1.0,
+	};
+	const mergedTrs = { ...defaultTrs, ...trs };
 	return createNode(
 		{
 			id: "root-anchor",
 			mesh: unitCube("unit-cube"),
-			trs: {
-				t: pos,
-				pivot: [0, 1, 0],
-				rxdeg: 0,
-				rydeg: 0,
-				rzdeg: 0,
-				s: 1.0,
-			},
+			trs: mergedTrs,
 			// To be filled by update world.
 			modelMatrix: [],
 			material: { basecolor: [] },
