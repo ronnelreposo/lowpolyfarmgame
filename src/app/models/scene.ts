@@ -258,176 +258,9 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		terrain(terrainWidth, terrainHeight),
 
 		// carrot.
-		createNode(
-			{
-				id: "root-anchor",
-				mesh: unitCube("unit-cube"),
-				trs: {
-					t: [0, 0, 0],
-					pivot: [0, 1, 0],
-					rxdeg: 0,
-					rydeg: 0,
-					rzdeg: 0,
-					s: 0.5,
-				},
-				// To be filled by update world.
-				modelMatrix: [],
-				material: { basecolor: [] },
-				cubeCount: 0,
-			},
-			[
-				createLeaf({
-					id: "carrot-body1",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [0, 0.2 + carrotOffset, 0],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					}, // 0.4
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotBodyColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-body2",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [0, 0.35 + 0.4 + carrotOffset, 0],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.7,
-					}, // 0.7
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotBodyColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-body3",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [0, carrotBodyHeight, 0],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 1.0,
-					}, // 1.
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotBodyColors },
-					cubeCount: 1,
-				}),
-				// Carrot leaves.
-				createLeaf({
-					id: "carrot-stalk",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [
-							0,
-							0.7 + // (size/2) + (prev cube size / 2).
-								carrotBodyHeight,
-							0,
-						],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					},
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotStalkAndLeavesColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-leaf1",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [
-							0,
-							0.2 + 0.7 + carrotBodyHeight, // (size/2) + (prev cube size / 2).
-							0.4, // offset a bit.
-						],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					},
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotStalkAndLeavesColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-leaf2",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [
-							0.4, // offset a bit.
-							0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
-							0,
-						],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					},
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotStalkAndLeavesColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-leaf3",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [
-							-0.4, // offset a bit.
-							0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
-							0,
-						],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					},
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotStalkAndLeavesColors },
-					cubeCount: 1,
-				}),
-				createLeaf({
-					id: "carrot-leaf4",
-					mesh: unitCube("unit-cube"),
-					trs: {
-						t: [
-							0,
-							0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
-							-0.4, // offset a bit.
-						],
-						pivot: [0, 0, 0],
-						rxdeg: 0,
-						rydeg: 0,
-						rzdeg: 0,
-						s: 0.4,
-					},
-					// To be filled by update world.
-					modelMatrix: [],
-					material: { basecolor: carrotStalkAndLeavesColors },
-					cubeCount: 1,
-				}),
-			],
-		),
+		createCarrotModel("carrot0", [0, 0, 0]),
+		createCarrotModel("carrot1", [1, 0, 0]),
+		createCarrotModel("carrot2", [2, 0, 0]),
 
 		// left side fence.
 		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
@@ -549,4 +382,177 @@ function createRowFencePolesModel(count: number,
 			.fill(null)
 			.map((x, i) => createFencePoleModel([(i - (count - 1) / 2) * config.spacing, 0, 0])) // centered.
 	);
+}
+
+function createCarrotModel(idTag: string, pos: number[] = [0,0,0]): Tree<Model> {
+	return createNode(
+		{
+			id: "root-anchor",
+			mesh: unitCube("unit-cube"),
+			trs: {
+				t: pos,
+				pivot: [0, 1, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1.0,
+			},
+			// To be filled by update world.
+			modelMatrix: [],
+			material: { basecolor: [] },
+			cubeCount: 0,
+		},
+		[
+			createLeaf({
+				id: "carrot-body1",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 0.2 + carrotOffset, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				}, // 0.4
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-body2",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, 0.35 + 0.4 + carrotOffset, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.7,
+				}, // 0.7
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-body3",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [0, carrotBodyHeight, 0],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 1.0,
+				}, // 1.
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotBodyColors },
+				cubeCount: 1,
+			}),
+			// Carrot leaves.
+			createLeaf({
+				id: "carrot-stalk",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [
+						0,
+						0.7 + // (size/2) + (prev cube size / 2).
+							carrotBodyHeight,
+						0,
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotStalkAndLeavesColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-leaf1",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [
+						0,
+						0.2 + 0.7 + carrotBodyHeight, // (size/2) + (prev cube size / 2).
+						0.4, // offset a bit.
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotStalkAndLeavesColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-leaf2",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [
+						0.4, // offset a bit.
+						0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
+						0,
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotStalkAndLeavesColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-leaf3",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [
+						-0.4, // offset a bit.
+						0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
+						0,
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotStalkAndLeavesColors },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "carrot-leaf4",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [
+						0,
+						0.2 + 0.7 + carrotBodyHeight, // (size/2) + (leaf base size / 2).
+						-0.4, // offset a bit.
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 0.4,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: carrotStalkAndLeavesColors },
+				cubeCount: 1,
+			}),
+		],
+	)
 }
