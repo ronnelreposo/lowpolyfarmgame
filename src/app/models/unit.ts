@@ -194,33 +194,6 @@ export function setTerrainColors(model: Model): Model {
 	};
 }
 
-// type FlatNode = { modelId: string; skipIndex: number }
-// export function flatten(tree: Tree<Model>, currentIndex: number = 0): { nodes: FlatNode[]; nextIndex: number } {
-// 	if (tree.kind === "leaf") {
-// 		const leafNode: FlatNode = {
-// 			modelId: tree.value.id, skipIndex: currentIndex + 1 };
-// 		return { nodes: [leafNode], nextIndex: currentIndex + 1 };
-// 	}
-
-// 	// Process children
-// 	const result = tree.children.reduce(
-// 		(acc, child) => {
-// 			const { nodes: childNodes, nextIndex } = flatten(child, acc.currentIndex);
-// 			return {
-// 				nodes: [...acc.nodes, ...childNodes],
-// 				currentIndex: nextIndex
-// 			}
-// 		},
-// 		{ nodes: [{ modelId: tree.value.id, skipIndex: 0 }], currentIndex: currentIndex + 1 }
-// 	);
-
-// 	// Backfill the skipindex for the current node.
-// 	const nodes = [...result.nodes];
-// 	nodes[0] = { ...nodes[0], skipIndex: result.currentIndex };
-
-// 	return { nodes, nextIndex: result.currentIndex };
-// }
-
 type FlattenedNode = {
 	modelId: string;
 	firstChild: string | undefined;
