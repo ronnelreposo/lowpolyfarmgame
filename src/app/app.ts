@@ -374,6 +374,16 @@ export class App implements AfterViewInit {
 			size: 16 * 4, // 4x4 matrix, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
+		const aabbminsStorageBuffer = device.createBuffer({
+			label: "aabbminsStorageBuffer",
+			size: MAX_BUFF_SIZE,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
+		const aabbmaxsStorageBuffer = device.createBuffer({
+			label: "aabbmaxsStorageBuffer",
+			size: MAX_BUFF_SIZE,
+			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		});
 
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
@@ -388,6 +398,8 @@ export class App implements AfterViewInit {
 				{ binding: 5, resource: { buffer: timeUniformBuffer } },
 				{ binding: 6, resource: { buffer: cubeCountUniformBuffer } },
 				{ binding: 7, resource: { buffer: viewProjectionUniformBuffer } },
+				{ binding: 8, resource: { buffer: aabbminsStorageBuffer } },
+				{ binding: 9, resource: { buffer: aabbmaxsStorageBuffer } },
 			],
 		});
 
@@ -503,6 +515,7 @@ export class App implements AfterViewInit {
 			if (animatedModel) {
 
 				const modelOffset = 16; // 4*4 matrix.
+				const aabbStride = 4; // 4 floats. 3dcoords + 1 padding.
 
 				const modelOnWorldWithBounds = withBounds(updateWorld((animatedModel)));
 				hits = selectModels(ray$.value, modelOnWorldWithBounds);
@@ -547,17 +560,22 @@ export class App implements AfterViewInit {
 								model.mesh.vertexCount,
 						);
 						acc.modelMatrices.set(model.modelMatrix, acc.modelOffset);
+						acc.aabbMins.set([...model.aabbMin!, 1], acc.aabbOffset);
+						acc.aabbMaxs.set([...model.aabbMax!, 1], acc.aabbOffset);
 
 						return {
 							vertexOffset: acc.vertexOffset + model.mesh.positions.length,
 							modelId: acc.modelId + 1,
 							modelOffset: acc.modelOffset + modelOffset,
+							aabbOffset: acc.aabbOffset + aabbStride,
 
 							positionValues: acc.positionValues,
 							colorValues: acc.colorValues,
 							normalValues: acc.normalValues,
 							modelIdValues: acc.modelIdValues,
 							modelMatrices: acc.modelMatrices,
+							aabbMins: acc.aabbMins,
+							aabbMaxs: acc.aabbMaxs,
 						}
 					},
 					{
@@ -565,6 +583,7 @@ export class App implements AfterViewInit {
 						vertexOffset: 0,
 						modelId: 0,
 						modelOffset: 0,
+						aabbOffset: 0,
 
 						// Values.
 						positionValues: new Float32Array(
@@ -581,6 +600,12 @@ export class App implements AfterViewInit {
 						),
 						modelMatrices: new Float32Array(
 							cubeNums * modelOffset,
+						),
+						aabbMins: new Float32Array(
+							cubeNums * aabbStride
+						),
+						aabbMaxs: new Float32Array(
+							cubeNums * aabbStride
 						),
 					}
 				);
@@ -627,6 +652,8 @@ export class App implements AfterViewInit {
 				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
 				device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
 				device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
+				device.queue.writeBuffer(aabbminsStorageBuffer, 0, models.aabbMins);
+				device.queue.writeBuffer(aabbmaxsStorageBuffer, 0, models.aabbMaxs);
 
 				const viewProjected = viewProjection({
 					width: canvasDimension.width,

@@ -16,11 +16,18 @@ struct VsOutput {
 @group(0) @binding(5) var<uniform> time: f32;
 @group(0) @binding(6) var<uniform> cubeCount: u32;
 @group(0) @binding(7) var<uniform> viewProjection: mat4x4f;
+// aabb data.
+@group(0) @binding(8) var<storage, read> aabbMins: array<vec4f>;
+@group(0) @binding(9) var<storage, read> aabbMaxs: array<vec4f>;
 
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32,
 	@builtin(instance_index) instanceIndex : u32
 ) -> VsOutput {
+
+	// Temporary assignment for usage, prevents error.
+	let aabbMins = aabbMins[0];
+	let aabbMaxs = aabbMaxs[0];
 
 	let t = time; // temporary assignment, dummy usage.
 
