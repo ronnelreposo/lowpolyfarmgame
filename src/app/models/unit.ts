@@ -159,6 +159,8 @@ export function setDebugColors(model: Model): Model {
 	};
 }
 
+export const blackCubeColors = Array(36).fill(rgbaToColor(0, 0, 0)).flat();
+
 export function setTerrainColors(model: Model): Model {
 	return {
 		...model,
@@ -230,7 +232,10 @@ export function flattenedTreeConnections(
 		case "node": {
 			// Process children.
 			const flattenedChildren = tree.children
-				.flatMap((c, i) => flattenedTreeConnections(c, tree.value.id, tree.children[i + 1]?.value.id))
+				.flatMap((child, i) =>
+					flattenedTreeConnections(child,
+						tree.value.id,
+						tree.children[i + 1]?.value.id));
 			return [
 				<FlattenedNode>{
 					modelId: tree.value.id,

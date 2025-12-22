@@ -1,7 +1,7 @@
 import { createLeaf, createNode, mapTree, Tree } from "../ds/tree";
 import { rgbaToColor } from "../ds/util";
 import { TRS } from "./geom";
-import { Model, setDebugColors, unitCube } from "./unit";
+import { blackCubeColors, Model, setDebugColors, unitCube } from "./unit";
 
 const headGeom: Tree<Model> = createNode<Model>(
 	{
@@ -206,8 +206,8 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 				s: 1.0,
 			},
 			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 0,
+			material: { basecolor: blackCubeColors },
+			cubeCount: 1,
 		},
 		spanModels.map(createLeaf),
 	);
@@ -249,8 +249,8 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		},
 		// To be filled by update world.
 		modelMatrix: [],
-		material: { basecolor: [] },
-		cubeCount: 0,
+		material: { basecolor: blackCubeColors },
+		cubeCount: 1,
 	},
 	[
 		// Cuberman army!
@@ -292,8 +292,8 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 			},
 			// To be filled by update world.
 			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 0,
+			material: { basecolor: blackCubeColors },
+			cubeCount: 1,
 		},
 		[
 			createLeaf({
@@ -379,8 +379,8 @@ function createRowFencePolesModel(count: number,
 		},
 		// To be filled by update world.
 		modelMatrix: [],
-		material: { basecolor: [] },
-		cubeCount: 0,
+		material: { basecolor: blackCubeColors },
+		cubeCount: 1,
 	},
 		Array(count)
 			.fill(null)
@@ -405,8 +405,8 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 			trs: mergedTrs,
 			// To be filled by update world.
 			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 0,
+			material: { basecolor: blackCubeColors },
+			cubeCount: 1,
 		},
 		[
 			createLeaf({

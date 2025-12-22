@@ -57,7 +57,7 @@ type Ray = {
 
 @Component({
 	selector: "app-root",
-	imports: [RouterOutlet, CommonModule],
+	imports: [CommonModule],
 	templateUrl: "./app.html",
 	styleUrl: "./app.scss",
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -526,10 +526,6 @@ export class App implements AfterViewInit {
 					finalModels,
 					(acc, model) => {
 
-						if (model.id === "root-anchor") {
-							return acc; // Don't add to the values.
-						}
-
 						console.assert(model !== undefined);
 
 						acc.positionValues.set(
@@ -551,11 +547,6 @@ export class App implements AfterViewInit {
 								model.mesh.vertexCount,
 						);
 						acc.modelMatrices.set(model.modelMatrix, acc.modelOffset);
-
-
-						if (model.id === "root-anchor") {
-							return acc;
-						}
 
 						return {
 							vertexOffset: acc.vertexOffset + model.mesh.positions.length,
