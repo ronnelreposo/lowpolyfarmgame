@@ -153,7 +153,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 	);
 }
 
-function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
+function terrain(id: number, row: number, col: number, gap = 0.01): Tree<Model> {
 	let spanModels: Model[] = [];
 	for (let i = 0; i < row; i++) {
 		for (let j = 0; j < col; j++) {
@@ -208,7 +208,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 	}
 	return createNode<Model>(
 		{
-			id: `root-anchor`,
+			id: `${id}:terrain:root-anchor`,
 			mesh: unitCube("unit-cube"),
 			trs: {
 				t: [0, 0, 0],
@@ -251,7 +251,7 @@ const carrotBodyColors = Array(36)
 // Bare no colors and not placed in the world yet.
 export const myModelWorld: Tree<Model> = createNode<Model>(
 	{
-		id: "root-anchor",
+		id: "global-root-anchor",
 		mesh: unitCube("unit-cube"),
 		trs: {
 			t: [0, 0, 0],
@@ -274,12 +274,12 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 			.map((_, i) => mapTree(createCuberMan(i, { t: [ 0, 1.5, 0 ] }), setDebugColors)),
 
 		// Terrain.
-		terrain(terrainWidth, terrainHeight),
+		terrain(0, terrainWidth, terrainHeight),
 
 		// carrot.
-		createCarrotModel("carrot0", { t: [ 0, 0, 0 ] }),
-		createCarrotModel("carrot1", { t: [ 1, 0, 0 ] }),
-		createCarrotModel("carrot2", { t: [ 2, 0, 0 ] }),
+		createCarrotModel(0, { t: [ 0, 0, 0 ] }),
+		createCarrotModel(1, { t: [ 1, 0, 0 ] }),
+		createCarrotModel(2, { t: [ 2, 0, 0 ] }),
 
 		// left side fence.
 		createRowFencePolesModel(0, fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
@@ -390,7 +390,7 @@ function createRowFencePolesModel(
 	count: number,
 	t: [number, number, number], rydeg: number, scale: number, config: { spacing: number }): Tree<Model> {
 	return createNode({
-		id: `${id}:root-anchor:row-fence`,
+		id: `${id}:row-fence:root-anchor`,
 		mesh: unitCube("unit-cube"),
 		trs: {
 			t: t,
@@ -412,7 +412,8 @@ function createRowFencePolesModel(
 	);
 }
 
-function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
+function createCarrotModel(id: number, trs: Partial<TRS>): Tree<Model> {
+	const carrotId = `${id}:carrot`;
 	const defaultTrs: TRS = {
 		t: [0, 0, 0],
 		pivot: [0, 1, 0],
@@ -424,7 +425,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 	const mergedTrs = { ...defaultTrs, ...trs };
 	return createNode<Model>(
 		{
-			id: "root-anchor",
+			id: `${carrotId}:root-anchor`,
 			mesh: unitCube("unit-cube"),
 			trs: mergedTrs,
 			// To be filled by update world.
@@ -435,7 +436,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 		},
 		[
 			createLeaf({
-				id: "carrot-body1",
+				id: `${carrotId}:body1`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 0.2 + carrotOffset, 0],
@@ -452,7 +453,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-body2",
+				id: `${carrotId}:body2`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 0.35 + 0.4 + carrotOffset, 0],
@@ -469,7 +470,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-body3",
+				id: `${carrotId}:body3`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, carrotBodyHeight, 0],
@@ -487,7 +488,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 			}),
 			// Carrot leaves.
 			createLeaf({
-				id: "carrot-stalk",
+				id: `${carrotId}:stalk`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
@@ -509,7 +510,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-leaf1",
+				id: `${carrotId}:leaf1`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
@@ -530,7 +531,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-leaf2",
+				id: `${carrotId}:leaf2`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
@@ -551,7 +552,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-leaf3",
+				id: `${carrotId}:leaf3`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
@@ -572,7 +573,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				renderable: true,
 			}),
 			createLeaf({
-				id: "carrot-leaf4",
+				id: `${carrotId}:leaf4`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [
