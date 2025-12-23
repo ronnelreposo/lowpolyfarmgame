@@ -437,7 +437,7 @@ export class App implements AfterViewInit {
 				// E.g. Turn all the scene graph tree (TARGET)_.
 				animatedModel = mapTree(myModelWorld, (model) => {
 
-					if (model.id === "head-base") {
+					if (model.id.includes("cuberman:head")) {
 						return {
 							...model,
 							trs: {
@@ -448,7 +448,8 @@ export class App implements AfterViewInit {
 						};
 					}
 					const earPronouncedAngle = 35;
-					if (model.id === "left-ear" || model.id === "right-ear") {
+					if (model.id.includes("cuberman:head:left-ear") ||
+						model.id.includes("cuberman:head:right-ear")) {
 						return {
 							...model,
 							trs: {
@@ -464,7 +465,8 @@ export class App implements AfterViewInit {
 							},
 						};
 					}
-					if (model.id === "left-leg" || model.id === "right-arm") {
+					if (model.id.includes("cuberman:head:left-leg") ||
+						model.id.includes("cuberman:head:right-arm")) {
 						return {
 							...model,
 							trs: {
@@ -475,7 +477,8 @@ export class App implements AfterViewInit {
 							},
 						};
 					}
-					if (model.id === "right-leg" || model.id === "left-arm") {
+					if (model.id.includes("cuberman:head:right-leg") ||
+						model.id.includes("cuberman:head:left-arm")) {
 						return {
 							...model,
 							trs: {
@@ -486,7 +489,10 @@ export class App implements AfterViewInit {
 							},
 						};
 					}
-					if (model.id.startsWith("cuberman")) {
+					// Match the `${instanceId}:cumberman` only.
+					const cubermanParts = model.id.split(":");
+					// For improvement. Brittle logic.
+					if (cubermanParts[1] === "cuberman" && cubermanParts.length === 2) {
 						return {
 							...model,
 							trs: {
@@ -517,7 +523,7 @@ export class App implements AfterViewInit {
 				const modelOffset = 16; // 4*4 matrix.
 				const aabbStride = 4; // 4 floats. 3dcoords + 1 padding.
 
-				const modelOnWorldWithBounds = withBounds(updateWorld((animatedModel)));
+				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
 				hits = selectModels(ray$.value, modelOnWorldWithBounds);
 				if (hits.length > 0) {
 					console.log("hits", hits.map(hit => hit.modelId));

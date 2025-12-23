@@ -3,10 +3,11 @@ import { rgbaToColor } from "../ds/util";
 import { TRS } from "./geom";
 import { blackCubeColors, Model, setDebugColors, unitCube } from "./unit";
 
-function headGeom(id: number): Tree<Model> {
+function cubermanHead(id: number): Tree<Model> {
+	const rootId = `${id}:cuberman:head`;
 	return createNode<Model>(
 		{
-			id: "head-base",
+			id: rootId,
 			mesh: unitCube("unit-cube"),
 			trs: {
 				t: [0, 0.9, 0],
@@ -23,7 +24,7 @@ function headGeom(id: number): Tree<Model> {
 		},
 		[
 			createLeaf({
-				id: "left-ear",
+				id: `${rootId}:left-ear`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [1.0, 1.0, 0],
@@ -39,7 +40,7 @@ function headGeom(id: number): Tree<Model> {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "right-ear",
+				id: `${rootId}:right-ear`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [-1.0, 1.0, 0],
@@ -58,7 +59,8 @@ function headGeom(id: number): Tree<Model> {
 	);
 }
 
-function createCuberMan(id: string, trs: Partial<TRS>) {
+function createCuberMan(id: number, trs: Partial<TRS>) {
+	const rootId = `${id}:cuberman`;
 	const defaultTrs: TRS = {
 		t: [1, 1, 0],
 		pivot: [0, 1, 0],
@@ -70,7 +72,7 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 	const mergedTrs = { ...defaultTrs, ...trs };
 	return createNode<Model>(
 		{
-			id: `cuberman:${id}`,
+			id: rootId,
 			mesh: unitCube("unit-cube"),
 			trs: mergedTrs,
 			modelMatrix: [],
@@ -78,9 +80,9 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 			cubeCount: 1,
 		},
 		[
-			headGeom(1),
+			cubermanHead(id),
 			createLeaf({
-				id: "left-arm",
+				id: `${rootId}:left-arm`,
 				mesh: unitCube("unit-cube"),
 				modelMatrix: [],
 				material: { basecolor: [] },
@@ -95,7 +97,7 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "right-arm",
+				id: `${rootId}:right-arm`,
 				mesh: unitCube("unit-cube"),
 				modelMatrix: [],
 				material: { basecolor: [] },
@@ -110,7 +112,7 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "left-leg",
+				id: `${rootId}:left-leg`,
 				mesh: unitCube("unit-cube"),
 				modelMatrix: [],
 				material: { basecolor: [] },
@@ -125,7 +127,7 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "right-leg",
+				id: `${rootId}:right-leg`,
 				mesh: unitCube("unit-cube"),
 				modelMatrix: [],
 				material: { basecolor: [] },
@@ -258,7 +260,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		// Cuberman army!
 		...Array(cuberManCount)
 			.fill(null)
-			.map((x, i) => mapTree(createCuberMan(i.toString(), { t: [ 0, 1.5, 0 ] }), setDebugColors)),
+			.map((_, i) => mapTree(createCuberMan(i, { t: [ 0, 1.5, 0 ] }), setDebugColors)),
 
 		// Terrain.
 		terrain(terrainWidth, terrainHeight),
