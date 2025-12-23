@@ -879,7 +879,7 @@ function selectModels(ray: Ray, worldTree: Tree<Model>, selectEntireModel = true
 				return [];
 			}
 			const selectedChildrenModels = worldTree.children.flatMap(child => selectModels(ray, child));
-			if (groupModel.id === "root-anchor" && selectEntireModel) {
+			if (!groupModel.renderable) {
 				return selectedChildrenModels;
 			}
 			return [

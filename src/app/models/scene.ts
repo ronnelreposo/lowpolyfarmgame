@@ -21,6 +21,7 @@ function cubermanHead(id: number): Tree<Model> {
 			modelMatrix: [],
 			material: { basecolor: [] },
 			cubeCount: 1,
+			renderable: true,
 		},
 		[
 			createLeaf({
@@ -38,6 +39,7 @@ function cubermanHead(id: number): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: [] },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${rootId}:right-ear`,
@@ -54,6 +56,7 @@ function cubermanHead(id: number): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: [] },
 				cubeCount: 1,
+				renderable: true,
 			}),
 		],
 	);
@@ -78,6 +81,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 			modelMatrix: [],
 			material: { basecolor: [] },
 			cubeCount: 1,
+			renderable: true,
 		},
 		[
 			cubermanHead(id),
@@ -95,6 +99,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 					s: 0.5,
 				},
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${rootId}:right-arm`,
@@ -110,6 +115,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 					s: 0.5,
 				},
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${rootId}:left-leg`,
@@ -125,6 +131,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 					s: 0.5,
 				},
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${rootId}:right-leg`,
@@ -140,6 +147,7 @@ function createCuberMan(id: number, trs: Partial<TRS>) {
 					s: 0.5,
 				},
 				cubeCount: 1,
+				renderable: true,
 			}),
 		],
 	);
@@ -194,6 +202,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 					]
 				},
 				cubeCount: 1,
+				renderable: true,
 			});
 		}
 	}
@@ -212,6 +221,7 @@ function terrain(row: number, col: number, gap = 0.01): Tree<Model> {
 			modelMatrix: [],
 			material: { basecolor: blackCubeColors },
 			cubeCount: 1,
+			renderable: false,
 		},
 		spanModels.map(createLeaf),
 	);
@@ -255,6 +265,7 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		modelMatrix: [],
 		material: { basecolor: blackCubeColors },
 		cubeCount: 1,
+		renderable: false,
 	},
 	[
 		// Cuberman army!
@@ -299,6 +310,7 @@ function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tr
 			modelMatrix: [],
 			material: { basecolor: blackCubeColors },
 			cubeCount: 1,
+			renderable: false,
 		},
 		[
 			createLeaf({
@@ -316,6 +328,7 @@ function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tr
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${fencePoleId}:fence-body-1`,
@@ -332,6 +345,7 @@ function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tr
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${fencePoleId}:fence-body-2`,
@@ -348,6 +362,7 @@ function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tr
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: `${fencePoleId}:fence-body-3`,
@@ -364,6 +379,7 @@ function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tr
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			})
 		],
 	);
@@ -388,6 +404,7 @@ function createRowFencePolesModel(
 		modelMatrix: [],
 		material: { basecolor: blackCubeColors },
 		cubeCount: 1,
+		renderable: false,
 	},
 		Array(count)
 			.fill(null)
@@ -405,7 +422,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 		s: 1.0,
 	};
 	const mergedTrs = { ...defaultTrs, ...trs };
-	return createNode(
+	return createNode<Model>(
 		{
 			id: "root-anchor",
 			mesh: unitCube("unit-cube"),
@@ -414,6 +431,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 			modelMatrix: [],
 			material: { basecolor: blackCubeColors },
 			cubeCount: 1,
+			renderable: false,
 		},
 		[
 			createLeaf({
@@ -431,6 +449,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-body2",
@@ -447,6 +466,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-body3",
@@ -463,6 +483,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotBodyColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			// Carrot leaves.
 			createLeaf({
@@ -485,6 +506,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotStalkAndLeavesColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-leaf1",
@@ -505,6 +527,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotStalkAndLeavesColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-leaf2",
@@ -525,6 +548,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotStalkAndLeavesColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-leaf3",
@@ -545,6 +569,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotStalkAndLeavesColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 			createLeaf({
 				id: "carrot-leaf4",
@@ -565,6 +590,7 @@ function createCarrotModel(idTag: string, trs: Partial<TRS>): Tree<Model> {
 				modelMatrix: [],
 				material: { basecolor: carrotStalkAndLeavesColors },
 				cubeCount: 1,
+				renderable: true,
 			}),
 		],
 	)

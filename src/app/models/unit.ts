@@ -128,6 +128,8 @@ export type Model = {
 	aabbMax?: [number, number, number];
 	// Sums
 	cubeCount: number;
+
+	renderable: boolean;
 }
 
 // DEBUG cube. derive color from mesh.
