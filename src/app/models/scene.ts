@@ -271,20 +271,21 @@ export const myModelWorld: Tree<Model> = createNode<Model>(
 		createCarrotModel("carrot2", { t: [ 2, 0, 0 ] }),
 
 		// left side fence.
-		createRowFencePolesModel(fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
+		createRowFencePolesModel(0, fencePolePerRow, [fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
 		// right side fence.
-		createRowFencePolesModel(fencePolePerRow, [-fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
+		createRowFencePolesModel(1, fencePolePerRow, [-fenceRowDistanceToCenter, 0, 0], 90, fenceScale, { spacing: 1.7 }),
 		// front fence.
-		createRowFencePolesModel(fencePolePerRow, [0, 0, fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
+		createRowFencePolesModel(2, fencePolePerRow, [0, 0, fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
 		// // back fence.
-		createRowFencePolesModel(fencePolePerRow, [0, 0, -fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
+		createRowFencePolesModel(3, fencePolePerRow, [0, 0, -fenceRowDistanceToCenter], 0, fenceScale, { spacing: 1.7 }),
 	],
 );
 
-function createFencePoleModel(pos: number[]): Tree<Model> {
+function createFencePoleModel(id: number, fenceRowId: number, pos: number[]): Tree<Model> {
+	const fencePoleId = `${fenceRowId}:${id}:fence-pole`;
 	return createNode<Model>(
 		{
-			id: "root-anchor",
+			id: `${fencePoleId}:root-anchor`,
 			mesh: unitCube("unit-cube"),
 			trs: {
 				t: pos,
@@ -301,7 +302,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 		},
 		[
 			createLeaf({
-				id: "fence-body",
+				id: `${fencePoleId}:fence-body-0`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 1, 0],
@@ -317,7 +318,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "fence-body",
+				id: `${fencePoleId}:fence-body-1`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 2, 0],
@@ -333,7 +334,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "fence-body",
+				id: `${fencePoleId}:fence-body-2`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 3, 0],
@@ -349,7 +350,7 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 				cubeCount: 1,
 			}),
 			createLeaf({
-				id: "fence-body",
+				id: `${fencePoleId}:fence-body-3`,
 				mesh: unitCube("unit-cube"),
 				trs: {
 					t: [0, 3.75, 0], // 3 + (scale/2)
@@ -368,10 +369,12 @@ function createFencePoleModel(pos: number[]): Tree<Model> {
 	);
 }
 
-function createRowFencePolesModel(count: number,
+function createRowFencePolesModel(
+	id: number,
+	count: number,
 	t: [number, number, number], rydeg: number, scale: number, config: { spacing: number }): Tree<Model> {
 	return createNode({
-		id: "root-anchor",
+		id: `${id}:root-anchor:row-fence`,
 		mesh: unitCube("unit-cube"),
 		trs: {
 			t: t,
@@ -388,7 +391,7 @@ function createRowFencePolesModel(count: number,
 	},
 		Array(count)
 			.fill(null)
-			.map((x, i) => createFencePoleModel([(i - (count - 1) / 2) * config.spacing, 0, 0])) // centered.
+			.map((x, i) => createFencePoleModel(i, id, [(i - (count - 1) / 2) * config.spacing, 0, 0])) // centered.
 	);
 }
 

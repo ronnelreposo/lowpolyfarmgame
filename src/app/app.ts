@@ -44,6 +44,7 @@ import { toDegrees, toRadians } from "./ds/util";
 import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
+import * as p from "parsimmon";
 
 // Perspective constants, should match in shader.
 const near = 0.1;
@@ -489,10 +490,10 @@ export class App implements AfterViewInit {
 							},
 						};
 					}
-					// Match the `${instanceId}:cumberman` only.
-					const cubermanParts = model.id.split(":");
-					// For improvement. Brittle logic.
-					if (cubermanParts[1] === "cuberman" && cubermanParts.length === 2) {
+
+					// For improvement. Performance on parsing.
+					const cubermanParser = p.digits.chain(id => p.string(":cuberman"));
+					if (cubermanParser.parse(model.id).status) {
 						return {
 							...model,
 							trs: {
