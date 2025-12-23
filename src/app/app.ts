@@ -329,78 +329,83 @@ export class App implements AfterViewInit {
 
 		const MAX_BUFF_SIZE = 8 * 1024 * 1024; // 8 MB
 
-		const posStorageBuffer = device.createBuffer({
-			label: `Position storage buffer`,
+		const meshDataStorageBuffer = device.createBuffer({
+			label: `Mesh data storage buffer`,
 			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
+		// const posStorageBuffer = device.createBuffer({
+		// 	label: `Position storage buffer`,
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
-		const modelsStorageBuffer = device.createBuffer({
-			label: `Models storage buffer`,
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
+		// const modelsStorageBuffer = device.createBuffer({
+		// 	label: `Models storage buffer`,
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
-		const modelIdStorageBuffer = device.createBuffer({
-			label: `Model IDs storage buffer`,
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
+		// const modelIdStorageBuffer = device.createBuffer({
+		// 	label: `Model IDs storage buffer`,
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
-		const colorStorageBuffer = device.createBuffer({
-			label: `Color storage buffer`,
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
+		// const colorStorageBuffer = device.createBuffer({
+		// 	label: `Color storage buffer`,
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
-		const normalStorageBuffer = device.createBuffer({
-			label: `Normal storage buffer`,
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
+		// const normalStorageBuffer = device.createBuffer({
+		// 	label: `Normal storage buffer`,
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
-		const timeUniformBuffer = device.createBuffer({
-			size: 1 * 4, // 1 float, 4 bytes each.
-			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		});
-		const subjUniformBuffer = device.createBuffer({
-			size: 4 * 4, // 1 float, 4 bytes each.
-			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		});
-		const cubeCountUniformBuffer = device.createBuffer({
-			size: 1 * 4, // 1 float, 4 bytes each.
-			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		});
+		// const timeUniformBuffer = device.createBuffer({
+		// 	size: 1 * 4, // 1 float, 4 bytes each.
+		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		// });
+		// const subjUniformBuffer = device.createBuffer({
+		// 	size: 4 * 4, // 1 float, 4 bytes each.
+		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		// });
+		// const cubeCountUniformBuffer = device.createBuffer({
+		// 	size: 1 * 4, // 1 float, 4 bytes each.
+		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+		// });
 		const viewProjectionUniformBuffer = device.createBuffer({
 			size: 16 * 4, // 4x4 matrix, 4 bytes each.
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
-		const aabbminsStorageBuffer = device.createBuffer({
-			label: "aabbminsStorageBuffer",
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
-		const aabbmaxsStorageBuffer = device.createBuffer({
-			label: "aabbmaxsStorageBuffer",
-			size: MAX_BUFF_SIZE,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		});
+		// const aabbminsStorageBuffer = device.createBuffer({
+		// 	label: "aabbminsStorageBuffer",
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
+		// const aabbmaxsStorageBuffer = device.createBuffer({
+		// 	label: "aabbmaxsStorageBuffer",
+		// 	size: MAX_BUFF_SIZE,
+		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		// });
 
 		// Create one bind group.
 		const bindGroup = device.createBindGroup({
 			label: `Position only bind group`,
 			layout: pipeline.getBindGroupLayout(0),
 			entries: [
-				{ binding: 0, resource: { buffer: posStorageBuffer } },
-				{ binding: 1, resource: { buffer: colorStorageBuffer } },
-				{ binding: 2, resource: { buffer: normalStorageBuffer } },
-				{ binding: 3, resource: { buffer: modelsStorageBuffer } },
-				{ binding: 4, resource: { buffer: modelIdStorageBuffer } },
-				{ binding: 5, resource: { buffer: timeUniformBuffer } },
-				{ binding: 6, resource: { buffer: cubeCountUniformBuffer } },
-				{ binding: 7, resource: { buffer: viewProjectionUniformBuffer } },
-				{ binding: 8, resource: { buffer: aabbminsStorageBuffer } },
-				{ binding: 9, resource: { buffer: aabbmaxsStorageBuffer } },
+				{ binding: 0, resource: { buffer: meshDataStorageBuffer } },
+				// { binding: 1, resource: { buffer: colorStorageBuffer } },
+				// { binding: 2, resource: { buffer: normalStorageBuffer } },
+				// { binding: 3, resource: { buffer: modelsStorageBuffer } },
+				// { binding: 4, resource: { buffer: modelIdStorageBuffer } },
+				// { binding: 5, resource: { buffer: timeUniformBuffer } },
+				// { binding: 6, resource: { buffer: cubeCountUniformBuffer } },
+				{ binding: 1, resource: { buffer: viewProjectionUniformBuffer } },
+				// { binding: 8, resource: { buffer: aabbminsStorageBuffer } },
+				// { binding: 9, resource: { buffer: aabbmaxsStorageBuffer } },
 			],
 		});
 
@@ -651,16 +656,36 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				device.queue.writeBuffer(posStorageBuffer, 0, models.positionValues);
-				device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
-				device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
-				device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
-				device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
-				device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
-				device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
-				device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
-				device.queue.writeBuffer(aabbminsStorageBuffer, 0, models.aabbMins);
-				device.queue.writeBuffer(aabbmaxsStorageBuffer, 0, models.aabbMaxs);
+				const singleMeshTriangle = new Float32Array([
+					// VERTEX 0 (Left-Back)
+					-0.5, 0.0, -0.5, 1.0,  // Position (x, y, z, w)
+					0.0, 1.0, 0.0, 0.0,  // Normal (Up)
+					1.0, 0.0, 0.0, 1.0,  // Color (Red)
+
+					// VERTEX 1 (Right-Back)
+					0.5, 0.0, -0.5, 1.0,  // Position
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+
+					// VERTEX 2 (Front-Center)
+					0.0, 0.0, 0.5, 1.0,  // Position
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+				]);
+				const vertexCount = 3;
+				// later add aabbmin and aabbmax.
+
+
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, singleMeshTriangle);
+				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
+				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
+				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
+				// device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
+				// device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
+				// device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
+				// device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
+				// device.queue.writeBuffer(aabbminsStorageBuffer, 0, models.aabbMins);
+				// device.queue.writeBuffer(aabbmaxsStorageBuffer, 0, models.aabbMaxs);
 
 				const viewProjected = viewProjection({
 					width: canvasDimension.width,
@@ -677,7 +702,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					cubeNums * Universal.unitCube.numOfVertices,
+					vertexCount,
 					drawInstances,
 				);
 

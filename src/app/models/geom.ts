@@ -161,3 +161,12 @@ export function summarizeCubeCount(tree: Tree<Model>): Tree<Model> {
 		default: { return assertNever(tree); }
 	}
 }
+
+
+// // Procedural primitives
+
+// type PrimitiveShape = {
+// 	vertices: number[]
+// }
+
+// function hexagon2d(radius: number)
