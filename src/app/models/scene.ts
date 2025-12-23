@@ -3,58 +3,60 @@ import { rgbaToColor } from "../ds/util";
 import { TRS } from "./geom";
 import { blackCubeColors, Model, setDebugColors, unitCube } from "./unit";
 
-const headGeom: Tree<Model> = createNode<Model>(
-	{
-		id: "head-base",
-		mesh: unitCube("unit-cube"),
-		trs: {
-			t: [0, 0.9, 0],
-			pivot: [0, 0, 0],
-			rxdeg: 0,
-			rydeg: 0,
-			rzdeg: 0,
-			s: 0.7,
+function headGeom(id: number): Tree<Model> {
+	return createNode<Model>(
+		{
+			id: "head-base",
+			mesh: unitCube("unit-cube"),
+			trs: {
+				t: [0, 0.9, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 0.7,
+			},
+			// To be filled by update world.
+			modelMatrix: [],
+			material: { basecolor: [] },
+			cubeCount: 1,
 		},
-		// To be filled by update world.
-		modelMatrix: [],
-		material: { basecolor: [] },
-		cubeCount: 1,
-	},
-	[
-		createLeaf({
-			id: "left-ear",
-			mesh: unitCube("unit-cube"),
-			trs: {
-				t: [1.0, 1.0, 0],
-				pivot: [-0.5, -0.5, 0],
-				rxdeg: 0,
-				rydeg: 0,
-				rzdeg: -25,
-				s: 0.5,
-			},
-			// To be filled by update world.
-			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 1,
-		}),
-		createLeaf({
-			id: "right-ear",
-			mesh: unitCube("unit-cube"),
-			trs: {
-				t: [-1.0, 1.0, 0],
-				pivot: [0.5, -0.5, 0],
-				rxdeg: 0,
-				rydeg: 0,
-				rzdeg: -25,
-				s: 0.5,
-			},
-			// To be filled by update world.
-			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 1,
-		}),
-	],
-);
+		[
+			createLeaf({
+				id: "left-ear",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [1.0, 1.0, 0],
+					pivot: [-0.5, -0.5, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: -25,
+					s: 0.5,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: [] },
+				cubeCount: 1,
+			}),
+			createLeaf({
+				id: "right-ear",
+				mesh: unitCube("unit-cube"),
+				trs: {
+					t: [-1.0, 1.0, 0],
+					pivot: [0.5, -0.5, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: -25,
+					s: 0.5,
+				},
+				// To be filled by update world.
+				modelMatrix: [],
+				material: { basecolor: [] },
+				cubeCount: 1,
+			}),
+		],
+	);
+}
 
 function createCuberMan(id: string, trs: Partial<TRS>) {
 	const defaultTrs: TRS = {
@@ -76,7 +78,7 @@ function createCuberMan(id: string, trs: Partial<TRS>) {
 			cubeCount: 1,
 		},
 		[
-			headGeom,
+			headGeom(1),
 			createLeaf({
 				id: "left-arm",
 				mesh: unitCube("unit-cube"),
