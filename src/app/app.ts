@@ -672,11 +672,66 @@ export class App implements AfterViewInit {
 					0.0, 1.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 				]);
-				const vertexCount = 3;
+				const vertexCount = 15;
 				// later add aabbmin and aabbmax.
 
+				// Front face.
+				const cubeCorners = [
+					// FRONT face (z = +0.5)
+					// - left
+					-0.5, -0.5, +0.5, 1.0, // bottom left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.0, +0.0, +0.5, 1.0, // center
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					-0.5, +0.5, +0.5, 1.0, // top left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - bottom
+					-0.5, -0.5, +0.5, 1.0, // bottom left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, -0.5, +0.5, 1.0, // bottom right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.0, +0.0, +0.5, 1.0, // center
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - right
+					+0.0, +0.0, +0.5, 1.0, // center
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, -0.5, +0.5, 1.0, // bottom right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, +0.2, +0.5, 1.0, // top right (c)
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - cut (top right)
+					+0.0, +0.0, +0.5, 1.0, // center
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, +0.2, +0.5, 1.0, // top right (c)
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.2, +0.5, +0.5, 1.0, // top right (c)
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - top
+					-0.5, +0.5, +0.5, 1.0, // top left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.0, +0.0, +0.5, 1.0, // center
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.2, +0.5, +0.5, 1.0, // top right (c)
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+				];
 
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, singleMeshTriangle);
+
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(cubeCorners));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
@@ -913,4 +968,18 @@ function selectModels(ray: Ray, worldTree: Tree<Model>, selectEntireModel = true
 			];
 		}
 	}
+}
+
+// top edges are sliced.
+function cuberock1() {
+	// Front face.
+	const cubeCorners = [
+		// FRONT face (z = +0.5)
+		-0.5, -0.5, +0.5, 1.0,   // bottom-left
+		+0.5, -0.5, +0.5, 1.0,   // bottom-right
+		+0.5, +0.5, +0.5, 1.0,   // top-right
+		-0.5, -0.5, +0.5, 1.0,   // bottom-left
+		+0.5, +0.5, +0.5, 1.0,   // top-right
+		-0.5, +0.5, +0.5, 1.0,   // top-left
+	];
 }

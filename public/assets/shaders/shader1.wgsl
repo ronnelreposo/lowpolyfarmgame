@@ -23,9 +23,10 @@ struct VsOutput {
 ) -> VsOutput {
 
 	let vertex = meshes.vertices[vertexIndex];
+	let m = viewProjection;
 
 	var vsOut: VsOutput;
-	vsOut.position = viewProjection * vertex.position;
+	vsOut.position = m * vertex.position;
 	vsOut.normal = vertex.normal;
 	vsOut.color = vertex.color;
 
