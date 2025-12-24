@@ -678,7 +678,7 @@ export class App implements AfterViewInit {
 				// Front face.
 				const cubeCorners = [
 					// FRONT face (z = +0.5)
-					// - left
+					// - left triangle
 					-0.5, -0.5, +0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -688,7 +688,7 @@ export class App implements AfterViewInit {
 					-0.5, +0.5, +0.5, 1.0, // top left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					// - center
+					// - center triangle
 					-0.5, -0.5, +0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -698,7 +698,7 @@ export class App implements AfterViewInit {
 					+0.2, +0.5, +0.5, 1.0, // right 1.
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					// - right
+					// - right triangle
 					-0.5, -0.5, +0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -710,7 +710,7 @@ export class App implements AfterViewInit {
 					1.0, 0.0, 0.0, 1.0,  // Color
 
 					// BACK face (z = -0.5)
-					// - left
+					// - left triangle
 					-0.5, -0.5, -0.5, 1.0, // bottom left
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -720,7 +720,7 @@ export class App implements AfterViewInit {
 					-0.5, +0.5, -0.5, 1.0, // top left
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					// - center
+					// - center triangle
 					-0.5, -0.5, -0.5, 1.0, // bottom left
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -730,7 +730,7 @@ export class App implements AfterViewInit {
 					+0.2, +0.5, -0.5, 1.0, // right 1.
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					// - right
+					// - right triangle
 					-0.5, -0.5, -0.5, 1.0, // bottom left
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -741,7 +741,7 @@ export class App implements AfterViewInit {
 					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 
-					// LEFT face (x = -0.5)
+					// LEFT face (x = -0.5) QUAD.
 					-0.5, -0.5, -0.5, 1.0,  // bottom-left
 					1.0, 0.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -762,7 +762,7 @@ export class App implements AfterViewInit {
 					1.0, 0.0, 0.0, 1.0,  // Color
 
 					// RIGHT face (x = +0.5)
-					// - left
+					// - left triangle
 					0.5, -0.5, 0.5, 1.0,  // bottom-left
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					0.0, 0.0, 1.0, 1.0,  // Color
@@ -772,7 +772,7 @@ export class App implements AfterViewInit {
 					0.5, 0.2, 0.5, 1.0,   // top-left
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					0.0, 0.0, 1.0, 1.0,  // Color
-					// - center
+					// - center triangle
 					0.5, -0.5, 0.5, 1.0,  // bottom-left
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					1.0, 1.0, 0.0, 1.0,  // Color
@@ -782,7 +782,7 @@ export class App implements AfterViewInit {
 					0.5, 0.5, 0.2, 1.0,   // top-left
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					1.0, 1.0, 0.0, 1.0,  // Color
-					// - right
+					// - right triangle
 					0.5, -0.5, 0.5, 1.0,  // bottom-left
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -792,6 +792,38 @@ export class App implements AfterViewInit {
 					0.5, 0.5, -0.5, 1.0,   // top-right
 					-1.0, 0.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
+
+					// TOP face (y = +0.5)
+					// - left triangle
+					-0.5, 0.5, 0.5, 1.0,  // bottom-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, 0.5, -0.5, 1.0,   // top-right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					-0.5, 0.5, -0.5, 1.0,   // top-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// // - center triangle
+					-0.5, 0.5, 0.5, 1.0,  // bottom-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, 0.5, -0.5, 1.0,   // top-right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, 0.5, 0.2, 1.0,   // top-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 1.0, 1.0,  // Color
+					// - right triangle
+					-0.5, 0.5, 0.5, 1.0,  // bottom-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.2, 0.5, 0.5, 1.0,   // bottom-right1
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, 0.5, 0.2, 1.0,   // bottom-right2
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					0.0, 1.0, 1.0, 1.0,  // Color
 				];
 
 
