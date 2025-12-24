@@ -678,33 +678,33 @@ export class App implements AfterViewInit {
 				const chamferedRock = [
 					// FRONT face (z = +0.5)
 					// - left triangle
-					-0.5, -0.5, +0.5, 1.0, // bottom left
+					-0.5, -0.5, 0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					+0.2, +0.5, +0.5, 1.0, // right 1.
+					0.2, 0.5, 0.5, 1.0, // right 1.
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, +0.5, +0.5, 1.0, // top left
+					-0.5, 0.5, 0.5, 1.0, // top left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 					// - center triangle
-					-0.5, -0.5, +0.5, 1.0, // bottom left
+					-0.5, -0.5, 0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					+0.5, +0.2, +0.5, 1.0, // right 2
+					0.5, 0.2, 0.5, 1.0, // right 2
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					+0.2, +0.5, +0.5, 1.0, // right 1.
+					0.2, 0.5, 0.5, 1.0, // right 1.
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 					// - right triangle
-					-0.5, -0.5, +0.5, 1.0, // bottom left
+					-0.5, -0.5, 0.5, 1.0, // bottom left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					+0.5, -0.5, +0.5, 1.0, // bottom right
+					0.5, -0.5, 0.5, 1.0, // bottom right
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
-					+0.5, +0.2, +0.5, 1.0, // right 2
+					0.5, 0.2, 0.5, 1.0, // right 2
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 
@@ -836,11 +836,9 @@ export class App implements AfterViewInit {
 					0.2, 0.5, 0.5, 1.0,   // Vertex 1
 					0.57, 0.57, 0.57, 0.0, // Normal (Pointing diagonally out)
 					1.0, 0.0, 1.0, 1.0,   // Color
-
 					0.5, 0.2, 0.5, 1.0,   // Vertex 2
 					0.57, 0.57, 0.57, 0.0, // Normal
 					1.0, 0.0, 1.0, 1.0,   // Color
-
 					0.5, 0.5, 0.2, 1.0,   // Vertex 3
 					0.57, 0.57, 0.57, 0.0, // Normal
 					1.0, 0.0, 1.0, 1.0,   // Color
