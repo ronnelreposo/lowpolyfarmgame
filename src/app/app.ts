@@ -675,8 +675,7 @@ export class App implements AfterViewInit {
 				const vertexCount = 99;
 				// later add aabbmin and aabbmax.
 
-				// Front face.
-				const cubeCorners = [
+				const chamferedRock = [
 					// FRONT face (z = +0.5)
 					// - left triangle
 					-0.5, -0.5, +0.5, 1.0, // bottom left
@@ -709,7 +708,7 @@ export class App implements AfterViewInit {
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 
-					// BACK face (z = -0.5)
+					// BACK face (z = -0.5) QUAD.
 					0.5, -0.5, -0.5, 1.0,   // bottom-left
 					0.0, 0.0, 1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
@@ -812,10 +811,43 @@ export class App implements AfterViewInit {
 					0.5, 0.5, 0.2, 1.0,   // bottom-right2
 					0.0, 1.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
+
+					// BOTTOM face (y = -0.5)
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, -0.5, 0.5, 1.0,   // bottom-right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, -0.5, -0.5, 1.0,   // top-right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					-0.5, -0.5, -0.5, 1.0,   // bottom-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					-0.5, -0.5, 0.5, 1.0,   // top-right
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					0.5, -0.5, 0.5, 1.0,   // top-left
+					0.0, 1.0, 0.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+
+					// THE CHAMFER FACE (The "Scar")
+					0.2, 0.5, 0.5, 1.0,   // Vertex 1
+					0.57, 0.57, 0.57, 0.0, // Normal (Pointing diagonally out)
+					1.0, 0.0, 1.0, 1.0,   // Color
+
+					0.5, 0.2, 0.5, 1.0,   // Vertex 2
+					0.57, 0.57, 0.57, 0.0, // Normal
+					1.0, 0.0, 1.0, 1.0,   // Color
+
+					0.5, 0.5, 0.2, 1.0,   // Vertex 3
+					0.57, 0.57, 0.57, 0.0, // Normal
+					1.0, 0.0, 1.0, 1.0,   // Color
 				];
 
 
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(cubeCorners));
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(chamferedRock));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
