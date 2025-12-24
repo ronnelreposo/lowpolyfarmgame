@@ -36,6 +36,7 @@ import {
 	buildFlattenedIndices,
 	unitCube,
 	Universal,
+    chamferedRock,
 } from "./models/unit";
 import {
 	myModelWorld,
@@ -675,177 +676,8 @@ export class App implements AfterViewInit {
 				const vertexCount = 99;
 				// later add aabbmin and aabbmax.
 
-				const chamferedRock = [
-					// FRONT face (z = +0.5)
-					// - left triangle
-					-0.5, -0.5, 0.5, 1.0, // bottom left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.2, 0.5, 0.5, 1.0, // right 1.
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, 0.5, 1.0, // top left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// - center triangle
-					-0.5, -0.5, 0.5, 1.0, // bottom left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.2, 0.5, 1.0, // right 2
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.2, 0.5, 0.5, 1.0, // right 1.
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// - right triangle
-					-0.5, -0.5, 0.5, 1.0, // bottom left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, 0.5, 1.0, // bottom right
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.2, 0.5, 1.0, // right 2
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// BACK face (z = -0.5) QUAD.
-					0.5, -0.5, -0.5, 1.0,   // bottom-left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, -0.5, -0.5, 1.0,   // bottom-right
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, -0.5, 1.0,   // top-right
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, -0.5, 1.0,   // bottom-left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, -0.5, 1.0,   // top-right
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, -0.5, 1.0,   // top-left
-					0.0, 0.0, 1.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// LEFT face (x = -0.5) QUAD.
-					-0.5, -0.5, -0.5, 1.0,  // bottom-left
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, -0.5, 0.5, 1.0,   // bottom-right
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, 0.5, 1.0,   // top-right
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, 0.5, 1.0,   // top-right
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, -0.5, 1.0,   // top-left
-					1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// RIGHT face (x = +0.5)
-					// - left triangle
-					0.5, -0.5, 0.5, 1.0,  // bottom-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, 0.2, 1.0,   // top-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.2, 0.5, 1.0,   // top-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// - center triangle
-					0.5, -0.5, 0.5, 1.0,  // bottom-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, -0.5, 1.0,   // top-right
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, 0.2, 1.0,   // top-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// - right triangle
-					0.5, -0.5, 0.5, 1.0,  // bottom-left
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, -0.5, 1.0,   // bottom-right
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, -0.5, 1.0,   // top-right
-					-1.0, 0.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// TOP face (y = +0.5)
-					// - left triangle
-					-0.5, 0.5, 0.5, 1.0,  // bottom-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, -0.5, 1.0,   // top-right
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, 0.5, -0.5, 1.0,   // top-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// // - center triangle
-					-0.5, 0.5, 0.5, 1.0,  // bottom-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, -0.5, 1.0,   // top-right
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, 0.2, 1.0,   // top-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					// - right triangle
-					-0.5, 0.5, 0.5, 1.0,  // bottom-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.2, 0.5, 0.5, 1.0,   // bottom-right1
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, 0.5, 0.2, 1.0,   // bottom-right2
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// BOTTOM face (y = -0.5)
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, 0.5, 1.0,   // bottom-right
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, -0.5, 1.0,   // top-right
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, -0.5, -0.5, 1.0,   // bottom-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					-0.5, -0.5, 0.5, 1.0,   // top-right
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-					0.5, -0.5, 0.5, 1.0,   // top-left
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// THE CHAMFER FACE (The "Scar")
-					0.2, 0.5, 0.5, 1.0,   // Vertex 1
-					0.57, 0.57, 0.57, 0.0, // Normal (Pointing diagonally out)
-					1.0, 0.0, 1.0, 1.0,   // Color
-					0.5, 0.2, 0.5, 1.0,   // Vertex 2
-					0.57, 0.57, 0.57, 0.0, // Normal
-					1.0, 0.0, 1.0, 1.0,   // Color
-					0.5, 0.5, 0.2, 1.0,   // Vertex 3
-					0.57, 0.57, 0.57, 0.0, // Normal
-					1.0, 0.0, 1.0, 1.0,   // Color
-				];
-
-
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(chamferedRock));
+				const myRock = chamferedRock();
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(myRock.data));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
@@ -871,7 +703,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					vertexCount,
+					myRock.vertexCount,
 					drawInstances,
 				);
 

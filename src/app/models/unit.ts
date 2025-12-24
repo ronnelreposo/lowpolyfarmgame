@@ -262,3 +262,180 @@ export function buildFlattenedIndices(
 		parent: fNode.parent ? lookup.get(fNode.parent) ?? -1 : -1,
 	};
 }
+
+export function chamferedRock(): {
+	vertexCount: number,
+	data: number[]
+} {
+	return {
+		vertexCount: 48,
+		data: [
+			// FRONT face (z = +0.5)
+			// - left triangle
+			-0.5, -0.5, 0.5, 1.0, // bottom left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.2, 0.5, 0.5, 1.0, // right 1.
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, 0.5, 1.0, // top left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// - center triangle
+			-0.5, -0.5, 0.5, 1.0, // bottom left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.2, 0.5, 1.0, // right 2
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.2, 0.5, 0.5, 1.0, // right 1.
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// - right triangle
+			-0.5, -0.5, 0.5, 1.0, // bottom left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, 0.5, 1.0, // bottom right
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.2, 0.5, 1.0, // right 2
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// BACK face (z = -0.5) QUAD.
+			0.5, -0.5, -0.5, 1.0,   // bottom-left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, -0.5, -0.5, 1.0,   // bottom-right
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, -0.5, 1.0,   // top-right
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, -0.5, 1.0,   // bottom-left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, -0.5, 1.0,   // top-right
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, -0.5, 1.0,   // top-left
+			0.0, 0.0, 1.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// LEFT face (x = -0.5) QUAD.
+			-0.5, -0.5, -0.5, 1.0,  // bottom-left
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, -0.5, 0.5, 1.0,   // bottom-right
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, 0.5, 1.0,   // top-right
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, -0.5, -0.5, 1.0,   // bottom-left
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, 0.5, 1.0,   // top-right
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, -0.5, 1.0,   // top-left
+			1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// RIGHT face (x = +0.5)
+			// - left triangle
+			0.5, -0.5, 0.5, 1.0,  // bottom-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, 0.2, 1.0,   // top-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.2, 0.5, 1.0,   // top-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// - center triangle
+			0.5, -0.5, 0.5, 1.0,  // bottom-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, -0.5, 1.0,   // top-right
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, 0.2, 1.0,   // top-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// - right triangle
+			0.5, -0.5, 0.5, 1.0,  // bottom-left
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, -0.5, 1.0,   // bottom-right
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, -0.5, 1.0,   // top-right
+			-1.0, 0.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// TOP face (y = +0.5)
+			// - left triangle
+			-0.5, 0.5, 0.5, 1.0,  // bottom-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, -0.5, 1.0,   // top-right
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, 0.5, -0.5, 1.0,   // top-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// // - center triangle
+			-0.5, 0.5, 0.5, 1.0,  // bottom-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, -0.5, 1.0,   // top-right
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, 0.2, 1.0,   // top-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			// - right triangle
+			-0.5, 0.5, 0.5, 1.0,  // bottom-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.2, 0.5, 0.5, 1.0,   // bottom-right1
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, 0.5, 0.2, 1.0,   // bottom-right2
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// BOTTOM face (y = -0.5)
+			-0.5, -0.5, -0.5, 1.0,   // bottom-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, 0.5, 1.0,   // bottom-right
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, -0.5, 1.0,   // top-right
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, -0.5, -0.5, 1.0,   // bottom-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			-0.5, -0.5, 0.5, 1.0,   // top-right
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+			0.5, -0.5, 0.5, 1.0,   // top-left
+			0.0, 1.0, 0.0, 0.0,  // Normal
+			1.0, 0.0, 0.0, 1.0,  // Color
+
+			// THE CHAMFER FACE (The "Scar")
+			0.2, 0.5, 0.5, 1.0,   // Vertex 1
+			0.57, 0.57, 0.57, 0.0, // Normal (Pointing diagonally out)
+			1.0, 0.0, 1.0, 1.0,   // Color
+			0.5, 0.2, 0.5, 1.0,   // Vertex 2
+			0.57, 0.57, 0.57, 0.0, // Normal
+			1.0, 0.0, 1.0, 1.0,   // Color
+			0.5, 0.5, 0.2, 1.0,   // Vertex 3
+			0.57, 0.57, 0.57, 0.0, // Normal
+			1.0, 0.0, 1.0, 1.0,   // Color
+		]
+	};
+}
