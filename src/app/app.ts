@@ -672,7 +672,7 @@ export class App implements AfterViewInit {
 					0.0, 1.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 				]);
-				const vertexCount = 15;
+				const vertexCount = 99;
 				// later add aabbmin and aabbmax.
 
 				// Front face.
@@ -708,6 +708,38 @@ export class App implements AfterViewInit {
 					1.0, 0.0, 0.0, 1.0,  // Color
 					+0.5, +0.2, +0.5, 1.0, // right 2
 					0.0, 0.0, 1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+
+					// BACK face (z = -0.5)
+					// - left
+					-0.5, -0.5, -0.5, 1.0, // bottom left
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.2, +0.5, -0.5, 1.0, // right 1.
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					-0.5, +0.5, -0.5, 1.0, // top left
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - center
+					-0.5, -0.5, -0.5, 1.0, // bottom left
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, +0.2, -0.5, 1.0, // right 2
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.2, +0.5, -0.5, 1.0, // right 1.
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					// - right
+					-0.5, -0.5, -0.5, 1.0, // bottom left
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, -0.5, -0.5, 1.0, // bottom right
+					0.0, 0.0, -1.0, 0.0,  // Normal
+					1.0, 0.0, 0.0, 1.0,  // Color
+					+0.5, +0.2, -0.5, 1.0, // right 2
+					0.0, 0.0, -1.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 				];
 
@@ -820,10 +852,11 @@ function viewProjection(params: { width: number, height: number, camera: number[
 	const P = mat.perspective([], fovDegrees, aspect, near, far);
 
 	const eye = [params.camera[0], params.camera[1], params.camera[2]];
-	const subj = [
-		params.camera[0] - params.initialCameraPosition[0],
-		params.camera[1] - params.initialCameraPosition[1],
-		params.camera[2] - params.initialCameraPosition[2]];
+	// const subj = [
+	// 	params.camera[0] - params.initialCameraPosition[0],
+	// 	params.camera[1] - params.initialCameraPosition[1],
+	// 	params.camera[2] - params.initialCameraPosition[2]];
+	const subj = [0, 0, 0];
 	const up = [0, 1, 0];
 	const V = mat.lookAt([], eye, subj, up);
 
