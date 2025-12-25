@@ -608,7 +608,14 @@ export const emptyMesh: Mesh = {
 // four scars on top face configurable.
 export function chamferedRock2(): Tree<Model> {
 
-	const c = 0.2;
+	const c1 = 0.25;
+	const c2 = 0.25;
+	const c3 = 0.25;
+	const c4 = 0.25;
+	const c5 = 0.25;
+	const c6 = 0.25;
+	const c7 = 0.25;
+	const c8 = 0.25;
 	const t1: Model = {
 		id: "t1",
 		trs: {
@@ -632,8 +639,8 @@ export function chamferedRock2(): Tree<Model> {
 		mesh: {
 			id: "t1",
 			positions: [
-				-c, 0.5, 0, 1,
-				c, 0.5, 0, 1,
+				-c1, 0.5, 0, 1,
+				c2, 0.5, 0, 1,
 				0, 0, 0, 1,
 			],
 			normals: [
@@ -645,7 +652,6 @@ export function chamferedRock2(): Tree<Model> {
 			triangleCount: 1,
 		}
 	};
-	const c2 = 0.2;
 	const t2: Model = {
 		id: "t2",
 		trs: {
@@ -659,9 +665,9 @@ export function chamferedRock2(): Tree<Model> {
 		modelMatrix: [],
 		material: {
 			basecolor: [
-				0.15, 0.68, 0.37, 1, // Color. Nephritis.
-				0.15, 0.68, 0.37, 1, // Color. Nephritis.
-				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+				1, 0.68, 0.37, 1, // Color. Nephritis.
+				1, 0.68, 0.37, 1, // Color. Nephritis.
+				1, 0.68, 0.37, 1, // Color. Nephritis.
 			]
 		},
 		cubeCount: 0,
@@ -670,7 +676,7 @@ export function chamferedRock2(): Tree<Model> {
 			id: "t2",
 			positions: [
 				c2, 0.5, 0, 1,
-				0.5, c2, 0, 1,
+				0.5, c3, 0, 1,
 				0, 0, 0, 1,
 			],
 			normals: [
@@ -682,7 +688,6 @@ export function chamferedRock2(): Tree<Model> {
 			triangleCount: 1,
 		}
 	};
-	const c3 = 0.2;
 	const t3: Model = {
 		id: "t3",
 		trs: {
@@ -707,7 +712,7 @@ export function chamferedRock2(): Tree<Model> {
 			id: "t3",
 			positions: [
 				0.5, c3, 0, 1,
-				0.5, -c3, 0, 1,
+				0.5, -c4, 0, 1,
 				0, 0, 0, 1,
 			],
 			normals: [
@@ -719,9 +724,44 @@ export function chamferedRock2(): Tree<Model> {
 			triangleCount: 1,
 		}
 	};
-	const c4 = 0.2;
 	const t4: Model = {
 		id: "t4",
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: {
+			basecolor: [
+				1.0, 0.68, 0.37, 1, // Color. Nephritis.
+				1.0, 0.68, 0.37, 1, // Color. Nephritis.
+				1.0, 0.68, 0.37, 1, // Color. Nephritis.
+			]
+		},
+		cubeCount: 0,
+		renderable: true,
+		mesh: {
+			id: "t4",
+			positions: [
+				0.5, -c4, 0, 1,
+				c5, -0.5, 0, 1,
+				0, 0, 0, 1,
+			],
+			normals: [
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+			],
+			vertexCount: 3,
+			triangleCount: 1,
+		}
+	};
+	const t5: Model = {
+		id: "t5",
 		trs: {
 			t: [0, 0, 0],
 			pivot: [0, 0, 0],
@@ -741,10 +781,118 @@ export function chamferedRock2(): Tree<Model> {
 		cubeCount: 0,
 		renderable: true,
 		mesh: {
-			id: "t4",
+			id: "t5",
 			positions: [
-				0.5, -c4, 0, 1,
-				c4, -0.5, 0, 1,
+				c5, -0.5, 0, 1,
+				-c6, -0.5, 0, 1,
+				0, 0, 0, 1,
+			],
+			normals: [
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+			],
+			vertexCount: 3,
+			triangleCount: 1,
+		}
+	};
+	const t6: Model = {
+		id: "t6",
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: {
+			basecolor: [
+				1, 0.68, 0.37, 1,
+				1, 0.68, 0.37, 1,
+				1, 0.68, 0.37, 1,
+			]
+		},
+		cubeCount: 0,
+		renderable: true,
+		mesh: {
+			id: "t6",
+			positions: [
+				-c6, -0.5, 0, 1,
+				-0.5, -c7, 0, 1,
+				0, 0, 0, 1,
+			],
+			normals: [
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+			],
+			vertexCount: 3,
+			triangleCount: 1,
+		}
+	};
+	const t7: Model = {
+		id: "t7",
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: {
+			basecolor: [
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+			]
+		},
+		cubeCount: 0,
+		renderable: true,
+		mesh: {
+			id: "t7",
+			positions: [
+				-0.5, -c7, 0, 1,
+				-0.5, c8, 0, 1,
+				0, 0, 0, 1,
+			],
+			normals: [
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+			],
+			vertexCount: 3,
+			triangleCount: 1,
+		}
+	};
+	const t8: Model = {
+		id: "t8",
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: {
+			basecolor: [
+				1, 0.68, 0.37, 1,
+				1, 0.68, 0.37, 1,
+				1, 0.68, 0.37, 1,
+			]
+		},
+		cubeCount: 0,
+		renderable: true,
+		mesh: {
+			id: "t8",
+			positions: [
+				-0.5, c8, 0, 1,
+				-c1, 0.5, 0, 1,
 				0, 0, 0, 1,
 			],
 			normals: [
@@ -780,22 +928,8 @@ export function chamferedRock2(): Tree<Model> {
 			})),
 		),
 		createLeaf(
-			updateWithTrs(t1, trs => ({
-				...trs,
-				rzdeg: 180,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
 			updateWithTrs(t2, trs => ({
 				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t2, trs => ({
-				...trs,
-				rzdeg: 180,
 				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
 			}))
 		),
@@ -806,22 +940,32 @@ export function chamferedRock2(): Tree<Model> {
 			}))
 		),
 		createLeaf(
-			updateWithTrs(t3, trs => ({
-				...trs,
-				rzdeg: 180,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
 			updateWithTrs(t4, trs => ({
 				...trs,
 				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
 			}))
 		),
 		createLeaf(
-			updateWithTrs(t4, trs => ({
+			updateWithTrs(t5, trs => ({
 				...trs,
-				rzdeg: 180,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(t6, trs => ({
+				...trs,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(t7, trs => ({
+				...trs,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(t8, trs => ({
+				...trs,
 				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
 			}))
 		),
