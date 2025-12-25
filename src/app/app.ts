@@ -422,7 +422,6 @@ export class App implements AfterViewInit {
 		const flattenedRelationships = flattenedTreeConnections(myModelWorld);
 		const modelIndexLookup = new Map(flattenedRelationships.map((m, i) => [m.modelId, i]));
 		const flattenedIndices = flattenedRelationships.map(d => buildFlattenedIndices(d, modelIndexLookup));
-		console.log(flattenedRelationships, modelIndexLookup, flattenedIndices);
 
 		// Render Loop.
 
@@ -687,13 +686,9 @@ export class App implements AfterViewInit {
 
 				const myRock = chamferedRock({ scarLengthPercentage: 1 });
 
-
 				// summarize the vertex count and the taping.
 				const myRock2 = updateWorld(chamferedRock2());
-				// const myRock3 = mapTree(myRock2, model => {
-				// 	return mat.mulV44([], model.modelMatrix, model.mesh.positions);
-				// });
-				// console.log("[debug] myrock3: ", myRock3);
+
 				// This one first for testing, later summarize all the length.
 				const models2 = reduceTree(
 					myRock2,
