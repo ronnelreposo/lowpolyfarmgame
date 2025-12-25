@@ -39,6 +39,7 @@ import {
     chamferedRock,
 } from "./models/unit";
 import {
+    chamferedRock2,
 	myModelWorld,
 } from "./models/scene";
 import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
@@ -50,7 +51,8 @@ import * as p from "parsimmon";
 // Perspective constants, should match in shader.
 const near = 0.1;
 const far = 100.0;
-const startingCamera = [10, 15, 10, 1];
+// const startingCamera = [10, 15, 10, 1];
+const startingCamera = [0, 0, 10, 1];
 
 type Ray = {
 	origin: vec.Vec3,
@@ -537,10 +539,10 @@ export class App implements AfterViewInit {
 				const aabbStride = 4; // 4 floats. 3dcoords + 1 padding.
 
 				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
-				hits = selectModels(ray$.value, modelOnWorldWithBounds);
-				if (hits.length > 0) {
-					console.log("hits", hits.map(hit => hit.modelId));
-				}
+				// hits = selectModels(ray$.value, modelOnWorldWithBounds);
+				// if (hits.length > 0) {
+				// 	console.log("hits", hits.map(hit => hit.modelId));
+				// }
 
 				const filteredModels = filterTree(modelOnWorldWithBounds, model =>
 					!(model.id === hits.sort((a, b) => a.minDistance - b.minDistance)[0]?.modelId));
@@ -629,6 +631,7 @@ export class App implements AfterViewInit {
 					}
 				);
 
+
 				const canvasDimension = canvasDimension$.value;
 				const depthTexture = device.createTexture({
 					size: [canvasDimension.width, canvasDimension.height],
@@ -683,7 +686,56 @@ export class App implements AfterViewInit {
 
 
 				const myRock = chamferedRock({ scarLengthPercentage: 1 });
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(myRock.data));
+
+
+				// summarize the vertex count and the taping.
+				const myRock2 = updateWorld(chamferedRock2());
+				// const myRock3 = mapTree(myRock2, model => {
+				// 	return mat.mulV44([], model.modelMatrix, model.mesh.positions);
+				// });
+				// console.log("[debug] myrock3: ", myRock3);
+				// This one first for testing, later summarize all the length.
+				const models2 = reduceTree(
+					myRock2,
+					(acc, model) => {
+
+						if (!model.renderable) {
+							return acc;
+						}
+
+						let localOffset = acc.offset;
+
+						for (let i = 0; i < model.mesh.vertexCount; i++) {
+							const vIndex = i * 4;
+
+							const rawPos = model.mesh.positions.slice(vIndex, vIndex + 4);
+							const worldPos = mat.mulV44([], model.modelMatrix, rawPos);
+							acc.tape.set(worldPos, localOffset);
+
+							const norm = model.mesh.normals.slice(vIndex, vIndex + 4);
+							acc.tape.set(norm, localOffset + 4);
+
+							const color = model.material.basecolor.slice(vIndex, vIndex + 4);
+							acc.tape.set(color, localOffset + 8);
+
+							// Step forward 12 floats (4 position + 4 normal + 4 color).
+							localOffset += 12;
+						}
+
+						return {
+							offset: localOffset,
+							tape: acc.tape,
+						};
+					},
+					{
+						offset: 0,
+						tape: new Float32Array(999),
+					}
+				);
+				// console.log("oi", chamferedRock2(), myRock2, models2);
+
+
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(models2.tape));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);

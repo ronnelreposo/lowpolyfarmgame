@@ -1,7 +1,7 @@
 import { createLeaf, createNode, mapTree, Tree } from "../ds/tree";
 import { rgbaToColor } from "../ds/util";
 import { TRS } from "./geom";
-import { blackCubeColors, Model, setDebugColors, unitCube } from "./unit";
+import { blackCubeColors, Mesh, Model, setDebugColors, unitCube } from "./unit";
 
 function cubermanHead(id: number): Tree<Model> {
 	const rootId = `${id}:cuberman:head`;
@@ -595,4 +595,139 @@ function createCarrotModel(id: number, trs: Partial<TRS>): Tree<Model> {
 			}),
 		],
 	)
+}
+
+export const emptyMesh: Mesh = {
+	id: "",
+	positions: [],
+	normals: [],
+	vertexCount: 0,
+	triangleCount: 0,
+};
+
+// four scars on top face configurable.
+export function chamferedRock2(): Tree<Model> {
+
+	const c = 0.2;
+	const unitFlatHexagon: Model = {
+		id: "t1", // order. TRBL.
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: {
+			basecolor: [
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+				0.15, 0.68, 0.37, 1, // Color. Nephritis.
+			]
+		},
+		cubeCount: 0,
+		renderable: true,
+		mesh: {
+			id: "t1",
+			positions: [
+				-c, 0.5, 0, 1,
+				c, 0.5, 0, 1,
+				0, 0, 0, 1,
+			],
+			normals: [
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+				0, 0, 1, 0,
+			],
+			vertexCount: 3,
+			triangleCount: 1,
+		}
+	};
+	// front face.
+	const frontFace: Tree<Model> = createNode({
+		id: "front-face",
+		trs: {
+			t: [0, 0, 0],
+			pivot: [0, 0, 0],
+			rxdeg: 0,
+			rydeg: 0,
+			rzdeg: 0,
+			s: 1,
+		},
+		modelMatrix: [],
+		material: { basecolor: [] },
+		cubeCount: 0,
+		renderable: false,
+		mesh: emptyMesh
+	}, [
+		// Front Face.
+		createLeaf(
+			// translateZ(unitFlatHexagon, 0.5),
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs, t: [trs.t[0], trs.t[1], trs.t[2] + 0.5]
+			})),
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 45,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 90,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 135,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 180,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 225,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 270,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+		createLeaf(
+			updateWithTrs(unitFlatHexagon, trs => ({
+				...trs,
+				rzdeg: 315,
+				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
+			}))
+		),
+	]);
+
+	return frontFace;
+}
+
+// Utilities.
+
+function updateWithTrs(model: Model, f: (trs: TRS) => TRS): Model {
+	return {
+		...model,
+		trs: f(model.trs),
+	};
 }
