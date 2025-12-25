@@ -908,7 +908,7 @@ export function chamferedRock2(): Tree<Model> {
 	const frontFace: Tree<Model> = createNode({
 		id: "front-face",
 		trs: {
-			t: [0, 0, 0],
+			t: [0, 0, 0.5],
 			pivot: [0, 0, 0],
 			rxdeg: 0,
 			rydeg: 0,
@@ -921,54 +921,14 @@ export function chamferedRock2(): Tree<Model> {
 		renderable: false,
 		mesh: emptyMesh
 	}, [
-		// Front Face.
-		createLeaf(
-			updateWithTrs(t1, trs => ({
-				...trs, t: [trs.t[0], trs.t[1], trs.t[2] + 0.5]
-			})),
-		),
-		createLeaf(
-			updateWithTrs(t2, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t3, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t4, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t5, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t6, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t7, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
-		createLeaf(
-			updateWithTrs(t8, trs => ({
-				...trs,
-				t: [trs.t[0], trs.t[1], trs.t[2] + 0.5],
-			}))
-		),
+		createLeaf(t1),
+		createLeaf(t2),
+		createLeaf(t3),
+		createLeaf(t4),
+		createLeaf(t5),
+		createLeaf(t6),
+		createLeaf(t7),
+		createLeaf(t8),
 	]);
 
 	return frontFace;
