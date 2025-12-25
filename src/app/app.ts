@@ -699,10 +699,6 @@ export class App implements AfterViewInit {
 					myRock2,
 					(acc, model) => {
 
-						if (!model.renderable) {
-							return acc;
-						}
-
 						let localOffset = acc.offset;
 
 						for (let i = 0; i < model.mesh.vertexCount; i++) {
