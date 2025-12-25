@@ -42,7 +42,7 @@ import {
 	myModelWorld,
 } from "./models/scene";
 import { toDegrees, toRadians } from "./ds/util";
-import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
+import { withBounds, updateWorld, summarizeCubeCount, getNormalForTriangle } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
 import * as p from "parsimmon";
@@ -673,10 +673,10 @@ export class App implements AfterViewInit {
 					0.0, 1.0, 0.0, 0.0,  // Normal
 					1.0, 0.0, 0.0, 1.0,  // Color
 				]);
-				const vertexCount = 99;
 				// later add aabbmin and aabbmax.
 
-				const myRock = chamferedRock();
+
+				const myRock = chamferedRock({ scarLengthPercentage: 0.9 });
 				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(myRock.data));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);

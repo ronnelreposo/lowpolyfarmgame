@@ -3,6 +3,7 @@ import { toRadians } from "../ds/util";
 import { createLeaf, createNode, Tree } from "../ds/tree";
 import { Model } from "./unit";
 import { assertNever } from "../util";
+import * as vec from "@thi.ng/vectors";
 
 // Note. TRS is per model instance, not per model.
 export type TRS = {
@@ -162,11 +163,14 @@ export function summarizeCubeCount(tree: Tree<Model>): Tree<Model> {
 	}
 }
 
+export function getNormalForTriangle(a: number[], b: number[], c: number[]) {
+	// 1. Get two edges (b-a and c-a)
+	const e1 = vec.sub3([], b, a);
+	const e2 = vec.sub3([], c, a);
 
-// // Procedural primitives
+	// 2. Cross product (e1 x e2)
+	const n = vec.cross3([], e1, e2);
 
-// type PrimitiveShape = {
-// 	vertices: number[]
-// }
-
-// function hexagon2d(radius: number)
+	// 3. Normalize (make length 1.0)
+	return vec.normalize3(null, n);
+}
