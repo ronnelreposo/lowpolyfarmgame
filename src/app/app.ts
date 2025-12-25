@@ -41,7 +41,7 @@ import {
 import {
 	myModelWorld,
 } from "./models/scene";
-import { toDegrees, toRadians } from "./ds/util";
+import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
 import { withBounds, updateWorld, summarizeCubeCount, getNormalForTriangle } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
@@ -50,7 +50,7 @@ import * as p from "parsimmon";
 // Perspective constants, should match in shader.
 const near = 0.1;
 const far = 100.0;
-const startingCamera = [0, 15, 10, 1];
+const startingCamera = [10, 15, 10, 1];
 
 type Ray = {
 	origin: vec.Vec3,
@@ -70,6 +70,9 @@ export class App implements AfterViewInit {
 
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
+
+		console.log("color", rgbaToColor(39, 174, 96));
+
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -124,7 +127,10 @@ export class App implements AfterViewInit {
 				}, startingCamera),
 				startWith(startingCamera),
 			)
-			.subscribe(camera$);
+			.subscribe(c => {
+				// console.log("Camera updated:", c);
+				camera$.next(c);
+			});
 
 
 
@@ -676,7 +682,7 @@ export class App implements AfterViewInit {
 				// later add aabbmin and aabbmax.
 
 
-				const myRock = chamferedRock({ scarLengthPercentage: 0.9 });
+				const myRock = chamferedRock({ scarLengthPercentage: 1 });
 				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(myRock.data));
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
