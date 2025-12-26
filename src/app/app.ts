@@ -26,7 +26,7 @@ import {
 	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
-import { filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
+import { createLeaf, filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
 import {
 	flattenedTreeConnections,
 	Mesh,
@@ -43,7 +43,7 @@ import {
 	myModelWorld,
 } from "./models/scene";
 import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
-import { withBounds, updateWorld, summarizeCubeCount, getNormalForTriangle } from "./models/geom";
+import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
 import * as p from "parsimmon";
@@ -51,7 +51,7 @@ import * as p from "parsimmon";
 // Perspective constants, should match in shader.
 const near = 0.1;
 const far = 100.0;
-// const startingCamera = [10, 15, 10, 1];
+// const startingCamera = [0, 15, 10, 1];
 const startingCamera = [0, 0, 10, 1];
 
 type Ray = {
@@ -73,7 +73,7 @@ export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 
-		console.log("color", rgbaToColor(39, 174, 96));
+		console.log("color", rgbaToColor(149, 165, 166));
 
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
@@ -301,6 +301,36 @@ export class App implements AfterViewInit {
 		const shaderCode = await fetch("/assets/shaders/shader1.wgsl").then(
 			(r) => r.text(),
 		);
+		const rockMeshRaw = await fetch("/assets/rocks.obj").then(
+			r => r.text().then(s => parseOBJ(s))
+		);
+		const m: Model = {
+			id: "rock-model",
+			mesh: {
+				id: "rock-mesh",
+				positions: rockMeshRaw.positions,
+				normals: rockMeshRaw.normals,
+				vertexCount: rockMeshRaw.positions.length / 4,
+				triangleCount: 0,
+			},
+			trs: {
+				t: [0, 0, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1,
+			},
+			modelMatrix: [],
+			material: {
+				basecolor: Array(rockMeshRaw.positions.length / 4).fill([
+					0.58, 0.64, 0.65, 1 // concrete
+				]).flat()
+			},
+			cubeCount: 0,
+			renderable: true,
+		};
+		console.log(rockMeshRaw);
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
 			code: shaderCode,
@@ -689,9 +719,11 @@ export class App implements AfterViewInit {
 				// summarize the vertex count and the taping.
 				const myRock2 = updateWorld(chamferedRock2());
 
+				const myRock3 = updateWorld(createLeaf(m));
+
 				// This one first for testing, later summarize all the length.
 				const models2 = reduceTree(
-					myRock2,
+					myRock3,
 					(acc, model) => {
 
 						let localOffset = acc.offset;
@@ -720,7 +752,7 @@ export class App implements AfterViewInit {
 					},
 					{
 						offset: 0,
-						tape: new Float32Array(999),
+						tape: new Float32Array(100_000),
 					}
 				);
 				// console.log("oi", chamferedRock2(), myRock2, models2);
@@ -752,7 +784,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					myRock.vertexCount,
+					m.mesh.vertexCount,
 					drawInstances,
 				);
 
@@ -978,4 +1010,73 @@ function cuberock1() {
 		+0.5, +0.5, +0.5, 1.0,   // top-right
 		-0.5, +0.5, +0.5, 1.0,   // top-left
 	];
+}
+
+function parseOBJ(objText: string) {
+	const positions: number[] = [];
+	const normals: number[] = [];
+
+	const vList: number[][] = [];
+	const vnList: number[][] = [];
+
+	const lines = objText.split('\n');
+
+	for (let line of lines) {
+		line = line.trim();
+		if (!line || line.startsWith('#')) continue;
+
+		const parts = line.split(/\s+/);
+		const type = parts[0];
+
+		if (type === 'v') {
+			// Vertex: v x y z -> push as [x, y, z, 1.0]
+			// Dividing by 16 if your Blockbench scale is the default 16 units per block
+			vList.push([
+				parseFloat(parts[1]),
+				parseFloat(parts[2]),
+				parseFloat(parts[3]),
+				1.0
+			]);
+		} else if (type === 'vn') {
+			// Normal: vn x y z -> push as [nx, ny, nz, 0.0]
+			vnList.push([
+				parseFloat(parts[1]),
+				parseFloat(parts[2]),
+				parseFloat(parts[3]),
+				0.0
+			]);
+		} else if (type === 'f') {
+			// Face: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+			const fIndices = parts.slice(1).map(p => {
+				const sub = p.split('/');
+				return {
+					vIdx: parseInt(sub[0]) - 1,
+					// sub[2] is the normal index in v/vt/vn format
+					vnIdx: sub[2] ? parseInt(sub[2]) - 1 : -1
+				};
+			});
+
+			// Triangulate faces (handles Quads or Polygons)
+			for (let i = 1; i < fIndices.length - 1; i++) {
+				const tri = [fIndices[0], fIndices[i], fIndices[i + 1]];
+
+				for (const vertex of tri) {
+					positions.push(...vList[vertex.vIdx]);
+
+					if (vertex.vnIdx >= 0 && vnList[vertex.vnIdx]) {
+						normals.push(...vnList[vertex.vnIdx]);
+					} else {
+						// Default normal (up) if none provided
+						normals.push(0, 1, 0, 0);
+					}
+				}
+			}
+		}
+	}
+
+	return {
+		positions, // raw number[]
+		normals,   // raw number[]
+		vertexCount: positions.length / 4
+	};
 }
