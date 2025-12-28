@@ -399,19 +399,14 @@ export class App implements AfterViewInit {
 			["rockScar2Model", rockScar2Model],
 			["rockScar3Model", rockScar3Model],
 		]);
-		const terrain2 = generateTerrain(0, 5, 5, (terrainTrs) =>
+		const terrain = generateTerrain(0, 5, 5, (terrainTrs) =>
 			updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => terrainTrs)
 		);
-		const totalVertexCount = reduceTree(terrain2,
+		const totalVertexCount = reduceTree(terrain,
 			(a, model) => model.mesh.vertexCount + a, 0);
 		const modelsTapeLength = totalVertexCount
 			* 4 // all parameters stored as vec4, 4 floats.
 			* 3; // position, normal, and color
-
-
-
-
-
 
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
@@ -777,31 +772,7 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				const singleMeshTriangle = new Float32Array([
-					// VERTEX 0 (Left-Back)
-					-0.5, 0.0, -0.5, 1.0,  // Position (x, y, z, w)
-					0.0, 1.0, 0.0, 0.0,  // Normal (Up)
-					1.0, 0.0, 0.0, 1.0,  // Color (Red)
-
-					// VERTEX 1 (Right-Back)
-					0.5, 0.0, -0.5, 1.0,  // Position
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-
-					// VERTEX 2 (Front-Center)
-					0.0, 0.0, 0.5, 1.0,  // Position
-					0.0, 1.0, 0.0, 0.0,  // Normal
-					1.0, 0.0, 0.0, 1.0,  // Color
-				]);
-				// later add aabbmin and aabbmax.
-
-
-				const myRock = chamferedRock({ scarLengthPercentage: 1 });
-
-				// summarize the vertex count and the taping.
-				const myRock2 = updateWorld(chamferedRock2());
-
-				const updatedTerrain = updateWorld(terrain2);
+				const updatedTerrain = updateWorld(terrain);
 
 				// This one first for testing, later summarize all the length.
 				const models2 = reduceTree(
