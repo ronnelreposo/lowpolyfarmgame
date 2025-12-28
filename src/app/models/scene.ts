@@ -227,6 +227,47 @@ function terrain(id: number, row: number, col: number, gap = 0.01): Tree<Model> 
 	);
 }
 
+export function generateTerrain(id: number, row: number, col: number, withTrs: (trs: TRS) => Model, gap = 0.01): Tree<Model> {
+	let spanModels: Model[] = [];
+	for (let i = 0; i < row; i++) {
+		for (let j = 0; j < col; j++) {
+			spanModels.push(withTrs(
+				{
+					t: [
+						(i - (row - 1) / 2) * (1 + gap),
+						0,
+						(j - (col - 1) / 2) * (1 + gap),
+					],
+					pivot: [0, 0, 0],
+					rxdeg: 0,
+					rydeg: 0,
+					rzdeg: 0,
+					s: 1,
+				})
+			);
+		}
+	}
+	return createNode<Model>(
+		{
+			id: `${id}:terrain:root-anchor`,
+			mesh: unitCube("unit-cube"),
+			trs: {
+				t: [0, 0, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1.0,
+			},
+			modelMatrix: [],
+			material: { basecolor: blackCubeColors },
+			cubeCount: 1,
+			renderable: false,
+		},
+		spanModels.map(createLeaf),
+	);
+}
+
 // Got pushed trerain. 100x100.
 // Got pushed cuberman to 100.
 // Upon introduction of shadows, the performance hits on gpu not on sim.
@@ -935,10 +976,3 @@ export function chamferedRock2(): Tree<Model> {
 }
 
 // Utilities.
-
-function updateWithTrs(model: Model, f: (trs: TRS) => TRS): Model {
-	return {
-		...model,
-		trs: f(model.trs),
-	};
-}

@@ -174,3 +174,15 @@ export function getNormalForTriangle(a: number[], b: number[], c: number[]) {
 	// 3. Normalize (make length 1.0)
 	return vec.normalize3(null, n);
 }
+
+export function updateWithTrs(model: Model, f: (trs: TRS) => TRS): Model {
+	return {
+		...model,
+		trs: f(model.trs),
+		// // rotate also the normals
+		// mesh: {
+		// 	...model.mesh,
+		// 	normals: model.mesh.normals.map(n => vec.rotate3([], n, model.trs.rotation))
+		// }
+	};
+}

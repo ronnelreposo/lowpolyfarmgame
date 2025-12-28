@@ -26,7 +26,7 @@ import {
 	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
-import { createLeaf, filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
+import { createLeaf, createNode, filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
 import {
 	flattenedTreeConnections,
 	Mesh,
@@ -40,10 +40,11 @@ import {
 } from "./models/unit";
 import {
     chamferedRock2,
+	emptyMesh,
 	myModelWorld,
 } from "./models/scene";
 import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
-import { withBounds, updateWorld, summarizeCubeCount } from "./models/geom";
+import { withBounds, updateWorld, summarizeCubeCount, updateWithTrs } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
 import * as p from "parsimmon";
@@ -52,7 +53,7 @@ import * as p from "parsimmon";
 const near = 0.1;
 const far = 100.0;
 // const startingCamera = [0, 15, 10, 1];
-const startingCamera = [0, 0, 10, 1];
+const startingCamera = [-10, 10, 10, 1];
 
 type Ray = {
 	origin: vec.Vec3,
@@ -301,16 +302,26 @@ export class App implements AfterViewInit {
 		const shaderCode = await fetch("/assets/shaders/shader1.wgsl").then(
 			(r) => r.text(),
 		);
-		const rockMeshRaw = await fetch("/assets/rocks.obj").then(
+
+		const rockPerfect = await fetch("/assets/rocks/rock-perfect.obj").then(
 			r => r.text().then(s => parseOBJ(s))
 		);
-		const m: Model = {
-			id: "rock-model",
+		const rockScar1 = await fetch("/assets/rocks/rock-scar1.obj").then(
+			r => r.text().then(s => parseOBJ(s))
+		);
+		const rockScar2 = await fetch("/assets/rocks/rock-scar2.obj").then(
+			r => r.text().then(s => parseOBJ(s))
+		);
+		const rockScar3 = await fetch("/assets/rocks/rock-scar3.obj").then(
+			r => r.text().then(s => parseOBJ(s))
+		);
+		const rockScar1Model: Model = {
+			id: "rockScar1Model",
 			mesh: {
-				id: "rock-mesh",
-				positions: rockMeshRaw.positions,
-				normals: rockMeshRaw.normals,
-				vertexCount: rockMeshRaw.positions.length / 4,
+				id: "rockScar1Model",
+				positions: rockScar1.positions,
+				normals: rockScar1.normals,
+				vertexCount: rockScar1.positions.length / 4,
 				triangleCount: 0,
 			},
 			trs: {
@@ -323,14 +334,109 @@ export class App implements AfterViewInit {
 			},
 			modelMatrix: [],
 			material: {
-				basecolor: Array(rockMeshRaw.positions.length / 4).fill([
+				basecolor: Array(rockScar1.positions.length / 4).fill([
 					0.58, 0.64, 0.65, 1 // concrete
 				]).flat()
 			},
 			cubeCount: 0,
 			renderable: true,
 		};
-		console.log(rockMeshRaw);
+		const rockScar2Model: Model = {
+			id: "rockScar2Model",
+			mesh: {
+				id: "rockScar2Model",
+				positions: rockScar2.positions,
+				normals: rockScar2.normals,
+				vertexCount: rockScar2.positions.length / 4,
+				triangleCount: 0,
+			},
+			trs: {
+				t: [0, 0, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1,
+			},
+			modelMatrix: [],
+			material: {
+				basecolor: Array(rockScar2.positions.length / 4).fill([
+					0.58, 0.64, 0.65, 1 // concrete
+				]).flat()
+			},
+			cubeCount: 0,
+			renderable: true,
+		};
+		const rockScar3Model: Model = {
+			id: "rockScar3Model",
+			mesh: {
+				id: "rockScar3Model",
+				positions: rockScar3.positions,
+				normals: rockScar3.normals,
+				vertexCount: rockScar3.positions.length / 4,
+				triangleCount: 0,
+			},
+			trs: {
+				t: [0, 0, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1,
+			},
+			modelMatrix: [],
+			material: {
+				basecolor: Array(rockScar3.positions.length / 4).fill([
+					0.58, 0.64, 0.65, 1 // concrete
+				]).flat()
+			},
+			cubeCount: 0,
+			renderable: true,
+		};
+		const rockScarLookup: Map<string, Model> = new Map([
+			["rockScar1Model", rockScar1Model],
+			["rockScar2Model", rockScar2Model],
+			["rockScar3Model", rockScar3Model],
+		]);
+		const terrainModel: Tree<Model> = createNode({
+			id: "terrain",
+			mesh: emptyMesh,
+			trs: {
+				t: [0, 0.9, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 0.7,
+			},
+			// To be filled by update world.
+			modelMatrix: [],
+			material: { basecolor: [] },
+			cubeCount: 1,
+			renderable: true,
+		}, [
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [-1, 0, 0] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 0] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [1, 0, 0] }))),
+
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [-1, 0, 1] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 1] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 1] }))),
+
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [-1, 0, 2] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [0, 0, 2] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 2] }))),
+
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [-1, 0, 3] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 3] }))),
+			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 3] }))),
+		])
+
+
+
+
+
+
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
 			code: shaderCode,
@@ -719,11 +825,11 @@ export class App implements AfterViewInit {
 				// summarize the vertex count and the taping.
 				const myRock2 = updateWorld(chamferedRock2());
 
-				const myRock3 = updateWorld(createLeaf(m));
+				const updatedTerrain = updateWorld(terrainModel);
 
 				// This one first for testing, later summarize all the length.
 				const models2 = reduceTree(
-					myRock3,
+					updatedTerrain,
 					(acc, model) => {
 
 						let localOffset = acc.offset;
@@ -784,7 +890,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					m.mesh.vertexCount,
+					10_000_000,
 					drawInstances,
 				);
 
@@ -1012,7 +1118,12 @@ function cuberock1() {
 	];
 }
 
-function parseOBJ(objText: string) {
+type ParsedObj = {
+	positions: number[],
+	normals: number[],
+	vertexCount: number,
+}
+function parseOBJ(objText: string): ParsedObj {
 	const positions: number[] = [];
 	const normals: number[] = [];
 
