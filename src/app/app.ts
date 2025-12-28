@@ -41,6 +41,7 @@ import {
 import {
     chamferedRock2,
 	emptyMesh,
+	generateTerrain,
 	myModelWorld,
 } from "./models/scene";
 import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
@@ -430,7 +431,10 @@ export class App implements AfterViewInit {
 			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [-1, 0, 3] }))),
 			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 3] }))),
 			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 3] }))),
-		])
+		]);
+		const terrain2 = generateTerrain(0, 5, 5, (terrainTrs) =>
+			updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => terrainTrs)
+		);
 
 
 
@@ -825,7 +829,7 @@ export class App implements AfterViewInit {
 				// summarize the vertex count and the taping.
 				const myRock2 = updateWorld(chamferedRock2());
 
-				const updatedTerrain = updateWorld(terrainModel);
+				const updatedTerrain = updateWorld(terrain2);
 
 				// This one first for testing, later summarize all the length.
 				const models2 = reduceTree(
