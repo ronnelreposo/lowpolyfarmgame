@@ -250,7 +250,7 @@ export function generateTerrain(id: number, row: number, col: number, withTrs: (
 	return createNode<Model>(
 		{
 			id: `${id}:terrain:root-anchor`,
-			mesh: unitCube("unit-cube"),
+			mesh: emptyMesh,
 			trs: {
 				t: [0, 0, 0],
 				pivot: [0, 0, 0],
@@ -260,7 +260,7 @@ export function generateTerrain(id: number, row: number, col: number, withTrs: (
 				s: 1.0,
 			},
 			modelMatrix: [],
-			material: { basecolor: blackCubeColors },
+			material: { basecolor: [] },
 			cubeCount: 1,
 			renderable: false,
 		},

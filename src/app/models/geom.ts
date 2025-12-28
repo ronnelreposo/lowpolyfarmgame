@@ -186,3 +186,34 @@ export function updateWithTrs(model: Model, f: (trs: TRS) => TRS): Model {
 		// }
 	};
 }
+
+export function summarizeVertexCount(tree: Tree<Model>): Tree<Model> {
+
+	switch (tree.kind) {
+		case "leaf": {
+			return tree;
+		}
+		case "node": {
+
+			const newChildren = tree.children.map(summarizeVertexCount);
+
+			const totalChildrenCubeCount = newChildren.reduce(
+				(acc, child) => acc + child.value.mesh.vertexCount,
+				tree.value.cubeCount
+			);
+
+			return {
+				...tree,
+				value: {
+					...tree.value,
+					mesh: {
+						...tree.value.mesh,
+						vertexCount: totalChildrenCubeCount
+					}
+				},
+				children: newChildren
+			}
+		}
+		default: { return assertNever(tree); }
+	}
+}

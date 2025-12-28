@@ -45,7 +45,7 @@ import {
 	myModelWorld,
 } from "./models/scene";
 import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
-import { withBounds, updateWorld, summarizeCubeCount, updateWithTrs } from "./models/geom";
+import { withBounds, updateWorld, summarizeCubeCount, updateWithTrs, summarizeVertexCount } from "./models/geom";
 import { CommonModule } from "@angular/common";
 import * as vec from "@thi.ng/vectors";
 import * as p from "parsimmon";
@@ -399,42 +399,14 @@ export class App implements AfterViewInit {
 			["rockScar2Model", rockScar2Model],
 			["rockScar3Model", rockScar3Model],
 		]);
-		const terrainModel: Tree<Model> = createNode({
-			id: "terrain",
-			mesh: emptyMesh,
-			trs: {
-				t: [0, 0.9, 0],
-				pivot: [0, 0, 0],
-				rxdeg: 0,
-				rydeg: 0,
-				rzdeg: 0,
-				s: 0.7,
-			},
-			// To be filled by update world.
-			modelMatrix: [],
-			material: { basecolor: [] },
-			cubeCount: 1,
-			renderable: true,
-		}, [
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [-1, 0, 0] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 0] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [1, 0, 0] }))),
-
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [-1, 0, 1] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 1] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 1] }))),
-
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [-1, 0, 2] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [0, 0, 2] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 2] }))),
-
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => ({ ...trs, t: [-1, 0, 3] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar2Model")!, (trs) => ({ ...trs, t: [0, 0, 3] }))),
-			createLeaf(updateWithTrs(rockScarLookup.get("rockScar1Model")!, (trs) => ({ ...trs, t: [1, 0, 3] }))),
-		]);
 		const terrain2 = generateTerrain(0, 5, 5, (terrainTrs) =>
 			updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => terrainTrs)
 		);
+		const totalVertexCount = reduceTree(terrain2,
+			(a, model) => model.mesh.vertexCount + a, 0);
+		const modelsTapeLength = totalVertexCount
+			* 4 // all parameters stored as vec4, 4 floats.
+			* 3; // position, normal, and color
 
 
 
@@ -862,10 +834,10 @@ export class App implements AfterViewInit {
 					},
 					{
 						offset: 0,
-						tape: new Float32Array(100_000),
+						tape: new Float32Array(modelsTapeLength),
 					}
 				);
-				// console.log("oi", chamferedRock2(), myRock2, models2);
+				// Note. For precision. offset and tepelenth should be equal.
 
 
 				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(models2.tape));
@@ -894,7 +866,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					10_000_000,
+					totalVertexCount,
 					drawInstances,
 				);
 
