@@ -399,9 +399,11 @@ export class App implements AfterViewInit {
 			["rockScar2Model", rockScar2Model],
 			["rockScar3Model", rockScar3Model],
 		]);
-		const terrain = generateTerrain(0, 5, 5, (terrainTrs) =>
-			updateWithTrs(rockScarLookup.get("rockScar3Model")!, (trs) => terrainTrs)
-		);
+		const terrain = generateTerrain(0, 100, 100, (terrainTrs) => {
+			// Peeudo random.. instead os just one variant, let's use the x coords.
+			const variant = (Math.abs(Math.floor(Math.sin(terrainTrs.t[0] * 12.9898 + terrainTrs.t[2] * 78.233) * 43758.5453)) % 3) + 1;
+			return updateWithTrs(rockScarLookup.get(`rockScar${variant}Model`)!, (trs) => terrainTrs)
+		});
 		const totalVertexCount = reduceTree(terrain,
 			(a, model) => model.mesh.vertexCount + a, 0);
 		const modelsTapeLength = totalVertexCount
@@ -443,7 +445,7 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const MAX_BUFF_SIZE = 8 * 1024 * 1024; // 8 MB
+		const MAX_BUFF_SIZE = 120 * 1024 * 1024; // 8 MB
 
 		const meshDataStorageBuffer = device.createBuffer({
 			label: `Mesh data storage buffer`,
