@@ -1,4 +1,17 @@
 
+Dec 30, 2025 09:30AM
+- A lot has changed back then see `webgpu-simulation` branch for more detail.
+- Got tired of manually creating vertices, instead I used a BlockBench to model a mesh (Everything got easier),
+manual vertices still has a place in my heart, for now I'll use this.
+- Recently I was obsessed in creating block of rocks with scars on the edges, you'll see in the `public/assets/rocs`
+the object files that I created, it may not that artistic but hey.
+- What I love in this journey of creating a game (it's far from it) is that there's a lot of venue you could progress,
+for instance you could model a mesh today and just that, or type few lines of code etc.
+- What is not in place however is the predictability of the cubes (our past model premitive), now I have to create a tree 
+wherein I could match the triangles on the scene graph (leaves) to ray trace the shadow.
+- For now I could only tell you about these progress, I have some progress that I didn't log, it's all visible in the commit graph.
+PS. There's also a lot of code to be cleaned up.
+
 Nov 23, 2025 10:36PM
 - Ray from mouse pointer.
 - Note that I've duplicated the shader and the typescript for 'P' and 'V',
