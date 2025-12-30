@@ -316,13 +316,39 @@ export class App implements AfterViewInit {
 		const rockScar3 = await fetch("/assets/rocks/rock-scar3.obj").then(
 			r => r.text().then(s => parseOBJ(s))
 		);
+		const rockPerfectModel: Model = {
+			id: "rockPerfectModel",
+			mesh: {
+				id: "rockPerfectModel",
+				positions: rockPerfect.positions,
+				normals: rockPerfect.normals,
+				vertexCount: rockPerfect.positions.length / 4,
+				triangleCount: 0,
+			},
+			trs: {
+				t: [0, 0, 0],
+				pivot: [0, 0, 0],
+				rxdeg: 0,
+				rydeg: 0,
+				rzdeg: 0,
+				s: 1,
+			},
+			modelMatrix: [],
+			material: {
+				basecolor: Array(rockPerfect.positions.length / 4).fill([
+					0.58, 0.64, 0.65, 1 // concrete
+				]).flat()
+			},
+			cubeCount: 0,
+			renderable: true,
+		};
 		const rockScar1Model: Model = {
 			id: "rockScar1Model",
 			mesh: {
 				id: "rockScar1Model",
-				positions: rockScar1.positions,
-				normals: rockScar1.normals,
-				vertexCount: rockScar1.positions.length / 4,
+				positions: rockPerfect.positions,
+				normals: rockPerfect.normals,
+				vertexCount: rockPerfect.positions.length / 4,
 				triangleCount: 0,
 			},
 			trs: {
@@ -395,14 +421,15 @@ export class App implements AfterViewInit {
 			renderable: true,
 		};
 		const rockScarLookup: Map<string, Model> = new Map([
+			["rockScar0Model", rockPerfectModel],
 			["rockScar1Model", rockScar1Model],
 			["rockScar2Model", rockScar2Model],
 			["rockScar3Model", rockScar3Model],
 		]);
-		const terrain = generateTerrain(0, 10, 10, (terrainTrs) => {
-			// Peeudo random. instead os just one variant, let's use the x coords.
-			const variantLen = 3;
-			const variant = (Math.abs(Math.floor(Math.sin(terrainTrs.t[0] * 12.9898 + terrainTrs.t[2] * 78.233) * 43758.5453)) % variantLen) + 1;
+		const terrain = generateTerrain(0, 13, 13, (terrainTrs) => {
+			// Pseudo random. instead of just one variant, let's use the x coords.
+			const variantLen = 4;
+			const variant = (Math.abs(Math.floor(Math.sin(terrainTrs.t[0] * 12.9898 + terrainTrs.t[2] * 78.233) * 43758.5453)) % variantLen);
 			return updateWithTrs(rockScarLookup.get(`rockScar${variant}Model`)!, (trs) => terrainTrs)
 		});
 		const totalVertexCount = reduceTree(terrain,
