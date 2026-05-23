@@ -797,11 +797,10 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				const updatedTerrain = updateWorld(terrain);
-
-				// This one first for testing, later summarize all the length.
-				const models2 = reduceTree(
-					updatedTerrain,
+				const animatedVertexCount = models.positionValues.length / 4;
+				const animatedTape = new Float32Array(animatedVertexCount * 12);
+				reduceTree(
+					finalModels,
 					(acc, model) => {
 
 						let localOffset = acc.offset;
@@ -819,7 +818,6 @@ export class App implements AfterViewInit {
 							const color = model.material.basecolor.slice(vIndex, vIndex + 4);
 							acc.tape.set(color, localOffset + 8);
 
-							// Step forward 12 floats (4 position + 4 normal + 4 color).
 							localOffset += 12;
 						}
 
@@ -830,13 +828,12 @@ export class App implements AfterViewInit {
 					},
 					{
 						offset: 0,
-						tape: new Float32Array(modelsTapeLength),
+						tape: animatedTape,
 					}
 				);
-				// Note. For precision. offset and tepelenth should be equal.
 
 
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(models2.tape));
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, animatedTape);
 				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
 				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
 				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
@@ -862,7 +859,7 @@ export class App implements AfterViewInit {
 
 				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
 				pass.draw(
-					totalVertexCount,
+					animatedVertexCount,
 					drawInstances,
 				);
 
