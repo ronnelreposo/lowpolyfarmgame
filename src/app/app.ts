@@ -1,59 +1,40 @@
 /// <reference types="@webgpu/types" />
 
-import { LOCATION_UPGRADE_CONFIGURATION } from "@angular/common/upgrade";
 import {
 	AfterViewInit,
 	ChangeDetectionStrategy,
 	Component,
 	NgZone,
-	OnInit,
 } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
 import {
-	animationFrames,
 	BehaviorSubject,
-	combineLatest,
 	EMPTY,
 	fromEvent,
-	map,
 	of,
-	ReplaySubject,
 	scan,
 	startWith,
-	Subject,
 	switchMap,
 	tap,
 	withLatestFrom,
 } from "rxjs";
 import * as mat from "@thi.ng/matrices";
-import { createLeaf, createNode, filterTree, mapTree, reduceTree, Tree } from "./ds/tree";
+import { mapTree, reduceTree } from "./ds/tree";
 import {
-	flattenedTreeConnections,
 	Mesh,
 	Model,
-	setDebugColors,
-	setTerrainColors,
-	buildFlattenedIndices,
-	unitCube,
-	Universal,
-    chamferedRock,
 } from "./models/unit";
 import {
-    chamferedRock2,
-	emptyMesh,
 	generateTerrain,
 	myModelWorld,
 } from "./models/scene";
-import { rgbaToColor, toDegrees, toRadians } from "./ds/util";
-import { fract, mix, deg2rad, pingPong01, pingPongAngle, easeInOutBack, easeInOutSine, easeInOutQuad, easeOutCubic, easeInOutCubic, easeOutSine, easeOutBounce, easeInBounce } from "./helpers/easings";
-import { withBounds, updateWorld, summarizeCubeCount, updateWithTrs, summarizeVertexCount } from "./models/geom";
+import { toDegrees, toRadians } from "./ds/util";
+import { pingPongAngle, easeInOutCubic } from "./helpers/easings";
+import { updateWorld, updateWithTrs } from "./models/geom";
 import { CommonModule } from "@angular/common";
-import * as vec from "@thi.ng/vectors";
 import * as p from "parsimmon";
 import { near, far, viewProjection } from "./rendering";
-import { Ray, IntersectedModel, selectModels } from "./ds/ray-caster";
-import { ParsedObj, parseOBJ } from "./helpers/obj-parser";
-// const startingCamera = [0, 15, 10, 1];
+import { parseOBJ } from "./helpers/obj-parser";
+
 const startingCamera = [-10, 10, 10, 1];
 
 @Component({
@@ -70,8 +51,6 @@ export class App implements AfterViewInit {
 	constructor(private ngZone: NgZone) {}
 	async ngAfterViewInit(): Promise<void> {
 
-		console.log("color", rgbaToColor(149, 165, 166));
-
 		const adapter = await navigator.gpu?.requestAdapter();
 		const device = await adapter?.requestDevice();
 
@@ -85,53 +64,27 @@ export class App implements AfterViewInit {
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
-					// console.log("key", event)
 					switch (event.key) {
-						case "ArrowLeft": {
-							return of([-0.1, 0, 0]);
-						}
-						case "ArrowRight": {
-							return of([0.1, 0, 0]);
-						}
-						case "ArrowUp": {
-							return of([0, 0, -0.1]);
-						}
-						case "ArrowDown": {
-							return of([0, 0, 0.1]);
-						}
-						case "PageUp": {
-							return of([0, 0.1, 0.0]);
-						}
-						case "-": {
-							return of([0, 0, 0.1]);
-						}
-						case "=": {
-							return of([0, 0, -0.1]);
-						}
-						case "PageDown": {
-							return of([0, -0.1, 0.0]);
-						}
-						default:
-							return EMPTY;
+						case "ArrowLeft": return of([-0.1, 0, 0]);
+						case "ArrowRight": return of([0.1, 0, 0]);
+						case "ArrowUp": return of([0, 0, -0.1]);
+						case "ArrowDown": return of([0, 0, 0.1]);
+						case "PageUp": return of([0, 0.1, 0.0]);
+						case "-": return of([0, 0, 0.1]);
+						case "=": return of([0, 0, -0.1]);
+						case "PageDown": return of([0, -0.1, 0.0]);
+						default: return EMPTY;
 					}
 				}),
-				scan((acc, arr) => {
-
-					return [
-						Math.min(Math.max(acc[0] + arr[0], -Infinity), Infinity),
-						Math.min(Math.max(acc[1] + arr[1], -Infinity), Infinity),
-						Math.min(Math.max(acc[2] + arr[2], near), far),
-						1,
-					];
-				}, startingCamera),
+				scan((acc, arr) => [
+					Math.min(Math.max(acc[0] + arr[0], -Infinity), Infinity),
+					Math.min(Math.max(acc[1] + arr[1], -Infinity), Infinity),
+					Math.min(Math.max(acc[2] + arr[2], near), far),
+					1,
+				], startingCamera),
 				startWith(startingCamera),
 			)
-			.subscribe(c => {
-				// console.log("Camera updated:", c);
-				camera$.next(c);
-			});
-
-
+			.subscribe(c => camera$.next(c));
 
 		const turnAngleDeg = 0;
 		const turnAngleDeg$ = new BehaviorSubject(turnAngleDeg);
@@ -139,51 +92,36 @@ export class App implements AfterViewInit {
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
-					// console.log("key", event)
-					const turnRate = 15.0
+					const turnRate = 15.0;
 					switch (event.key) {
-						case "a": {
-							return of(-turnRate);
-						}
-						case "d": {
-							return of(turnRate);
-						}
-						default:
-							return EMPTY;
+						case "a": return of(-turnRate);
+						case "d": return of(turnRate);
+						default: return EMPTY;
 					}
 				}),
 				scan((acc, turnRateDelta) => acc + turnRateDelta, turnAngleDeg),
 				startWith(turnAngleDeg),
 			)
-			.subscribe(angle => {
-				turnAngleDeg$.next(angle);
-			});
+			.subscribe(angle => turnAngleDeg$.next(angle));
 
 		const startingMove = [0, 0, 0, 1];
 		const move$ = new BehaviorSubject(startingMove);
-		// Move with respect to the turn.
 		fromEvent<KeyboardEvent>(document!, "keydown")
 			.pipe(
 				tap((event: KeyboardEvent) => event.preventDefault()),
 				switchMap((event: KeyboardEvent) => {
-					// console.log("key", event)
 					const strafeSpeed = 0.1;
 					switch (event.key) {
-						case "w": {
-							return of([0, 0, strafeSpeed, 1.0]);
-						}
-						case "s": {
-							return of([0, 0, -strafeSpeed, 1.0]);
-						}
-						default:
-							return EMPTY;
+						case "w": return of([0, 0, strafeSpeed, 1.0]);
+						case "s": return of([0, 0, -strafeSpeed, 1.0]);
+						default: return EMPTY;
 					}
 				}),
 				withLatestFrom(turnAngleDeg$),
 				scan((acc, [deltaMove, turnAngleDeg]) => {
 					const forwardX = Math.sin(toRadians(turnAngleDeg));
 					const forwardZ = Math.cos(toRadians(turnAngleDeg));
-					const forwardAmount = deltaMove[2]; // from W/S
+					const forwardAmount = deltaMove[2];
 					return [
 						acc[0] + forwardX * forwardAmount,
 						0,
@@ -193,9 +131,7 @@ export class App implements AfterViewInit {
 				}, startingMove),
 				startWith(startingMove),
 			)
-			.subscribe(m => {
-				move$.next(m);
-			});
+			.subscribe(m => move$.next(m));
 
 		const canvasDimension$ = new BehaviorSubject<{
 			width: number;
@@ -228,66 +164,6 @@ export class App implements AfterViewInit {
 			});
 			observer.observe(canvas!);
 		});
-		// const canvasSubj = new
-		// canvasDimension$.subscribe()
-
-		const ray$ = new BehaviorSubject<Ray>({ direction: vec.vec3(0, 0, 0), origin: vec.vec3(0, 0, 0) });
-		// canvas pixel coords
-		fromEvent(canvas!, 'pointerdown')
-			.pipe(withLatestFrom(canvasDimension$, camera$))
-			.subscribe(([e, { width, height }, camera]) => {
-				// In full screen, use bounding rect if not.
-				const x = (e as PointerEvent).clientX;
-				const y = (e as PointerEvent).clientY;
-
-				// Note for PV. This is duplicated logic from shader.
-				const viewProjected = viewProjection({
-					width,
-					height,
-					camera,
-					initialCameraPosition: startingCamera
-				});
-
-				const invPV = mat.invert44([], viewProjected);
-
-				// screen (pixel) -> NDC
-				const ndcX = (x / width) * 2.0 - 1.0;
-				const ndcY = 1.0 - (y / height) * 2.0;
-
-				const clipNear = [ndcX, ndcY, 0.0, 1.0];
-				const clipFar = [ndcX, ndcY, 1.0, 1.0];
-
-				if (invPV) {
-					// Backprojection/Unproject: world = inverse(P*V) * clip.
-					const worldNear4 = mat.mulV44([], invPV, clipNear);
-					const worldFar4 = mat.mulV44([], invPV, clipFar);
-
-					// Find out more about homogenous coords.
-					const worldNear = [
-						worldNear4[0] / worldNear4[3],
-						worldNear4[1] / worldNear4[3],
-						worldNear4[2] / worldNear4[3]
-					];
-
-					// Find out more about homogenous coords.
-					const worldFar = [
-						worldFar4[0] / worldFar4[3],
-						worldFar4[1] / worldFar4[3],
-						worldFar4[2] / worldFar4[3]
-					];
-
-					const rayOrigin = worldNear;
-					const rayDirectionRaw = mat.sub([], worldFar, rayOrigin);
-					const rayDirection = vec.normalize3([], rayDirectionRaw);
-
-
-					const ray = {
-						origin: vec.vec3(...rayOrigin),
-						direction: vec.vec3(...rayDirection),
-					};
-					ray$.next(ray);
-				}
-			});
 
 		const context = canvas?.getContext("webgpu");
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -331,7 +207,7 @@ export class App implements AfterViewInit {
 			modelMatrix: [],
 			material: {
 				basecolor: Array(rockPerfect.positions.length / 4).fill([
-					0.58, 0.64, 0.65, 1 // concrete
+					0.58, 0.64, 0.65, 1
 				]).flat()
 			},
 			cubeCount: 0,
@@ -357,7 +233,7 @@ export class App implements AfterViewInit {
 			modelMatrix: [],
 			material: {
 				basecolor: Array(rockScar1.positions.length / 4).fill([
-					0.58, 0.64, 0.65, 1 // concrete
+					0.58, 0.64, 0.65, 1
 				]).flat()
 			},
 			cubeCount: 0,
@@ -383,7 +259,7 @@ export class App implements AfterViewInit {
 			modelMatrix: [],
 			material: {
 				basecolor: Array(rockScar2.positions.length / 4).fill([
-					0.58, 0.64, 0.65, 1 // concrete
+					0.58, 0.64, 0.65, 1
 				]).flat()
 			},
 			cubeCount: 0,
@@ -409,7 +285,7 @@ export class App implements AfterViewInit {
 			modelMatrix: [],
 			material: {
 				basecolor: Array(rockScar3.positions.length / 4).fill([
-					0.58, 0.64, 0.65, 1 // concrete
+					0.58, 0.64, 0.65, 1
 				]).flat()
 			},
 			cubeCount: 0,
@@ -422,7 +298,6 @@ export class App implements AfterViewInit {
 			["rockScar3Model", rockScar3Model],
 		]);
 		const terrain = generateTerrain(0, 13, 13, (terrainTrs) => {
-			// Pseudo random. instead of just one variant, let's use the x coords.
 			const variantLen = 4;
 			const variant = (Math.abs(Math.floor(Math.sin(terrainTrs.t[0] * 12.9898 + terrainTrs.t[2] * 78.233) * 43758.5453)) % variantLen);
 			return updateWithTrs(rockScarLookup.get(`rockScar${variant}Model`)!, (trs) => terrainTrs)
@@ -430,8 +305,8 @@ export class App implements AfterViewInit {
 		const totalVertexCount = reduceTree(terrain,
 			(a, model) => model.mesh.vertexCount + a, 0);
 		const modelsTapeLength = totalVertexCount
-			* 4 // all parameters stored as vec4, 4 floats.
-			* 3; // position, normal, and color
+			* 4
+			* 3;
 
 		const module = device.createShaderModule({
 			label: "our hardcoded red triangle shaders",
@@ -468,119 +343,44 @@ export class App implements AfterViewInit {
 			},
 		];
 
-		const MAX_BUFF_SIZE = 8 * 1024 * 1024; // 8 MB
+		const MAX_BUFF_SIZE = 8 * 1024 * 1024;
 
 		const meshDataStorageBuffer = device.createBuffer({
 			label: `Mesh data storage buffer`,
 			size: MAX_BUFF_SIZE,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 		});
-		// const posStorageBuffer = device.createBuffer({
-		// 	label: `Position storage buffer`,
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-
-		// const modelsStorageBuffer = device.createBuffer({
-		// 	label: `Models storage buffer`,
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-
-		// const modelIdStorageBuffer = device.createBuffer({
-		// 	label: `Model IDs storage buffer`,
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-
-		// const colorStorageBuffer = device.createBuffer({
-		// 	label: `Color storage buffer`,
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-
-		// const normalStorageBuffer = device.createBuffer({
-		// 	label: `Normal storage buffer`,
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-
-		// const timeUniformBuffer = device.createBuffer({
-		// 	size: 1 * 4, // 1 float, 4 bytes each.
-		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		// });
-		// const subjUniformBuffer = device.createBuffer({
-		// 	size: 4 * 4, // 1 float, 4 bytes each.
-		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		// });
-		// const cubeCountUniformBuffer = device.createBuffer({
-		// 	size: 1 * 4, // 1 float, 4 bytes each.
-		// 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-		// });
 		const viewProjectionUniformBuffer = device.createBuffer({
-			size: 16 * 4, // 4x4 matrix, 4 bytes each.
+			size: 16 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 		});
-		// const aabbminsStorageBuffer = device.createBuffer({
-		// 	label: "aabbminsStorageBuffer",
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
-		// const aabbmaxsStorageBuffer = device.createBuffer({
-		// 	label: "aabbmaxsStorageBuffer",
-		// 	size: MAX_BUFF_SIZE,
-		// 	usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		// });
 
-		// Create one bind group.
 		const bindGroup = device.createBindGroup({
 			label: `Position only bind group`,
 			layout: pipeline.getBindGroupLayout(0),
 			entries: [
 				{ binding: 0, resource: { buffer: meshDataStorageBuffer } },
-				// { binding: 1, resource: { buffer: colorStorageBuffer } },
-				// { binding: 2, resource: { buffer: normalStorageBuffer } },
-				// { binding: 3, resource: { buffer: modelsStorageBuffer } },
-				// { binding: 4, resource: { buffer: modelIdStorageBuffer } },
-				// { binding: 5, resource: { buffer: timeUniformBuffer } },
-				// { binding: 6, resource: { buffer: cubeCountUniformBuffer } },
 				{ binding: 1, resource: { buffer: viewProjectionUniformBuffer } },
-				// { binding: 8, resource: { buffer: aabbminsStorageBuffer } },
-				// { binding: 9, resource: { buffer: aabbmaxsStorageBuffer } },
 			],
 		});
-
-		// TODO. Upload to GPU.
-		const flattenedRelationships = flattenedTreeConnections(myModelWorld);
-		const modelIndexLookup = new Map(flattenedRelationships.map((m, i) => [m.modelId, i]));
-		const flattenedIndices = flattenedRelationships.map(d => buildFlattenedIndices(d, modelIndexLookup));
-
-		// Render Loop.
 
 		const duration = 1_500;
 
 		let previous = performance.now();
 		let lag = 0.0;
 		let MsPerUpdate = 1_000 / 60;
-		let hits: IntersectedModel[] = [];
 		const frame = (now: number) => {
-			hits = [];
 			const elapsed = now - previous;
 			previous = now;
 			lag += elapsed;
 
-			// Process Input here.
-
-			// normalized 0→1 value repeating every duration
 			const period = (now % duration) / duration;
-
 
 			let animatedModel = undefined;
 
 			const perfStart = performance.now();
 			while (lag >= MsPerUpdate) {
 
-				// E.g. Turn all the scene graph tree (TARGET)_.
 				animatedModel = mapTree(myModelWorld, (model) => {
 
 					if (model.id.includes("cuberman:head")) {
@@ -636,14 +436,13 @@ export class App implements AfterViewInit {
 						};
 					}
 
-					// For improvement. Performance on parsing.
 					const cubermanParser = p.digits.chain(id => p.string(":cuberman"));
 					if (cubermanParser.parse(model.id).status) {
 						return {
 							...model,
 							trs: {
 								...model.trs,
-								rydeg: turnAngleDeg$.value, // rotate only on Y axis.
+								rydeg: turnAngleDeg$.value,
 								t: [
 									move$.value[0],
 									model.trs.t[1],
@@ -656,112 +455,14 @@ export class App implements AfterViewInit {
 					return model;
 				});
 
-				// Update lag of the game loop.
 				lag -= MsPerUpdate;
 			}
 			const perfEnd = performance.now();
 			this.simFPS$.next(perfEnd - perfStart);
 
-			// Render.
-
 			if (animatedModel) {
 
-				const modelOffset = 16; // 4*4 matrix.
-				const aabbStride = 4; // 4 floats. 3dcoords + 1 padding.
-
-				const modelOnWorldWithBounds = withBounds(updateWorld(animatedModel));
-				// hits = selectModels(ray$.value, modelOnWorldWithBounds);
-				// if (hits.length > 0) {
-				// 	console.log("hits", hits.map(hit => hit.modelId));
-				// }
-
-				const filteredModels = filterTree(modelOnWorldWithBounds, model =>
-					!(model.id === hits.sort((a, b) => a.minDistance - b.minDistance)[0]?.modelId));
-
-				// Skip this frame.
-				if (filteredModels === null) {
-					requestAnimationFrame(frame);
-					return;
-				}
-				const finalModels = summarizeCubeCount(filteredModels);
-				const cubeNums =  finalModels.value.cubeCount;
-
-				// Reduce everything before rendering.
-				const models = reduceTree(
-					finalModels,
-					(acc, model) => {
-
-						console.assert(model !== undefined);
-
-						acc.positionValues.set(
-							model.mesh.positions,
-							acc.vertexOffset,
-						);
-						acc.colorValues.set(
-							model.material.basecolor,
-							acc.vertexOffset,
-						);
-						acc.normalValues.set(
-							model.mesh.normals,
-							acc.vertexOffset,
-						);
-						acc.modelIdValues.fill(
-							acc.modelId,
-							acc.vertexOffset / Universal.floatsPerVertex,
-							acc.vertexOffset / Universal.floatsPerVertex +
-								model.mesh.vertexCount,
-						);
-						acc.modelMatrices.set(model.modelMatrix, acc.modelOffset);
-						acc.aabbMins.set([...model.aabbMin!, 1], acc.aabbOffset);
-						acc.aabbMaxs.set([...model.aabbMax!, 1], acc.aabbOffset);
-
-						return {
-							vertexOffset: acc.vertexOffset + model.mesh.positions.length,
-							modelId: acc.modelId + 1,
-							modelOffset: acc.modelOffset + modelOffset,
-							aabbOffset: acc.aabbOffset + aabbStride,
-
-							positionValues: acc.positionValues,
-							colorValues: acc.colorValues,
-							normalValues: acc.normalValues,
-							modelIdValues: acc.modelIdValues,
-							modelMatrices: acc.modelMatrices,
-							aabbMins: acc.aabbMins,
-							aabbMaxs: acc.aabbMaxs,
-						}
-					},
-					{
-						// Incremental informations.
-						vertexOffset: 0,
-						modelId: 0,
-						modelOffset: 0,
-						aabbOffset: 0,
-
-						// Values.
-						positionValues: new Float32Array(
-							cubeNums * Universal.unitCube.vertexFloatCount,
-						),
-						colorValues: new Float32Array(
-							cubeNums * Universal.unitCube.vertexFloatCount,
-						),
-						normalValues: new Float32Array(
-							cubeNums * Universal.unitCube.vertexFloatCount,
-						),
-						modelIdValues: new Uint32Array(
-							cubeNums * Universal.unitCube.numOfVertices,
-						),
-						modelMatrices: new Float32Array(
-							cubeNums * modelOffset,
-						),
-						aabbMins: new Float32Array(
-							cubeNums * aabbStride
-						),
-						aabbMaxs: new Float32Array(
-							cubeNums * aabbStride
-						),
-					}
-				);
-
+				const updatedTerrain = updateWorld(terrain);
 
 				const canvasDimension = canvasDimension$.value;
 				const depthTexture = device.createTexture({
@@ -797,10 +498,8 @@ export class App implements AfterViewInit {
 				const pass = encoder.beginRenderPass(renderPassDescriptor);
 				pass.setPipeline(pipeline);
 
-				const animatedVertexCount = models.positionValues.length / 4;
-				const animatedTape = new Float32Array(animatedVertexCount * 12);
-				reduceTree(
-					finalModels,
+				const models2 = reduceTree(
+					updatedTerrain,
 					(acc, model) => {
 
 						let localOffset = acc.offset;
@@ -828,21 +527,11 @@ export class App implements AfterViewInit {
 					},
 					{
 						offset: 0,
-						tape: animatedTape,
+						tape: new Float32Array(modelsTapeLength),
 					}
 				);
 
-
-				device.queue.writeBuffer(meshDataStorageBuffer, 0, animatedTape);
-				// device.queue.writeBuffer(colorStorageBuffer, 0, models.colorValues);
-				// device.queue.writeBuffer(normalStorageBuffer, 0, models.normalValues);
-				// device.queue.writeBuffer(modelsStorageBuffer, 0, models.modelMatrices);
-				// device.queue.writeBuffer(modelIdStorageBuffer, 0, models.modelIdValues);
-				// device.queue.writeBuffer(timeUniformBuffer, 0, new Float32Array([period]));
-				// device.queue.writeBuffer(subjUniformBuffer, 0, new Float32Array([0, 0, 0, 1]));
-				// device.queue.writeBuffer(cubeCountUniformBuffer, 0, new Uint32Array([cubeNums]));
-				// device.queue.writeBuffer(aabbminsStorageBuffer, 0, models.aabbMins);
-				// device.queue.writeBuffer(aabbmaxsStorageBuffer, 0, models.aabbMaxs);
+				device.queue.writeBuffer(meshDataStorageBuffer, 0, new Float32Array(models2.tape));
 
 				const viewProjected = viewProjection({
 					width: canvasDimension.width,
@@ -851,17 +540,12 @@ export class App implements AfterViewInit {
 					initialCameraPosition: startingCamera
 				});
 				const pvData = new Float32Array(viewProjected);
-				// console.log(viewProjected);
 				device.queue.writeBuffer(viewProjectionUniformBuffer, 0, pvData);
 
-				// Assign resource
 				pass.setBindGroup(0, bindGroup);
 
-				const drawInstances = 1; // Note. Doesn't have to do with the vertices.
-				pass.draw(
-					animatedVertexCount,
-					drawInstances,
-				);
+				const drawInstances = 1;
+				pass.draw(totalVertexCount, drawInstances);
 
 				pass.end();
 				const commandBuffer = encoder.finish();
